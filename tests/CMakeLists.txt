@@ -66,6 +66,10 @@ ecm_add_test(services/library/TestLibrary.cpp
     LINK_LIBRARIES pictorio_library Qt6::Test
 )
 
+ecm_add_test(services/network_access/TestNetworkAccess.cpp
+    LINK_LIBRARIES pictorio_network_access Qt6::Test
+)
+
 ecm_add_test(packaging/TestDesktopFile.cpp
     LINK_LIBRARIES pictorio_image_loader Qt6::Gui Qt6::Test KF6::I18n
 )

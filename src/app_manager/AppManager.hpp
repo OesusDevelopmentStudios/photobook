@@ -13,6 +13,7 @@
 
 #include "Connection.hpp"
 #include "Navigator.hpp"
+#include "NetworkAccess.hpp"
 #include "Settings.hpp"
 #include "Slideshow.hpp"
 #include "ViewTransform.hpp"
@@ -44,6 +45,9 @@ public:
     slideshow::Slideshow* slideshow() const;
     connection::Connection* connection() const;
 
+    // For the QML engine: images it loads from the server get the login token, and are cached on disk.
+    QQmlNetworkAccessManagerFactory* networkAccessFactory() const;
+
     // An image or folder chosen in a file dialog, which gives a URL
     Q_INVOKABLE void openImage(const QUrl& fileUrl);
     Q_INVOKABLE void openFolder(const QUrl& folderUrl);
@@ -55,6 +59,8 @@ private:
     std::unique_ptr<navigator::Navigator> m_navigator;
     std::unique_ptr<slideshow::Slideshow> m_slideshow;     // uses m_navigator and m_settings, so declared after them
     std::unique_ptr<connection::Connection> m_connection;  // uses m_settings
+    std::shared_ptr<network_access::ServerCredentials> m_serverCredentials;
+    std::unique_ptr<QQmlNetworkAccessManagerFactory> m_networkAccessFactory;
 };
 
 }  // namespace pictorio::app_manager

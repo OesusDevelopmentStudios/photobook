@@ -178,6 +178,7 @@ void TestConnection::logsInAndKeepsTheLogin()
 
     QCOMPARE(connection->username(), QStringLiteral("kid"));
     QCOMPARE(m_keyring->tokens.value(serverUrl), QStringLiteral("pk_new"));
+    QCOMPARE(connection->token(), QStringLiteral("pk_new"));
     QCOMPARE(m_settings->serverUrl(), QUrl(serverUrl));
     QCOMPARE(m_settings->serverUsername(), QStringLiteral("kid"));
     QTRY_COMPARE(connection->restrictedTags(), QStringList({QStringLiteral("rating:nsfw")}));
@@ -276,6 +277,7 @@ void TestConnection::logsOutAndEndsThisDevicesLogin()
     QCOMPARE(connection->state(), Connection::State::ServerFound);
     QVERIFY(m_keyring->tokens.isEmpty());
     QVERIFY(connection->restrictedTags().isEmpty());
+    QVERIFY(connection->token().isEmpty());
     const QString revokeUrl = serverUrl + QStringLiteral("/api/v1/auth/tokens/3");
     QTRY_COMPARE(m_server->requestsTo("DELETE", revokeUrl).size(), 1);
     QCOMPARE(fakes::authorizationOf(m_server->requestsTo("DELETE", revokeUrl).first()), QByteArray("Bearer pk_new"));

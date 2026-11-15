@@ -223,6 +223,11 @@ QStringList Connection::restrictedTags() const
     return m_restrictedTags;
 }
 
+QString Connection::token() const
+{
+    return m_state == State::LoggedIn ? m_token : QString();
+}
+
 QString Connection::errorMessage() const
 {
     return m_errorMessage;

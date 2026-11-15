@@ -35,6 +35,7 @@ add_subdirectory(services/server_client)
 add_subdirectory(services/token_store)
 add_subdirectory(services/connection)
 add_subdirectory(services/library)
+add_subdirectory(services/network_access)
 
 # The application. main.cpp only wires things together; logic lives in the libraries above.
 add_executable(pictorio)
@@ -72,6 +73,7 @@ target_link_libraries(pictorio PRIVATE
     pictorio_navigator
     pictorio_slideshow
     pictorio_connection
+    pictorio_network_access
     Qt6::Widgets
     Qt6::Qml
     Qt6::Quick

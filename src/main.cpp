@@ -64,7 +64,8 @@ int main(int argc, char* argv[])
     }
 
     QQmlApplicationEngine qmlEngine;
-    KLocalization::setupLocalizedContext(&qmlEngine);  // makes KI18n.i18n*() work in QML
+    KLocalization::setupLocalizedContext(&qmlEngine);                             // makes KI18n.i18n*() work in QML
+    qmlEngine.setNetworkAccessManagerFactory(appManager.networkAccessFactory());  // owned by the AppManager
 
     qmlEngine.setInitialProperties({
         {QStringLiteral("appManager"), QVariant::fromValue(&appManager)},

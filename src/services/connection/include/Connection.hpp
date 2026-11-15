@@ -72,6 +72,7 @@ public:
     bool isPlainHttp() const;           // passwords and images travel unencrypted
     QString username() const;
     QStringList restrictedTags() const;  // what the logged-in user may not see or use
+    QString token() const;               // for images loaded straight from the server; empty when logged out
     QString errorMessage() const;        // why the last step failed; empty if it did not
     QString keyringWarning() const;      // set if the login cannot be kept for the next start
 
