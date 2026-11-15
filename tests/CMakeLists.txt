@@ -55,6 +55,10 @@ ecm_add_test(services/token_store/TestTokenStore.cpp
 # Tests the error mapping in hlp/; the keyring itself is not used in tests.
 target_include_directories(TestTokenStore PRIVATE ${PROJECT_SOURCE_DIR}/src/services/token_store)
 
+ecm_add_test(services/connection/TestConnection.cpp
+    LINK_LIBRARIES pictorio_connection Qt6::Test
+)
+
 ecm_add_test(packaging/TestDesktopFile.cpp
     LINK_LIBRARIES pictorio_image_loader Qt6::Gui Qt6::Test KF6::I18n
 )
