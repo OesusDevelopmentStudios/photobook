@@ -45,6 +45,10 @@ ecm_add_test(services/settings/TestSettings.cpp
     LINK_LIBRARIES pictorio_settings Qt6::Test KF6::ConfigCore
 )
 
+ecm_add_test(services/server_client/TestServerClient.cpp
+    LINK_LIBRARIES pictorio_server_client Qt6::Network Qt6::Test
+)
+
 ecm_add_test(packaging/TestDesktopFile.cpp
     LINK_LIBRARIES pictorio_image_loader Qt6::Gui Qt6::Test KF6::I18n
 )

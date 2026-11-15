@@ -21,7 +21,7 @@ Pictorio is an image viewer and photo library for KDE Plasma.
 |---|---|
 | CMake | 3.25 |
 | C++23 compiler (GCC or Clang) | |
-| Qt (Core, Concurrent, Gui, Qml, Quick, QuickControls2, Widgets, Test) | 6.8 |
+| Qt (Core, Concurrent, Gui, Network, Qml, Quick, QuickControls2, Widgets, Test) | 6.8 |
 | KDE Frameworks (Extra CMake Modules, Kirigami, KI18n, KCoreAddons, KConfig) | 6.21 |
 | exiv2 | 0.28 |
 | KDE desktop style for Qt Quick (qqc2-desktop-style), needed at run time | |
