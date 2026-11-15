@@ -5,16 +5,14 @@
 
 #include <memory>
 
-#include <QHash>
-#include <QSet>
 #include <QTemporaryDir>
 #include <QTest>
 
 #include "Connection.hpp"
-#include "HttpTransport.hpp"
 #include "ServerClientFactory.hpp"
 #include "SettingsFactory.hpp"
-#include "TokenStore.hpp"
+#include "fakes/FakeServer.hpp"
+#include "fakes/FakeTokenStore.hpp"
 
 namespace pictorio::connection
 {
@@ -22,10 +20,12 @@ namespace pictorio::connection
 namespace
 {
 
+using fakes::FakeServer;
+using fakes::FakeTokenStore;
+using fakes::Keyring;
+using fakes::problem;
+using fakes::response;
 using server_client::HttpRequest;
-using server_client::HttpResponse;
-using token_store::StoreResult;
-using token_store::TokenStoreError;
 
 const QString serverUrl = QStringLiteral("https://photos.example.org");
 
@@ -34,127 +34,6 @@ const QByteArray loginJson = R"({"token_id":3,"token":"pk_new","user":{"id":2,"u
 const QByteArray currentUserJson = R"({"id":2,"username":"kid","role":"user","restricted_tags":["rating:nsfw"]})";
 const QByteArray devicesJson = R"([{"token_id":3,"device_name":"laptop","created_at":"2026-11-15T19:22:03Z",
     "last_used_at":"2026-11-15T19:22:04Z","expires_at":null,"is_current":true}])";
-
-HttpResponse response(int status, const QByteArray& body)
-{
-    HttpResponse answer;
-    answer.status = status;
-    answer.body = body;
-    return answer;
-}
-
-HttpResponse problem(int status, const QByteArray& code)
-{
-    return response(status,
-                    R"({"type":"t","title":"Problem","status":)" + QByteArray::number(status) + R"(,"code":)" +
-                        ('"' + code + '"') + "}");
-}
-
-// A pictorio-db server that answers with canned responses, by method and URL. Addresses can be made
-// unreachable, as if the server were off.
-class FakeServer : public server_client::HttpTransport
-{
-public:
-    QFuture<HttpResponse> send(const HttpRequest& request) override
-    {
-        requests.append(request);
-        if (unreachableOrigins.contains(request.url.adjusted(QUrl::RemovePath | QUrl::RemoveQuery).toString()))
-        {
-            HttpResponse noAnswer;
-            noAnswer.networkError = QStringLiteral("Connection refused");
-            return QtFuture::makeReadyValueFuture(noAnswer);
-        }
-
-        const QString key = QString::fromLatin1(request.method) + QLatin1Char(' ') + request.url.toString();
-        return QtFuture::makeReadyValueFuture(answers.value(key, problem(404, "not_found")));
-    }
-
-    void answer(const char* method, const QString& url, const HttpResponse& answer)
-    {
-        answers.insert(QString::fromLatin1(method) + QLatin1Char(' ') + url, answer);
-    }
-
-    QList<HttpRequest> requestsTo(const char* method, const QString& url) const
-    {
-        QList<HttpRequest> found;
-        for (const HttpRequest& request : requests)
-        {
-            if (request.method == method && request.url.toString() == url)
-            {
-                found.append(request);
-            }
-        }
-
-        return found;
-    }
-
-    QHash<QString, HttpResponse> answers;
-    QSet<QString> unreachableOrigins;  // e.g. "https://raspberrypi.local:8737"
-    QList<HttpRequest> requests;
-};
-
-// The keyring: tokens by key, or none at all on this system.
-struct Keyring
-{
-    QHash<QString, QString> tokens;
-    bool available = true;
-};
-
-class FakeTokenStore : public token_store::TokenStore
-{
-public:
-    explicit FakeTokenStore(std::shared_ptr<Keyring> keyring)
-        : m_keyring(std::move(keyring))
-    {}
-
-    QFuture<StoreResult<QString>> readToken(const QString& serverKey) override
-    {
-        if (!m_keyring->available)
-        {
-            return QtFuture::makeReadyValueFuture(StoreResult<QString>(std::unexpected(unavailable())));
-        }
-
-        return QtFuture::makeReadyValueFuture(StoreResult<QString>(m_keyring->tokens.value(serverKey)));
-    }
-
-    QFuture<StoreResult<void>> writeToken(const QString& serverKey, const QString& token) override
-    {
-        if (!m_keyring->available)
-        {
-            return QtFuture::makeReadyValueFuture(StoreResult<void>(std::unexpected(unavailable())));
-        }
-
-        m_keyring->tokens.insert(serverKey, token);
-        return QtFuture::makeReadyValueFuture(StoreResult<void>());
-    }
-
-    QFuture<StoreResult<void>> deleteToken(const QString& serverKey) override
-    {
-        m_keyring->tokens.remove(serverKey);
-        return QtFuture::makeReadyValueFuture(StoreResult<void>());
-    }
-
-private:
-    static TokenStoreError unavailable()
-    {
-        return {TokenStoreError::Kind::Unavailable, QStringLiteral("No keyring")};
-    }
-
-    std::shared_ptr<Keyring> m_keyring;
-};
-
-QByteArray authorizationOf(const HttpRequest& request)
-{
-    for (const auto& [name, value] : request.headers)
-    {
-        if (name == "Authorization")
-        {
-            return value;
-        }
-    }
-
-    return {};
-}
 
 }  // namespace
 
@@ -303,7 +182,7 @@ void TestConnection::logsInAndKeepsTheLogin()
     QCOMPARE(m_settings->serverUsername(), QStringLiteral("kid"));
     QTRY_COMPARE(connection->restrictedTags(), QStringList({QStringLiteral("rating:nsfw")}));
     const QList<HttpRequest> meRequests = m_server->requestsTo("GET", serverUrl + QStringLiteral("/api/v1/auth/me"));
-    QCOMPARE(authorizationOf(meRequests.last()), QByteArray("Bearer pk_new"));
+    QCOMPARE(fakes::authorizationOf(meRequests.last()), QByteArray("Bearer pk_new"));
     QVERIFY(connection->keyringWarning().isEmpty());
 }
 
@@ -354,7 +233,7 @@ void TestConnection::restoresTheLoginAtStart()
     QCOMPARE(connection->restrictedTags(), QStringList({QStringLiteral("rating:nsfw")}));
     QVERIFY(m_server->requestsTo("POST", serverUrl + QStringLiteral("/api/v1/auth/tokens")).isEmpty());  // no password
     const QList<HttpRequest> meRequests = m_server->requestsTo("GET", serverUrl + QStringLiteral("/api/v1/auth/me"));
-    QCOMPARE(authorizationOf(meRequests.last()), QByteArray("Bearer pk_kept"));
+    QCOMPARE(fakes::authorizationOf(meRequests.last()), QByteArray("Bearer pk_kept"));
 }
 
 void TestConnection::asksToLogInAgainWhenTheLoginHasEnded()
@@ -399,7 +278,7 @@ void TestConnection::logsOutAndEndsThisDevicesLogin()
     QVERIFY(connection->restrictedTags().isEmpty());
     const QString revokeUrl = serverUrl + QStringLiteral("/api/v1/auth/tokens/3");
     QTRY_COMPARE(m_server->requestsTo("DELETE", revokeUrl).size(), 1);
-    QCOMPARE(authorizationOf(m_server->requestsTo("DELETE", revokeUrl).first()), QByteArray("Bearer pk_new"));
+    QCOMPARE(fakes::authorizationOf(m_server->requestsTo("DELETE", revokeUrl).first()), QByteArray("Bearer pk_new"));
 }
 
 }  // namespace pictorio::connection

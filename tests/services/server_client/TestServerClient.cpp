@@ -585,6 +585,7 @@ void TestServerClient::downloadsTheFileAndTheThumbnail()
     QCOMPARE(m_transport->lastRequest().url.path(), QStringLiteral("/api/v1/images/5/thumbnail"));
     QCOMPARE(serverSideValue(m_transport->lastRequest().url, "size"), QStringLiteral("1024"));
     QCOMPARE(thumbnail.value(), QByteArray("webp bytes"));
+    QCOMPARE(m_client->thumbnailUrl(5, ThumbnailSize::Large), m_transport->lastRequest().url);  // where views load it
 
     m_transport->nextResponse =
         answer(404, R"({"type":"t","title":"Image not found","status":404,"code":"not_found"})");

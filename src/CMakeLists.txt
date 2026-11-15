@@ -34,6 +34,7 @@ add_subdirectory(services/settings)
 add_subdirectory(services/server_client)
 add_subdirectory(services/token_store)
 add_subdirectory(services/connection)
+add_subdirectory(services/library)
 
 # The application. main.cpp only wires things together; logic lives in the libraries above.
 add_executable(pictorio)

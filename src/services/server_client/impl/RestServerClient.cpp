@@ -101,6 +101,18 @@ QString jobStatusName(JobStatus status)
     return QStringLiteral("queued");
 }
 
+QString thumbnailPath(int imageId)
+{
+    return QStringLiteral("/images/%1/thumbnail").arg(imageId);
+}
+
+QUrlQuery thumbnailQuery(ThumbnailSize size)
+{
+    QUrlQuery parameters;
+    parameters.addQueryItem(QStringLiteral("size"), QString::number(static_cast<int>(size)));
+    return parameters;
+}
+
 QJsonObject tagChangesJson(const TagChanges& changes)
 {
     return {
@@ -287,10 +299,13 @@ QFuture<Result<QByteArray>> RestServerClient::imageFile(int imageId)
 
 QFuture<Result<QByteArray>> RestServerClient::thumbnail(int imageId, ThumbnailSize size)
 {
-    QUrlQuery parameters;
-    parameters.addQueryItem(QStringLiteral("size"), QString::number(static_cast<int>(size)));
-    return send("GET", QStringLiteral("/images/%1/thumbnail").arg(imageId), std::nullopt, parameters)
+    return send("GET", thumbnailPath(imageId), std::nullopt, thumbnailQuery(size))
         .then([](const HttpResponse& response) { return binaryAnswer(response, statusOk); });
+}
+
+QUrl RestServerClient::thumbnailUrl(int imageId, ThumbnailSize size) const
+{
+    return endpointUrl(thumbnailPath(imageId), thumbnailQuery(size));
 }
 
 QFuture<Result<QList<TagCount>>> RestServerClient::tags(const QString& prefix, const QString& namespaceName, int limit)

@@ -71,6 +71,9 @@ public:
     // GET /images/{id}/thumbnail: a WebP image
     virtual QFuture<Result<QByteArray>> thumbnail(int imageId, ThumbnailSize size) = 0;
 
+    // Where the thumbnail is, for a view that loads it itself; it must send the token too.
+    virtual QUrl thumbnailUrl(int imageId, ThumbnailSize size) const = 0;
+
     // GET /tags: tags starting with prefix, most used first. The prefix may name a namespace ("author:sam");
     // namespaceName limits the search to one. The user's restricted tags are never suggested.
     virtual QFuture<Result<QList<TagCount>>>

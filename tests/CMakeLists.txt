@@ -3,6 +3,9 @@
 
 include(ECMAddTests)
 
+# Shared fakes for the tests, e.g. #include "fakes/FakeServer.hpp"
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+
 # One Qt Test executable per source file. The CTest name is the file name without .cpp.
 
 ecm_add_test(utils/TestAppIdentity.cpp
@@ -57,6 +60,10 @@ target_include_directories(TestTokenStore PRIVATE ${PROJECT_SOURCE_DIR}/src/serv
 
 ecm_add_test(services/connection/TestConnection.cpp
     LINK_LIBRARIES pictorio_connection Qt6::Test
+)
+
+ecm_add_test(services/library/TestLibrary.cpp
+    LINK_LIBRARIES pictorio_library Qt6::Test
 )
 
 ecm_add_test(packaging/TestDesktopFile.cpp
