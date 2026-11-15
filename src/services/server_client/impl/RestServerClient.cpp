@@ -84,6 +84,23 @@ QString sortName(SortBy sortBy)
     return QStringLiteral("taken_at");
 }
 
+QString jobStatusName(JobStatus status)
+{
+    switch (status)
+    {
+    case JobStatus::Running:
+        return QStringLiteral("running");
+    case JobStatus::Done:
+        return QStringLiteral("done");
+    case JobStatus::Failed:
+        return QStringLiteral("failed");
+    case JobStatus::Queued:
+        break;
+    }
+
+    return QStringLiteral("queued");
+}
+
 QJsonObject tagChangesJson(const TagChanges& changes)
 {
     return {
@@ -274,6 +291,63 @@ QFuture<Result<QByteArray>> RestServerClient::thumbnail(int imageId, ThumbnailSi
     parameters.addQueryItem(QStringLiteral("size"), QString::number(static_cast<int>(size)));
     return send("GET", QStringLiteral("/images/%1/thumbnail").arg(imageId), std::nullopt, parameters)
         .then([](const HttpResponse& response) { return binaryAnswer(response, statusOk); });
+}
+
+QFuture<Result<QList<TagCount>>> RestServerClient::tags(const QString& prefix, const QString& namespaceName, int limit)
+{
+    QUrlQuery parameters;
+    parameters.addQueryItem(QStringLiteral("prefix"), queryValue(prefix));
+    if (!namespaceName.isEmpty())
+    {
+        parameters.addQueryItem(QStringLiteral("namespace"), queryValue(namespaceName));
+    }
+
+    parameters.addQueryItem(QStringLiteral("limit"), QString::number(limit));
+    return send("GET", QStringLiteral("/tags"), std::nullopt, parameters).then([](const HttpResponse& response) {
+        return jsonAnswer(response, statusOk, tagCountsFrom);
+    });
+}
+
+QFuture<Result<QList<Namespace>>> RestServerClient::namespaces()
+{
+    return send("GET", QStringLiteral("/namespaces")).then([](const HttpResponse& response) {
+        return jsonAnswer(response, statusOk, namespacesFrom);
+    });
+}
+
+QFuture<Result<Preferences>> RestServerClient::preferences()
+{
+    return send("GET", QStringLiteral("/preferences")).then([](const HttpResponse& response) {
+        return jsonAnswer(response, statusOk, preferencesFrom);
+    });
+}
+
+QFuture<Result<Preferences>> RestServerClient::setPreferences(const Preferences& preferences)
+{
+    const QJsonObject body{{QStringLiteral("hidden_filters"), QJsonArray::fromStringList(preferences.hiddenFilters)}};
+    return send("PUT", QStringLiteral("/preferences"), body).then([](const HttpResponse& response) {
+        return jsonAnswer(response, statusOk, preferencesFrom);
+    });
+}
+
+QFuture<Result<QList<Job>>> RestServerClient::jobs(std::optional<JobStatus> status)
+{
+    QUrlQuery parameters;
+    if (status.has_value())
+    {
+        parameters.addQueryItem(QStringLiteral("status"), jobStatusName(*status));
+    }
+
+    return send("GET", QStringLiteral("/jobs"), std::nullopt, parameters).then([](const HttpResponse& response) {
+        return jsonAnswer(response, statusOk, jobsFrom);
+    });
+}
+
+QFuture<Result<Job>> RestServerClient::job(int jobId)
+{
+    return send("GET", QStringLiteral("/jobs/%1").arg(jobId)).then([](const HttpResponse& response) {
+        return jsonAnswer(response, statusOk, jobFrom);
+    });
 }
 
 QFuture<HttpResponse> RestServerClient::send(const QByteArray& method,

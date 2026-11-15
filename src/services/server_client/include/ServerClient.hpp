@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include <optional>
+
 #include <QFuture>
 #include <QString>
 #include <QUrl>
@@ -68,6 +70,26 @@ public:
 
     // GET /images/{id}/thumbnail: a WebP image
     virtual QFuture<Result<QByteArray>> thumbnail(int imageId, ThumbnailSize size) = 0;
+
+    // GET /tags: tags starting with prefix, most used first. The prefix may name a namespace ("author:sam");
+    // namespaceName limits the search to one. The user's restricted tags are never suggested.
+    virtual QFuture<Result<QList<TagCount>>>
+    tags(const QString& prefix, const QString& namespaceName = {}, int limit = 20) = 0;
+
+    // GET /namespaces
+    virtual QFuture<Result<QList<Namespace>>> namespaces() = 0;
+
+    // GET /preferences
+    virtual QFuture<Result<Preferences>> preferences() = 0;
+
+    // PUT /preferences: replaces them all
+    virtual QFuture<Result<Preferences>> setPreferences(const Preferences& preferences) = 0;
+
+    // GET /jobs: the user's latest jobs, newest first; all of them, or those with the given status
+    virtual QFuture<Result<QList<Job>>> jobs(std::optional<JobStatus> status = std::nullopt) = 0;
+
+    // GET /jobs/{id}
+    virtual QFuture<Result<Job>> job(int jobId) = 0;
 };
 
 }  // namespace pictorio::server_client

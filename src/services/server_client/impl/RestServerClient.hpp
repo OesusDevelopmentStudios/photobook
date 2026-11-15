@@ -40,6 +40,12 @@ public:
     QFuture<Result<int>> changeTagsOfImages(const QList<int>& imageIds, const TagChanges& changes) override;
     QFuture<Result<QByteArray>> imageFile(int imageId) override;
     QFuture<Result<QByteArray>> thumbnail(int imageId, ThumbnailSize size) override;
+    QFuture<Result<QList<TagCount>>> tags(const QString& prefix, const QString& namespaceName, int limit) override;
+    QFuture<Result<QList<Namespace>>> namespaces() override;
+    QFuture<Result<Preferences>> preferences() override;
+    QFuture<Result<Preferences>> setPreferences(const Preferences& preferences) override;
+    QFuture<Result<QList<Job>>> jobs(std::optional<JobStatus> status) override;
+    QFuture<Result<Job>> job(int jobId) override;
 
 private:
     QFuture<HttpResponse> send(const QByteArray& method,

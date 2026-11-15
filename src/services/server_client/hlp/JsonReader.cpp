@@ -117,12 +117,32 @@ QDateTime JsonReader::wallClockTime(const QString& key)
 
 std::optional<QDateTime> JsonReader::optionalDateTime(const QString& key)
 {
-    if (m_object.contains(key) && m_object.value(key).isNull())
+    if (isNull(key))
     {
         return std::nullopt;
     }
 
     return dateTime(key);
+}
+
+std::optional<int> JsonReader::optionalInteger(const QString& key)
+{
+    if (isNull(key))
+    {
+        return std::nullopt;
+    }
+
+    return integer(key);
+}
+
+QString JsonReader::optionalString(const QString& key)
+{
+    return isNull(key) ? QString() : string(key);
+}
+
+QJsonObject JsonReader::optionalObject(const QString& key)
+{
+    return isNull(key) ? QJsonObject() : object(key);
 }
 
 QStringList JsonReader::stringList(const QString& key)
@@ -164,6 +184,11 @@ bool JsonReader::isValid() const
 QString JsonReader::error() const
 {
     return m_error;
+}
+
+bool JsonReader::isNull(const QString& key) const
+{
+    return m_object.contains(key) && m_object.value(key).isNull();
 }
 
 QJsonValue JsonReader::field(const QString& key, QJsonValue::Type type)

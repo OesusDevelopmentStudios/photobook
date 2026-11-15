@@ -22,5 +22,10 @@ Result<QList<DeviceToken>> devicesFrom(const QJsonValue& json);
 Result<Image> imageFrom(const QJsonValue& json);
 Result<ImagePage> imagePageFrom(const QJsonValue& json);
 Result<int> updatedCountFrom(const QJsonValue& json);  // of a bulk tag change
+Result<QList<TagCount>> tagCountsFrom(const QJsonValue& json);
+Result<QList<Namespace>> namespacesFrom(const QJsonValue& json);
+Result<Preferences> preferencesFrom(const QJsonValue& json);
+Result<Job> jobFrom(const QJsonValue& json);
+Result<QList<Job>> jobsFrom(const QJsonValue& json);
 
 }  // namespace pictorio::server_client

@@ -158,6 +158,13 @@ private Q_SLOTS:
     void changesTheTagsOfManyImages();
     void downloadsTheFileAndTheThumbnail();
 
+    void suggestsTags();
+    void readsTheNamespaces();
+    void readsAndReplacesThePreferences();
+    void readsTheJobs();
+    void readsOneJob();
+    void namesTheItemThatIsWrong();
+
     void realTransportReadsAnAnswer();
     void realTransportReportsARefusedConnection();
     void realTransportUploadsTheFileAsMultipart();
@@ -583,6 +590,114 @@ void TestServerClient::downloadsTheFileAndTheThumbnail()
         answer(404, R"({"type":"t","title":"Image not found","status":404,"code":"not_found"})");
     const Result<QByteArray> missing = valueOf(m_client->thumbnail(99, ThumbnailSize::Small));
     QCOMPARE(missing.error().code, QStringLiteral("not_found"));
+}
+
+void TestServerClient::suggestsTags()
+{
+    m_transport->nextResponse = answer(200, R"({"items":[{"tag":"author:sample_artist","image_count":412},
+                                                         {"tag":"author:sam_other","image_count":3}]})");
+
+    const Result<QList<TagCount>> tags = valueOf(m_client->tags(QStringLiteral("sam"), QStringLiteral("author"), 5));
+
+    const QUrl url = m_transport->lastRequest().url;
+    QCOMPARE(url.path(), QStringLiteral("/api/v1/tags"));
+    QCOMPARE(serverSideValue(url, "prefix"), QStringLiteral("sam"));
+    QCOMPARE(serverSideValue(url, "namespace"), QStringLiteral("author"));
+    QCOMPARE(serverSideValue(url, "limit"), QStringLiteral("5"));
+    QVERIFY(tags.has_value());
+    QCOMPARE(tags->size(), 2);
+    QCOMPARE(tags->at(0).tag, QStringLiteral("author:sample_artist"));
+    QCOMPARE(tags->at(0).imageCount, 412);
+}
+
+void TestServerClient::readsTheNamespaces()
+{
+    m_transport->nextResponse = answer(200, R"({"items":[
+        {"name":"category","single_value":true,"is_builtin":true,"in_path_template":true},
+        {"name":"weather","single_value":false,"is_builtin":false,"in_path_template":false}]})");
+
+    const Result<QList<Namespace>> namespaces = valueOf(m_client->namespaces());
+
+    QCOMPARE(m_transport->lastRequest().url.path(), QStringLiteral("/api/v1/namespaces"));
+    QVERIFY(namespaces.has_value());
+    QCOMPARE(namespaces->size(), 2);
+    const Namespace category = namespaces->at(0);
+    QCOMPARE(category.name, QStringLiteral("category"));
+    QVERIFY(category.singleValue && category.isBuiltin && category.inPathTemplate);
+    QVERIFY(!namespaces->at(1).singleValue);
+}
+
+void TestServerClient::readsAndReplacesThePreferences()
+{
+    m_transport->nextResponse = answer(200, R"({"hidden_filters":["rating:nsfw"]})");
+    const Result<Preferences> stored = valueOf(m_client->preferences());
+    QCOMPARE(m_transport->lastRequest().url.path(), QStringLiteral("/api/v1/preferences"));
+    QCOMPARE(stored->hiddenFilters, QStringList({QStringLiteral("rating:nsfw")}));
+
+    m_transport->nextResponse = answer(200, R"({"hidden_filters":["rating:nsfw","category:refs"]})");
+    Preferences changed;
+    changed.hiddenFilters = {QStringLiteral("rating:nsfw"), QStringLiteral("category:refs")};
+    const Result<Preferences> saved = valueOf(m_client->setPreferences(changed));
+
+    const HttpRequest request = m_transport->lastRequest();
+    QCOMPARE(request.method, QByteArray("PUT"));
+    QCOMPARE(jsonBodyOf(request),
+             QJsonObject({{QStringLiteral("hidden_filters"),
+                           QJsonArray({QStringLiteral("rating:nsfw"), QStringLiteral("category:refs")})}}));
+    QCOMPARE(saved->hiddenFilters, changed.hiddenFilters);
+}
+
+void TestServerClient::readsTheJobs()
+{
+    m_transport->nextResponse = answer(200, R"([
+        {"id":2,"kind":"folder_import","status":"running","params":{"source_subdir":"holiday"},"progress_done":7,
+         "progress_total":null,"result":null,"error":null,"created_by":null,"created_at":"2026-11-15T16:20:00Z",
+         "finished_at":null}])");
+
+    const Result<QList<Job>> jobs = valueOf(m_client->jobs(JobStatus::Running));
+
+    QCOMPARE(m_transport->lastRequest().url.path(), QStringLiteral("/api/v1/jobs"));
+    QCOMPARE(serverSideValue(m_transport->lastRequest().url, "status"), QStringLiteral("running"));
+    QVERIFY(jobs.has_value());
+    const Job import = jobs->at(0);
+    QCOMPARE(import.kind, QStringLiteral("folder_import"));
+    QVERIFY(import.status == JobStatus::Running);
+    QCOMPARE(import.params.value(QStringLiteral("source_subdir")).toString(), QStringLiteral("holiday"));
+    QCOMPARE(import.progressDone, 7);
+    QVERIFY(!import.progressTotal.has_value());
+    QVERIFY(import.result.isEmpty() && import.error.isEmpty());
+    QVERIFY(!import.createdBy.has_value() && !import.finishedAt.has_value());
+}
+
+void TestServerClient::readsOneJob()
+{
+    m_transport->nextResponse = answer(200, R"({"id":2,"kind":"folder_import","status":"failed","params":{},
+        "progress_done":81,"progress_total":81,"result":{"imported":80},"error":"The disk is full.","created_by":1,
+        "created_at":"2026-11-15T16:20:00Z","finished_at":"2026-11-15T16:21:00Z"})");
+
+    const Result<Job> job = valueOf(m_client->job(2));
+
+    QCOMPARE(m_transport->lastRequest().url.path(), QStringLiteral("/api/v1/jobs/2"));
+    QVERIFY(job.has_value());
+    QVERIFY(job->status == JobStatus::Failed);
+    QCOMPARE(job->progressTotal.value(), 81);
+    QCOMPARE(job->result.value(QStringLiteral("imported")).toInt(), 80);
+    QCOMPARE(job->error, QStringLiteral("The disk is full."));
+    QCOMPARE(job->createdBy.value(), 1);
+    QCOMPARE(job->finishedAt.value(), QDateTime(QDate(2026, 11, 15), QTime(16, 21), QTimeZone::UTC));
+}
+
+void TestServerClient::namesTheItemThatIsWrong()
+{
+    m_transport->nextResponse = answer(200, R"([
+        {"token_id":1,"device_name":"laptop","created_at":"2026-11-15T19:22:03Z","last_used_at":"2026-11-15T19:22:04Z",
+         "expires_at":null,"is_current":true},
+        {"device_name":"phone"}])");
+
+    const Result<QList<DeviceToken>> result = valueOf(m_client->devices());
+
+    QVERIFY(!result.has_value());
+    QCOMPARE(result.error().detail, QStringLiteral("[1].token_id: missing"));
 }
 
 // The real network transport, against a one-answer HTTP server on this computer.
