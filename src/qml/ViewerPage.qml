@@ -19,6 +19,9 @@ Kirigami.Page {
     required property ViewTransform viewTransform
     required property Navigator navigator
     required property Slideshow slideshow
+    required property Connection connection
+
+    signal serverPageRequested()
 
     readonly property bool presenting: slideshow.running
 
@@ -128,6 +131,15 @@ Kirigami.Page {
             shortcut: "Ctrl+R"
             enabled: page.viewer.hasImage
             onTriggered: page.viewTransform.rotateClockwise()
+        },
+        Kirigami.Action {
+            readonly property bool loggedIn: page.connection.state === Connection.State.LoggedIn
+
+            icon.name: loggedIn ? "user-identity" : "network-server"
+            text: loggedIn ? KI18n.i18nc("@action:inmenu", "Account…")
+                           : KI18n.i18nc("@action:inmenu", "Connect to Server…")
+            displayHint: Kirigami.DisplayHint.AlwaysHide  // in the menu, not the toolbar
+            onTriggered: page.serverPageRequested()
         }
     ]
 

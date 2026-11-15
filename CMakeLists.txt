@@ -65,6 +65,7 @@ find_package(LibExiv2 0.28 REQUIRED)
 # Imported by the QML files at run time, so CMake cannot see them through linking.
 ecm_find_qmlmodule(org.kde.kirigami REQUIRED)
 ecm_find_qmlmodule(org.kde.ki18n REQUIRED)
+ecm_find_qmlmodule(QtQuick.Dialogs REQUIRED)  # the file dialog for opening an image
 
 add_subdirectory(src)
 add_subdirectory(packaging)

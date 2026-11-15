@@ -28,3 +28,6 @@ target_link_libraries(pictorio_connection
     PRIVATE
         KF6::I18n
 )
+
+# Connection is exposed to QML (app_manager/QmlForeignTypes.hpp); QML tools read its properties from these metatypes.
+qt_extract_metatypes(pictorio_connection)

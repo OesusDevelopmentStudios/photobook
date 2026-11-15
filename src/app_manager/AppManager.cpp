@@ -5,6 +5,7 @@
 
 #include "app_manager/AppManager.hpp"
 
+#include "ConnectionFactory.hpp"
 #include "FolderScannerFactory.hpp"
 #include "ImageLoaderFactory.hpp"
 #include "NavigatorFactory.hpp"
@@ -23,6 +24,7 @@ AppManager::AppManager(QObject* parent)
     , m_viewTransform(view_transform::createViewTransform())
     , m_navigator(navigator::createNavigator(folder_scanner::createFolderScanner(image_loader::createImageLoader())))
     , m_slideshow(slideshow::createSlideshow(m_navigator.get(), m_settings.get()))
+    , m_connection(connection::createConnection(m_settings.get()))
 {
     connect(m_navigator.get(), &navigator::Navigator::imageRequested, m_viewer.get(), &viewer::Viewer::openImage);
 
@@ -30,6 +32,8 @@ AppManager::AppManager(QObject* parent)
     connect(m_viewer.get(), &viewer::Viewer::currentImageChanged, m_viewTransform.get(), [this]() {
         m_viewTransform->showImage(m_viewer->imageDisplaySize());
     });
+
+    m_connection->restoreLogin();  // logged in last time: logged in again, without asking
 }
 
 AppManager::~AppManager() = default;
@@ -52,6 +56,16 @@ navigator::Navigator* AppManager::navigator() const
 slideshow::Slideshow* AppManager::slideshow() const
 {
     return m_slideshow.get();
+}
+
+connection::Connection* AppManager::connection() const
+{
+    return m_connection.get();
+}
+
+void AppManager::openImage(const QUrl& fileUrl)
+{
+    m_navigator->openImage(fileUrl.toLocalFile());
 }
 
 }  // namespace pictorio::app_manager

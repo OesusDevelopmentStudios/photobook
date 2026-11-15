@@ -8,8 +8,10 @@
 #include <memory>
 
 #include <QObject>
+#include <QUrl>
 #include <QtQmlIntegration/qqmlintegration.h>
 
+#include "Connection.hpp"
 #include "Navigator.hpp"
 #include "Settings.hpp"
 #include "Slideshow.hpp"
@@ -30,6 +32,7 @@ class AppManager : public QObject
     Q_PROPERTY(pictorio::view_transform::ViewTransform* viewTransform READ viewTransform CONSTANT)
     Q_PROPERTY(pictorio::navigator::Navigator* navigator READ navigator CONSTANT)
     Q_PROPERTY(pictorio::slideshow::Slideshow* slideshow READ slideshow CONSTANT)
+    Q_PROPERTY(pictorio::connection::Connection* connection READ connection CONSTANT)
 
 public:
     explicit AppManager(QObject* parent = nullptr);
@@ -39,13 +42,18 @@ public:
     view_transform::ViewTransform* viewTransform() const;
     navigator::Navigator* navigator() const;
     slideshow::Slideshow* slideshow() const;
+    connection::Connection* connection() const;
+
+    // An image chosen in a file dialog, which gives a URL
+    Q_INVOKABLE void openImage(const QUrl& fileUrl);
 
 private:
     std::unique_ptr<settings::Settings> m_settings;
     std::unique_ptr<viewer::Viewer> m_viewer;
     std::unique_ptr<view_transform::ViewTransform> m_viewTransform;
     std::unique_ptr<navigator::Navigator> m_navigator;
-    std::unique_ptr<slideshow::Slideshow> m_slideshow;  // uses m_navigator and m_settings, so declared after them
+    std::unique_ptr<slideshow::Slideshow> m_slideshow;     // uses m_navigator and m_settings, so declared after them
+    std::unique_ptr<connection::Connection> m_connection;  // uses m_settings
 };
 
 }  // namespace pictorio::app_manager

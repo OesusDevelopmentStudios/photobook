@@ -59,6 +59,9 @@ ecm_target_qml_sources(pictorio SOURCES
     qml/Main.qml
     qml/ViewerPage.qml
     qml/SlideshowControls.qml
+    qml/WelcomePage.qml
+    qml/ConnectPage.qml
+    qml/AccountPage.qml
 )
 
 target_link_libraries(pictorio PRIVATE
@@ -67,6 +70,7 @@ target_link_libraries(pictorio PRIVATE
     pictorio_view_transform
     pictorio_navigator
     pictorio_slideshow
+    pictorio_connection
     Qt6::Widgets
     Qt6::Qml
     Qt6::Quick
