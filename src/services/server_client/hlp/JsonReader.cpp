@@ -5,6 +5,8 @@
 
 #include "hlp/JsonReader.hpp"
 
+#include <limits>
+
 #include <QJsonValue>
 
 namespace
@@ -46,6 +48,18 @@ QString JsonReader::string(const QString& key)
 
 int JsonReader::integer(const QString& key)
 {
+    const qint64 number = integer64(key);
+    if (number < std::numeric_limits<int>::min() || number > std::numeric_limits<int>::max())
+    {
+        reject(key, QStringLiteral("too large"));
+        return 0;
+    }
+
+    return static_cast<int>(number);
+}
+
+qint64 JsonReader::integer64(const QString& key)
+{
     const QJsonValue value = field(key, QJsonValue::Double);
     const qint64 number = value.toInteger();
     if (value.isDouble() && QJsonValue(number) != value)
@@ -54,7 +68,7 @@ int JsonReader::integer(const QString& key)
         return 0;
     }
 
-    return static_cast<int>(number);
+    return number;
 }
 
 bool JsonReader::boolean(const QString& key)
@@ -79,6 +93,26 @@ QDateTime JsonReader::dateTime(const QString& key)
     }
 
     return moment.toUTC();
+}
+
+QDateTime JsonReader::wallClockTime(const QString& key)
+{
+    const QString text = field(key, QJsonValue::String).toString();
+    if (!isValid())
+    {
+        return {};
+    }
+
+    // e.g. 2025-07-14T18:03:12: the time on the clock where the photo was taken. Qt reads it as local time
+    // and it is shown unchanged, so it is never converted to another zone.
+    const QDateTime moment = QDateTime::fromString(text, Qt::ISODateWithMs);
+    if (!moment.isValid())
+    {
+        reject(key, QStringLiteral("not a date and time: %1").arg(text));
+        return {};
+    }
+
+    return moment;
 }
 
 std::optional<QDateTime> JsonReader::optionalDateTime(const QString& key)

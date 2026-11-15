@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include <optional>
+
 #include <QByteArray>
 #include <QFuture>
 #include <QList>
@@ -15,12 +17,22 @@
 namespace pictorio::server_client
 {
 
+// A multipart/form-data body: text fields, and one file read from disk while it is sent.
+struct MultipartForm
+{
+    QList<QPair<QByteArray, QByteArray>> fields;  // name, value
+    QByteArray fileField;
+    QString filePath;
+    QString fileName;  // as the server sees it
+};
+
 struct HttpRequest
 {
     QByteArray method;  // "GET", "POST"…
     QUrl url;
     QList<QPair<QByteArray, QByteArray>> headers;
     QByteArray body;
+    std::optional<MultipartForm> form;  // instead of body
 };
 
 struct HttpResponse

@@ -5,6 +5,7 @@
 
 #include "impl/RestServerClient.hpp"
 
+#include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonParseError>
@@ -50,6 +51,66 @@ Result<void> emptyAnswer(const HttpResponse& response, int expectedStatus)
     }
 
     return {};
+}
+
+Result<QByteArray> binaryAnswer(const HttpResponse& response, int expectedStatus)
+{
+    if (response.status != expectedStatus)
+    {
+        return std::unexpected(apiErrorFrom(response));
+    }
+
+    return response.body;
+}
+
+// QUrlQuery leaves "+" as it is, but the server reads it as a space: a search for c++ must arrive as c++.
+QString queryValue(const QString& value)
+{
+    return QString(value).replace(QLatin1Char('+'), QStringLiteral("%2B"));
+}
+
+QString sortName(SortBy sortBy)
+{
+    switch (sortBy)
+    {
+    case SortBy::ImportedAt:
+        return QStringLiteral("imported_at");
+    case SortBy::Random:
+        return QStringLiteral("random");
+    case SortBy::TakenAt:
+        break;
+    }
+
+    return QStringLiteral("taken_at");
+}
+
+QJsonObject tagChangesJson(const TagChanges& changes)
+{
+    return {
+        {QStringLiteral("add_tags"), QJsonArray::fromStringList(changes.addTags)},
+        {QStringLiteral("remove_tags"), QJsonArray::fromStringList(changes.removeTags)},
+    };
+}
+
+QByteArray uploadMetadataJson(const ImageUpload& upload)
+{
+    QJsonObject metadata{
+        {QStringLiteral("original_filename"), upload.originalFilename},
+        {QStringLiteral("tags"), QJsonArray::fromStringList(upload.tags)},
+    };
+    if (!upload.sha256.isEmpty())
+    {
+        metadata.insert(QStringLiteral("client_sha256"), upload.sha256);
+    }
+
+    if (upload.fileModified.has_value())
+    {
+        // The server takes the time as it is, as the photo's date: so the local clock time, without a zone.
+        const QString localTime = upload.fileModified->toLocalTime().toString(QStringLiteral("yyyy-MM-ddTHH:mm:ss"));
+        metadata.insert(QStringLiteral("file_mtime"), localTime);
+    }
+
+    return QJsonDocument(metadata).toJson(QJsonDocument::Compact);
 }
 
 }  // namespace
@@ -125,18 +186,102 @@ QFuture<Result<void>> RestServerClient::revokeDevice(int tokenId)
     });
 }
 
-QFuture<HttpResponse>
-RestServerClient::send(const QByteArray& method, const QString& path, const std::optional<QJsonObject>& body) const
+QFuture<Result<ImagePage>> RestServerClient::searchImages(const ImageQuery& query)
 {
-    HttpRequest request;
-    request.method = method;
-    request.url = endpointUrl(path);
-    request.headers.emplaceBack("Accept", "application/json");
-    if (!m_token.isEmpty())
+    QUrlQuery parameters;
+    parameters.addQueryItem(QStringLiteral("q"), queryValue(query.text));
+    parameters.addQueryItem(QStringLiteral("sort"), sortName(query.sortBy));
+    parameters.addQueryItem(QStringLiteral("order"),
+                            query.order == SortOrder::Ascending ? QStringLiteral("asc") : QStringLiteral("desc"));
+    if (query.seed.has_value())
     {
-        request.headers.emplaceBack("Authorization", "Bearer " + m_token.toUtf8());
+        parameters.addQueryItem(QStringLiteral("seed"), QString::number(*query.seed));
     }
 
+    parameters.addQueryItem(QStringLiteral("limit"), QString::number(query.limit));
+    if (!query.cursor.isEmpty())
+    {
+        parameters.addQueryItem(QStringLiteral("cursor"), queryValue(query.cursor));
+    }
+
+    parameters.addQueryItem(QStringLiteral("apply_hidden_filters"),
+                            query.applyHiddenFilters ? QStringLiteral("true") : QStringLiteral("false"));
+    return send("GET", QStringLiteral("/images"), std::nullopt, parameters).then([](const HttpResponse& response) {
+        return jsonAnswer(response, statusOk, imagePageFrom);
+    });
+}
+
+QFuture<Result<Image>> RestServerClient::image(int imageId)
+{
+    return send("GET", QStringLiteral("/images/%1").arg(imageId)).then([](const HttpResponse& response) {
+        return jsonAnswer(response, statusOk, imageFrom);
+    });
+}
+
+QFuture<Result<Image>> RestServerClient::uploadImage(const ImageUpload& upload)
+{
+    const QFileInfo file(upload.filePath);
+    if (!file.isFile() || !file.isReadable())
+    {
+        ApiError error;
+        error.code = fileUnreadableCode;
+        error.title = QStringLiteral("Cannot read the file");
+        error.detail = upload.filePath;
+        return QtFuture::makeReadyValueFuture(Result<Image>(std::unexpected(error)));
+    }
+
+    MultipartForm form;
+    form.fields.emplaceBack("metadata", uploadMetadataJson(upload));
+    form.fileField = "file";
+    form.filePath = upload.filePath;
+    form.fileName = upload.originalFilename;
+    return sendForm(QStringLiteral("/images"), form).then([](const HttpResponse& response) {
+        return jsonAnswer(response, statusCreated, imageFrom);
+    });
+}
+
+QFuture<Result<Image>> RestServerClient::changeImageTags(int imageId, const TagChanges& changes)
+{
+    return send("PATCH", QStringLiteral("/images/%1").arg(imageId), tagChangesJson(changes))
+        .then([](const HttpResponse& response) { return jsonAnswer(response, statusOk, imageFrom); });
+}
+
+QFuture<Result<int>> RestServerClient::changeTagsOfImages(const QList<int>& imageIds, const TagChanges& changes)
+{
+    QJsonObject body = tagChangesJson(changes);
+    QJsonArray ids;
+    for (const int imageId : imageIds)
+    {
+        ids.append(imageId);
+    }
+
+    body.insert(QStringLiteral("image_ids"), ids);
+    return send("POST", QStringLiteral("/images/bulk-tags"), body).then([](const HttpResponse& response) {
+        return jsonAnswer(response, statusOk, updatedCountFrom);
+    });
+}
+
+QFuture<Result<QByteArray>> RestServerClient::imageFile(int imageId)
+{
+    return send("GET", QStringLiteral("/images/%1/file").arg(imageId)).then([](const HttpResponse& response) {
+        return binaryAnswer(response, statusOk);
+    });
+}
+
+QFuture<Result<QByteArray>> RestServerClient::thumbnail(int imageId, ThumbnailSize size)
+{
+    QUrlQuery parameters;
+    parameters.addQueryItem(QStringLiteral("size"), QString::number(static_cast<int>(size)));
+    return send("GET", QStringLiteral("/images/%1/thumbnail").arg(imageId), std::nullopt, parameters)
+        .then([](const HttpResponse& response) { return binaryAnswer(response, statusOk); });
+}
+
+QFuture<HttpResponse> RestServerClient::send(const QByteArray& method,
+                                             const QString& path,
+                                             const std::optional<QJsonObject>& body,
+                                             const QUrlQuery& query) const
+{
+    HttpRequest request = requestTo(method, path, query);
     if (body.has_value())
     {
         request.headers.emplaceBack("Content-Type", "application/json");
@@ -146,7 +291,28 @@ RestServerClient::send(const QByteArray& method, const QString& path, const std:
     return m_transport->send(request);
 }
 
-QUrl RestServerClient::endpointUrl(const QString& path) const
+QFuture<HttpResponse> RestServerClient::sendForm(const QString& path, const MultipartForm& form) const
+{
+    HttpRequest request = requestTo("POST", path, {});
+    request.form = form;  // the transport sets the multipart Content-Type with its boundary
+    return m_transport->send(request);
+}
+
+HttpRequest RestServerClient::requestTo(const QByteArray& method, const QString& path, const QUrlQuery& query) const
+{
+    HttpRequest request;
+    request.method = method;
+    request.url = endpointUrl(path, query);
+    request.headers.emplaceBack("Accept", "application/json");  // also for files: errors come as JSON
+    if (!m_token.isEmpty())
+    {
+        request.headers.emplaceBack("Authorization", "Bearer " + m_token.toUtf8());
+    }
+
+    return request;
+}
+
+QUrl RestServerClient::endpointUrl(const QString& path, const QUrlQuery& query) const
 {
     QUrl url = m_serverUrl;
     QString basePath = url.path();
@@ -156,7 +322,7 @@ QUrl RestServerClient::endpointUrl(const QString& path) const
     }
 
     url.setPath(basePath + apiPath + path);
-    url.setQuery(QString());
+    url.setQuery(query);
     url.setFragment(QString());
     return url;
 }

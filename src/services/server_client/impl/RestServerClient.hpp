@@ -9,6 +9,7 @@
 #include <optional>
 
 #include <QJsonObject>
+#include <QUrlQuery>
 
 #include "HttpTransport.hpp"
 #include "ServerClient.hpp"
@@ -32,10 +33,22 @@ public:
     QFuture<Result<QList<DeviceToken>>> devices() override;
     QFuture<Result<void>> revokeDevice(int tokenId) override;
 
+    QFuture<Result<ImagePage>> searchImages(const ImageQuery& query) override;
+    QFuture<Result<Image>> image(int imageId) override;
+    QFuture<Result<Image>> uploadImage(const ImageUpload& upload) override;
+    QFuture<Result<Image>> changeImageTags(int imageId, const TagChanges& changes) override;
+    QFuture<Result<int>> changeTagsOfImages(const QList<int>& imageIds, const TagChanges& changes) override;
+    QFuture<Result<QByteArray>> imageFile(int imageId) override;
+    QFuture<Result<QByteArray>> thumbnail(int imageId, ThumbnailSize size) override;
+
 private:
-    QFuture<HttpResponse>
-    send(const QByteArray& method, const QString& path, const std::optional<QJsonObject>& body = std::nullopt) const;
-    QUrl endpointUrl(const QString& path) const;
+    QFuture<HttpResponse> send(const QByteArray& method,
+                               const QString& path,
+                               const std::optional<QJsonObject>& body = std::nullopt,
+                               const QUrlQuery& query = {}) const;
+    QFuture<HttpResponse> sendForm(const QString& path, const MultipartForm& form) const;
+    HttpRequest requestTo(const QByteArray& method, const QString& path, const QUrlQuery& query) const;
+    QUrl endpointUrl(const QString& path, const QUrlQuery& query) const;
 
     QUrl m_serverUrl;
     QString m_token;

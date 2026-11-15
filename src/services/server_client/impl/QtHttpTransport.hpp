@@ -6,6 +6,8 @@
 #pragma once
 
 #include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
 
 #include "HttpTransport.hpp"
 
@@ -20,6 +22,10 @@ public:
     QFuture<HttpResponse> send(const HttpRequest& request) override;
 
 private:
+    QFuture<HttpResponse>
+    sendForm(const QNetworkRequest& networkRequest, const QByteArray& method, const MultipartForm& form);
+    static QFuture<HttpResponse> finished(QNetworkReply* reply);
+
     QNetworkAccessManager m_network;
 };
 

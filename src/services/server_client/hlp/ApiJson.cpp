@@ -53,6 +53,46 @@ DeviceToken deviceTokenFrom(JsonReader& reader)
     return device;
 }
 
+TakenAtSource takenAtSourceFrom(JsonReader& reader)
+{
+    const QString source = reader.string(QStringLiteral("taken_at_source"));
+    if (source == QLatin1String("exif"))
+    {
+        return TakenAtSource::Exif;
+    }
+
+    if (source == QLatin1String("file_mtime"))
+    {
+        return TakenAtSource::FileMtime;
+    }
+
+    if (source != QLatin1String("import_time") && reader.isValid())
+    {
+        reader.reject(QStringLiteral("taken_at_source"), QStringLiteral("unknown source %1").arg(source));
+    }
+
+    return TakenAtSource::ImportTime;
+}
+
+Image imageFieldsFrom(JsonReader& reader)
+{
+    Image image;
+    image.id = reader.integer(QStringLiteral("id"));
+    image.sha256 = reader.string(QStringLiteral("sha256"));
+    image.originalFilename = reader.string(QStringLiteral("original_filename"));
+    image.storagePath = reader.string(QStringLiteral("storage_path"));
+    image.mimeType = reader.string(QStringLiteral("mime_type"));
+    image.width = reader.integer(QStringLiteral("width"));
+    image.height = reader.integer(QStringLiteral("height"));
+    image.fileSize = reader.integer64(QStringLiteral("file_size"));
+    image.takenAt = reader.wallClockTime(QStringLiteral("taken_at"));
+    image.takenAtSource = takenAtSourceFrom(reader);
+    image.importedAt = reader.dateTime(QStringLiteral("imported_at"));
+    image.updatedAt = reader.dateTime(QStringLiteral("updated_at"));
+    image.tags = reader.stringList(QStringLiteral("tags"));
+    return image;
+}
+
 // The parsed value, or the reader's first error.
 template <typename T> Result<T> checked(const JsonReader& reader, T value)
 {
@@ -103,6 +143,50 @@ Result<CurrentUser> currentUserFrom(const QJsonValue& json)
     currentUser.user = userSummaryFrom(reader);
     currentUser.restrictedTags = reader.stringList(QStringLiteral("restricted_tags"));
     return checked(reader, currentUser);
+}
+
+Result<Image> imageFrom(const QJsonValue& json)
+{
+    JsonReader reader(json.toObject());
+    const Image image = imageFieldsFrom(reader);
+    return checked(reader, image);
+}
+
+Result<ImagePage> imagePageFrom(const QJsonValue& json)
+{
+    JsonReader reader(json.toObject());
+    ImagePage page;
+    page.effectiveQuery = reader.string(QStringLiteral("effective_query"));
+    const QJsonValue nextCursor = json.toObject().value(QStringLiteral("next_cursor"));
+    if (!nextCursor.isNull())  // null on the last page
+    {
+        page.nextCursor = reader.string(QStringLiteral("next_cursor"));
+    }
+
+    const QJsonArray items = json.toObject().value(QStringLiteral("items")).toArray();
+    if (!json.toObject().value(QStringLiteral("items")).isArray())
+    {
+        reader.reject(QStringLiteral("items"), QStringLiteral("not a list"));
+    }
+
+    for (qsizetype index = 0; index < items.size() && reader.isValid(); ++index)
+    {
+        JsonReader itemReader(items.at(index).toObject(), QStringLiteral("items[%1]").arg(index));
+        page.items.append(imageFieldsFrom(itemReader));
+        if (!itemReader.isValid())
+        {
+            return std::unexpected(invalidResponse(itemReader.error()));
+        }
+    }
+
+    return checked(reader, page);
+}
+
+Result<int> updatedCountFrom(const QJsonValue& json)
+{
+    JsonReader reader(json.toObject());
+    const int updated = reader.integer(QStringLiteral("updated"));
+    return checked(reader, updated);
 }
 
 Result<QList<DeviceToken>> devicesFrom(const QJsonValue& json)

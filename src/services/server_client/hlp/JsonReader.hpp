@@ -25,9 +25,11 @@ public:
 
     QString string(const QString& key);
     int integer(const QString& key);
+    qint64 integer64(const QString& key);  // e.g. a file size
     bool boolean(const QString& key);
     QDateTime dateTime(const QString& key);
     std::optional<QDateTime> optionalDateTime(const QString& key);  // null: nothing
+    QDateTime wallClockTime(const QString& key);                    // a time without time zone, kept as it is
     QStringList stringList(const QString& key);
     QJsonObject object(const QString& key);
 

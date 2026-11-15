@@ -46,6 +46,28 @@ public:
 
     // DELETE /auth/tokens/{id}; revoking the current token logs this app out
     virtual QFuture<Result<void>> revokeDevice(int tokenId) = 0;
+
+    // GET /images: one page of the images the user may see
+    virtual QFuture<Result<ImagePage>> searchImages(const ImageQuery& query) = 0;
+
+    // GET /images/{id}
+    virtual QFuture<Result<Image>> image(int imageId) = 0;
+
+    // POST /images. A file the server has already gives the error duplicate_image; its Problem Details
+    // carry the server's sha256 and, if the user may see that image, existing_image_id.
+    virtual QFuture<Result<Image>> uploadImage(const ImageUpload& upload) = 0;
+
+    // PATCH /images/{id}; the server moves the file if a folder-forming tag changed
+    virtual QFuture<Result<Image>> changeImageTags(int imageId, const TagChanges& changes) = 0;
+
+    // POST /images/bulk-tags: all or nothing; gives how many images were changed
+    virtual QFuture<Result<int>> changeTagsOfImages(const QList<int>& imageIds, const TagChanges& changes) = 0;
+
+    // GET /images/{id}/file: the original file
+    virtual QFuture<Result<QByteArray>> imageFile(int imageId) = 0;
+
+    // GET /images/{id}/thumbnail: a WebP image
+    virtual QFuture<Result<QByteArray>> thumbnail(int imageId, ThumbnailSize size) = 0;
 };
 
 }  // namespace pictorio::server_client

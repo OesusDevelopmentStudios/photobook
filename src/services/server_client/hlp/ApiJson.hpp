@@ -19,5 +19,8 @@ Result<ServerInfo> serverInfoFrom(const QJsonValue& json);
 Result<Login> loginFrom(const QJsonValue& json);
 Result<CurrentUser> currentUserFrom(const QJsonValue& json);
 Result<QList<DeviceToken>> devicesFrom(const QJsonValue& json);
+Result<Image> imageFrom(const QJsonValue& json);
+Result<ImagePage> imagePageFrom(const QJsonValue& json);
+Result<int> updatedCountFrom(const QJsonValue& json);  // of a bulk tag change
 
 }  // namespace pictorio::server_client
