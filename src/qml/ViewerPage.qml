@@ -22,6 +22,7 @@ Kirigami.Page {
     required property Connection connection
 
     signal serverPageRequested()
+    signal libraryRequested()
 
     readonly property bool presenting: slideshow.running
 
@@ -131,6 +132,13 @@ Kirigami.Page {
             shortcut: "Ctrl+R"
             enabled: page.viewer.hasImage
             onTriggered: page.viewTransform.rotateClockwise()
+        },
+        Kirigami.Action {
+            icon.name: "view-preview"
+            text: KI18n.i18nc("@action:inmenu", "Library")
+            displayHint: Kirigami.DisplayHint.AlwaysHide
+            visible: page.connection.state === Connection.State.LoggedIn
+            onTriggered: page.libraryRequested()
         },
         Kirigami.Action {
             readonly property bool loggedIn: page.connection.state === Connection.State.LoggedIn

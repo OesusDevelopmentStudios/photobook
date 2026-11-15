@@ -10,6 +10,7 @@
 #include "ConnectionFactory.hpp"
 #include "FolderScannerFactory.hpp"
 #include "ImageLoaderFactory.hpp"
+#include "LibraryFactory.hpp"
 #include "NavigatorFactory.hpp"
 #include "SettingsFactory.hpp"
 #include "SlideshowFactory.hpp"
@@ -27,6 +28,7 @@ AppManager::AppManager(QObject* parent)
     , m_navigator(navigator::createNavigator(folder_scanner::createFolderScanner(image_loader::createImageLoader())))
     , m_slideshow(slideshow::createSlideshow(m_navigator.get(), m_settings.get()))
     , m_connection(connection::createConnection(m_settings.get()))
+    , m_library(library::createLibrary(m_connection.get()))
     , m_serverCredentials(std::make_shared<network_access::ServerCredentials>())
     , m_networkAccessFactory(network_access::createNetworkAccessFactory(
           m_serverCredentials,
@@ -72,6 +74,11 @@ slideshow::Slideshow* AppManager::slideshow() const
 connection::Connection* AppManager::connection() const
 {
     return m_connection.get();
+}
+
+library::Library* AppManager::library() const
+{
+    return m_library.get();
 }
 
 QQmlNetworkAccessManagerFactory* AppManager::networkAccessFactory() const

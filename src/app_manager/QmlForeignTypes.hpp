@@ -9,6 +9,7 @@
 #include <QtQmlIntegration/qqmlintegration.h>
 
 #include "Connection.hpp"
+#include "Library.hpp"
 #include "Navigator.hpp"
 #include "Slideshow.hpp"
 #include "ViewTransform.hpp"
@@ -57,6 +58,14 @@ struct ForeignConnection
     Q_GADGET
     QML_FOREIGN(pictorio::connection::Connection)
     QML_NAMED_ELEMENT(Connection)
+    QML_UNCREATABLE("Provided by AppManager")
+};
+
+struct ForeignLibrary
+{
+    Q_GADGET
+    QML_FOREIGN(pictorio::library::Library)
+    QML_NAMED_ELEMENT(Library)
     QML_UNCREATABLE("Provided by AppManager")
 };
 

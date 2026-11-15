@@ -8,6 +8,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QSet>
 #include <QTemporaryDir>
 #include <QTest>
 #include <QUrlQuery>
@@ -82,6 +83,13 @@ QString parameter(const HttpRequest& request, const QString& name)
     return QUrlQuery(request.url).queryItemValue(name, QUrl::FullyDecoded);
 }
 
+// The cursor of the second page of the request's search, e.g. "page2:taken_at:summer".
+QString cursorFor(const HttpRequest& request)
+{
+    return QStringLiteral("page2:%1:%2")
+        .arg(parameter(request, QStringLiteral("sort")), parameter(request, QStringLiteral("q")));
+}
+
 }  // namespace
 
 class TestLibrary : public QObject
@@ -96,6 +104,7 @@ private Q_SLOTS:
     void searchesAndStartsOver();
     void keepsARandomOrderWhilePaging();
     void ignoresTheAnswerToAnOlderSearch();
+    void neverMixesANewOrderWithTheOldOrdersPages();
     void showsWhyASearchFailed();
     void emptiesWhenLoggedOut();
     void givesTheGridWhatItShows();
@@ -129,12 +138,14 @@ void TestLibrary::init()
             return page({7}, QString());
         }
 
-        if (parameter(request, QStringLiteral("cursor")) == QLatin1String("page2"))
+        // Like a real cursor, this one belongs to its search: the sort and the text.
+        const QString nextPage = cursorFor(request);
+        if (parameter(request, QStringLiteral("cursor")) == nextPage)
         {
             return page({3}, QString());
         }
 
-        return page({1, 2}, QStringLiteral("page2"));
+        return page({1, 2}, nextPage);
     });
 
     auto keyring = std::make_shared<fakes::Keyring>();
@@ -178,10 +189,10 @@ void TestLibrary::loadsTheNextPageWhenTheGridAsks()
     logIn();
     QTRY_COMPARE(m_library->count(), 2);
 
-    m_library->fetchMore({});
+    m_library->loadMore();
 
     QTRY_COMPARE(m_library->count(), 3);
-    QCOMPARE(parameter(searches().last(), QStringLiteral("cursor")), QStringLiteral("page2"));
+    QCOMPARE(parameter(searches().last(), QStringLiteral("cursor")), QStringLiteral("page2:taken_at:"));
     QVERIFY(!m_library->canFetchMore({}));  // that was the last page
 }
 
@@ -229,6 +240,37 @@ void TestLibrary::ignoresTheAnswerToAnOlderSearch()
     QTest::qWait(50);  // give the older answer time to arrive, if it were not ignored
     QCOMPARE(m_library->count(), 1);
     QCOMPARE(m_library->data(m_library->index(0), Library::ImageIdRole).toInt(), 7);
+}
+
+// The grid asks for more whenever it changes: when the list is emptied for the new search, when the change
+// is announced, as images arrive, as the busy indicator goes. The old search's next page must never be asked
+// for in the new one, which the server refuses, and no page twice.
+void TestLibrary::neverMixesANewOrderWithTheOldOrdersPages()
+{
+    logIn();
+    QTRY_COMPARE(m_library->count(), 2);  // a next page is waiting
+    const auto askForMore = [this]() { m_library->loadMore(); };
+    connect(m_library.get(), &Library::modelReset, this, askForMore);
+    connect(m_library.get(), &Library::countChanged, this, askForMore);
+    connect(m_library.get(), &Library::searchChanged, this, askForMore);
+    connect(m_library.get(), &Library::loadingChanged, this, askForMore);
+
+    m_library->setOrder(Library::Order::Random);
+    m_library->search(QStringLiteral("summer"));
+
+    QSet<QUrl> asked;
+    for (const HttpRequest& request : searches())  // every next page belongs to the search it is asked for in
+    {
+        const QString cursor = parameter(request, QStringLiteral("cursor"));
+        QVERIFY2(cursor.isEmpty() || cursor == cursorFor(request), qPrintable(request.url.toString()));
+        if (parameter(request, QStringLiteral("sort")) != QLatin1String("random"))  // a new seed each time
+        {
+            QVERIFY2(!asked.contains(request.url), qPrintable(request.url.toString()));
+            asked.insert(request.url);
+        }
+    }
+
+    QCOMPARE(m_library->count(), 3);  // both pages of the last search, once
 }
 
 void TestLibrary::showsWhyASearchFailed()

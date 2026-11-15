@@ -3,7 +3,6 @@
 
 import QtQuick
 import QtQuick.Controls as Controls
-import QtQuick.Dialogs
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.ki18n
@@ -14,9 +13,10 @@ Kirigami.Page {
 
     required property Connection connection
 
-    signal imageChosen(url fileUrl)
-    signal folderChosen(url folderUrl)
+    signal openImageRequested()
+    signal openFolderRequested()
     signal serverPageRequested()
+    signal libraryRequested()
 
     readonly property bool loggedIn: connection.state === Connection.State.LoggedIn
 
@@ -58,7 +58,7 @@ Kirigami.Page {
             Layout.preferredWidth: Kirigami.Units.gridUnit * 14
             icon.name: "document-open"
             text: KI18n.i18nc("@action:button", "Open Image…")
-            onClicked: openImageDialog.open()
+            onClicked: page.openImageRequested()
         }
 
         Controls.Button {
@@ -66,35 +66,16 @@ Kirigami.Page {
             Layout.preferredWidth: Kirigami.Units.gridUnit * 14
             icon.name: "folder-open"
             text: KI18n.i18nc("@action:button", "Open Folder…")
-            onClicked: openFolderDialog.open()
+            onClicked: page.openFolderRequested()
         }
 
         Controls.Button {
             Layout.alignment: Qt.AlignHCenter
             Layout.preferredWidth: Kirigami.Units.gridUnit * 14
-            icon.name: page.loggedIn ? "user-identity" : "network-server"
-            text: page.loggedIn ? KI18n.i18nc("@action:button", "Account")
+            icon.name: page.loggedIn ? "view-preview" : "network-server"
+            text: page.loggedIn ? KI18n.i18nc("@action:button", "Library")
                                 : KI18n.i18nc("@action:button", "Connect to Server…")
-            onClicked: page.serverPageRequested()
+            onClicked: page.loggedIn ? page.libraryRequested() : page.serverPageRequested()
         }
-    }
-
-    FileDialog {
-        id: openImageDialog
-
-        title: KI18n.i18nc("@title:window", "Open Image")
-        nameFilters: [
-            KI18n.i18nc("@item:inlistbox File type filter",
-                        "Images (*.jpg *.jpeg *.png *.webp *.gif *.avif *.heic *.heif *.jxl *.tif *.tiff *.bmp)"),
-            KI18n.i18nc("@item:inlistbox File type filter", "All files (*)")
-        ]
-        onAccepted: page.imageChosen(selectedFile)
-    }
-
-    FolderDialog {
-        id: openFolderDialog
-
-        title: KI18n.i18nc("@title:window", "Open Folder")
-        onAccepted: page.folderChosen(selectedFolder)
     }
 }

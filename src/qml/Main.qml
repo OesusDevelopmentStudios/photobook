@@ -5,6 +5,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Dialogs
 import org.kde.kirigami as Kirigami
 import org.kde.ki18n
 
@@ -26,8 +27,14 @@ Kirigami.ApplicationWindow {
     pageStack.globalToolBar.style: appManager.slideshow.running ? Kirigami.ApplicationHeaderStyle.None
                                                                 : Kirigami.ApplicationHeaderStyle.Auto
 
-    // Started with an image or a folder: the viewer; without: the welcome page.
-    pageStack.initialPage: openedAtStart ? viewerPage : welcomePage
+    // Started with an image or a folder: the viewer. Without: the library if a server login is remembered,
+    // otherwise the welcome page.
+    pageStack.initialPage: {
+        if (openedAtStart) {
+            return viewerPage;
+        }
+        return appManager.connection.state === Connection.State.NoServer ? welcomePage : libraryPage;
+    }
 
     // One page at a time: side by side, the image would get only part of a wide window.
     pageStack.columnView.columnResizeMode: Kirigami.ColumnView.SingleColumn
@@ -35,6 +42,50 @@ Kirigami.ApplicationWindow {
     function showServerPage() {
         const loggedIn = appManager.connection.state === Connection.State.LoggedIn;
         pageStack.push(loggedIn ? accountPage : connectPage);
+    }
+
+    // Back to the library if it is in the page stack; otherwise it comes in place of the current page.
+    function showLibrary() {
+        const pages = pageStack.items;
+        for (let index = pages.length - 1; index >= 0; --index) {
+            if (pages[index] instanceof LibraryPage) {
+                pageStack.pop(pages[index]);
+                return;
+            }
+        }
+        pageStack.replace(libraryPage);
+    }
+
+    // On top of the current page, so going back returns to it.
+    function showViewer() {
+        if (!(pageStack.currentItem instanceof ViewerPage)) {
+            pageStack.push(viewerPage);
+        }
+    }
+
+    FileDialog {
+        id: openImageDialog
+
+        title: KI18n.i18nc("@title:window", "Open Image")
+        nameFilters: [
+            KI18n.i18nc("@item:inlistbox File type filter",
+                        "Images (*.jpg *.jpeg *.png *.webp *.gif *.avif *.heic *.heif *.jxl *.tif *.tiff *.bmp)"),
+            KI18n.i18nc("@item:inlistbox File type filter", "All files (*)")
+        ]
+        onAccepted: {
+            root.appManager.openImage(selectedFile);
+            root.showViewer();
+        }
+    }
+
+    FolderDialog {
+        id: openFolderDialog
+
+        title: KI18n.i18nc("@title:window", "Open Folder")
+        onAccepted: {
+            root.appManager.openFolder(selectedFolder);  // its first image follows once it is listed
+            root.showViewer();
+        }
     }
 
     Component {
@@ -47,6 +98,7 @@ Kirigami.ApplicationWindow {
             slideshow: root.appManager.slideshow
             connection: root.appManager.connection
             onServerPageRequested: root.showServerPage()
+            onLibraryRequested: root.showLibrary()
         }
     }
 
@@ -55,14 +107,21 @@ Kirigami.ApplicationWindow {
 
         WelcomePage {
             connection: root.appManager.connection
-            onImageChosen: fileUrl => {
-                root.appManager.openImage(fileUrl);
-                root.pageStack.replace(viewerPage);
-            }
-            onFolderChosen: folderUrl => {
-                root.appManager.openFolder(folderUrl);  // its first image follows once it is listed
-                root.pageStack.replace(viewerPage);
-            }
+            onOpenImageRequested: openImageDialog.open()
+            onOpenFolderRequested: openFolderDialog.open()
+            onServerPageRequested: root.showServerPage()
+            onLibraryRequested: root.showLibrary()
+        }
+    }
+
+    Component {
+        id: libraryPage
+
+        LibraryPage {
+            library: root.appManager.library
+            connection: root.appManager.connection
+            onOpenImageRequested: openImageDialog.open()
+            onOpenFolderRequested: openFolderDialog.open()
             onServerPageRequested: root.showServerPage()
         }
     }
@@ -91,7 +150,8 @@ Kirigami.ApplicationWindow {
         }
     }
 
-    // Logging in turns the connect page into the account page; logging out turns it back.
+    // Logging in leads from the connect page to the library; logging out turns the account page into the
+    // connect page.
     Connections {
         target: root.appManager.connection
 
@@ -99,7 +159,7 @@ Kirigami.ApplicationWindow {
             const currentPage = root.pageStack.currentItem;
             const loggedIn = root.appManager.connection.state === Connection.State.LoggedIn;
             if (loggedIn && currentPage instanceof ConnectPage) {
-                root.pageStack.replace(accountPage);
+                root.showLibrary();
             } else if (!loggedIn && currentPage instanceof AccountPage) {
                 root.pageStack.replace(connectPage);
             }

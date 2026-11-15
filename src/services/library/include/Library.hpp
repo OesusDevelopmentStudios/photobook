@@ -57,6 +57,8 @@ public:
     Q_INVOKABLE void search(const QString& text);
     // The same search from the start, e.g. after an upload.
     Q_INVOKABLE void reload();
+    // The next page, if there is one and none is loading; the grid calls it as it nears the end.
+    Q_INVOKABLE void loadMore();
 
     QString searchText() const;
     Order order() const;

@@ -47,13 +47,13 @@ Library::Library(connection::Connection* connection, QObject* parent)
 void Library::search(const QString& text)
 {
     const QString searchText = text.trimmed();
-    if (searchText != m_searchText)
+    const bool changed = searchText != m_searchText;
+    m_searchText = searchText;
+    reload();
+    if (changed)
     {
-        m_searchText = searchText;
         Q_EMIT searchChanged();
     }
-
-    reload();
 }
 
 void Library::reload()
@@ -76,6 +76,11 @@ void Library::reload()
     loadPage({});
 }
 
+void Library::loadMore()
+{
+    fetchMore({});
+}
+
 QString Library::searchText() const
 {
     return m_searchText;
@@ -91,8 +96,8 @@ void Library::setOrder(Order order)
     if (order != m_order || order == Order::Random)  // choosing random again shuffles again
     {
         m_order = order;
+        reload();  // before the announcement, as in search()
         Q_EMIT searchChanged();
-        reload();
     }
 }
 
@@ -192,10 +197,10 @@ void Library::loadPage(const QString& cursor)
                 return;  // the user has searched for something else since
             }
 
-            setLoading(false);
             if (!page.has_value())
             {
                 setErrorMessage(describeError(page.error()));
+                setLoading(false);
                 return;
             }
 
@@ -203,8 +208,19 @@ void Library::loadPage(const QString& cursor)
         });
 }
 
+// The next page's cursor is kept before anyone hears of the new images: the grid asks for more as soon as
+// they arrive.
 void Library::addPage(const server_client::ImagePage& page)
 {
+    m_nextCursor = page.nextCursor;
+    m_complete = page.nextCursor.isEmpty();
+    setLoading(false);
+    if (page.effectiveQuery != m_effectiveQuery)
+    {
+        m_effectiveQuery = page.effectiveQuery;
+        Q_EMIT effectiveQueryChanged();
+    }
+
     if (!page.items.isEmpty())
     {
         beginInsertRows({}, count(), count() + static_cast<int>(page.items.size()) - 1);
@@ -212,18 +228,14 @@ void Library::addPage(const server_client::ImagePage& page)
         endInsertRows();
         Q_EMIT countChanged();
     }
-
-    m_nextCursor = page.nextCursor;
-    m_complete = page.nextCursor.isEmpty();
-    if (page.effectiveQuery != m_effectiveQuery)
-    {
-        m_effectiveQuery = page.effectiveQuery;
-        Q_EMIT effectiveQueryChanged();
-    }
 }
 
+// The old search's next page is forgotten before the grid hears of the reset: the grid asks for more as soon
+// as it is empty, and must not get the old search's next page then.
 void Library::clearImages()
 {
+    m_nextCursor.clear();
+    m_complete = true;
     if (!m_images.isEmpty())
     {
         beginResetModel();
@@ -231,9 +243,6 @@ void Library::clearImages()
         endResetModel();
         Q_EMIT countChanged();
     }
-
-    m_nextCursor.clear();
-    m_complete = true;
 }
 
 void Library::setLoading(bool loading)
