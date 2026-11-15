@@ -55,6 +55,9 @@ find_package(KF6 ${KF_MIN_VERSION} REQUIRED COMPONENTS
     Config       # settings file (KConfig)
 )
 
+# The login token for the server, kept in the system keyring (KWallet or the Secret Service).
+find_package(Qt6Keychain 0.17 REQUIRED)
+
 # Image metadata: the date a photo was taken. ECM's find module, because exiv2's own CMake package
 # accepts only the exact version asked for.
 find_package(LibExiv2 0.28 REQUIRED)

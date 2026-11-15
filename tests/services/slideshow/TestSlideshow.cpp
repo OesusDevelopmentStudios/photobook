@@ -64,6 +64,21 @@ public:
         order = newOrder;
     }
 
+    // Not used by the slideshow
+    std::optional<QUrl> serverUrl() const override
+    {
+        return std::nullopt;
+    }
+
+    void setServerUrl(const QUrl&) override {}
+
+    std::optional<QString> serverUsername() const override
+    {
+        return std::nullopt;
+    }
+
+    void setServerUsername(const QString&) override {}
+
     std::optional<int> intervalSeconds;
     std::optional<QString> order;
 };

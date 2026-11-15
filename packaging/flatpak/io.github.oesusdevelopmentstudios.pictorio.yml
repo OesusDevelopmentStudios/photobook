@@ -55,6 +55,23 @@ modules:
       - /lib/cmake
       - /lib/pkgconfig
 
+  # Keeps the server login token in the system keyring. Not in the KDE runtime, so it is built here.
+  - name: qtkeychain
+    buildsystem: cmake-ninja
+    builddir: true
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DBUILD_TRANSLATIONS=OFF
+      - -DBUILD_TESTING=OFF
+    sources:
+      - type: archive
+        url: https://github.com/frankosterfeld/qtkeychain/archive/refs/tags/0.18.0.tar.gz
+        sha256: 837af59f2b950760a73eff81ccae817f7d3051183b447438dc610bb984a41691
+    cleanup:
+      - /include
+      - /lib/cmake
+      - /mkspecs
+
   - name: pictorio
     buildsystem: cmake-ninja
     builddir: true

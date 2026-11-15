@@ -46,6 +46,8 @@ void TestSettings::returnsNothingForValuesNeverStored()
 
     QCOMPARE(settings->slideshowIntervalSeconds(), std::nullopt);
     QCOMPARE(settings->slideshowOrder(), std::nullopt);
+    QCOMPARE(settings->serverUrl(), std::nullopt);
+    QCOMPARE(settings->serverUsername(), std::nullopt);
 }
 
 void TestSettings::keepsValuesAfterRestart()
@@ -54,12 +56,16 @@ void TestSettings::keepsValuesAfterRestart()
         const auto settings = createSettings(configFilePath());
         settings->setSlideshowIntervalSeconds(12);
         settings->setSlideshowOrder(QStringLiteral("date"));
+        settings->setServerUrl(QUrl(QStringLiteral("https://photos.example.org")));
+        settings->setServerUsername(QStringLiteral("kid"));
     }
 
     const auto settingsAfterRestart = createSettings(configFilePath());
 
     QCOMPARE(settingsAfterRestart->slideshowIntervalSeconds(), 12);
     QCOMPARE(settingsAfterRestart->slideshowOrder(), QStringLiteral("date"));
+    QCOMPARE(settingsAfterRestart->serverUrl(), QUrl(QStringLiteral("https://photos.example.org")));
+    QCOMPARE(settingsAfterRestart->serverUsername(), QStringLiteral("kid"));
 }
 
 // Group and key names must not change, or users lose their settings with an update.
@@ -68,12 +74,18 @@ void TestSettings::writesReadableConfigFile()
     const auto settings = createSettings(configFilePath());
     settings->setSlideshowIntervalSeconds(7);
     settings->setSlideshowOrder(QStringLiteral("random"));
+    settings->setServerUrl(QUrl(QStringLiteral("http://raspberrypi.local:8737")));
+    settings->setServerUsername(QStringLiteral("kid"));
 
     const KConfig configFile(configFilePath(), KConfig::SimpleConfig);
     const KConfigGroup slideshowGroup = configFile.group(QStringLiteral("Slideshow"));
+    const KConfigGroup serverGroup = configFile.group(QStringLiteral("Server"));
 
     QCOMPARE(slideshowGroup.readEntry("IntervalSeconds", 0), 7);
     QCOMPARE(slideshowGroup.readEntry("Order", QString()), QStringLiteral("random"));
+    QCOMPARE(serverGroup.readEntry("Url", QString()), QStringLiteral("http://raspberrypi.local:8737"));
+    QCOMPARE(serverGroup.readEntry("Username", QString()), QStringLiteral("kid"));
+    QVERIFY(!serverGroup.keyList().contains(QStringLiteral("Token")));  // the token belongs in the keyring
 }
 
 QString TestSettings::configFilePath() const

@@ -25,9 +25,16 @@ public:
     std::optional<QString> slideshowOrder() const override;
     void setSlideshowOrder(const QString& order) override;
 
+    std::optional<QUrl> serverUrl() const override;
+    void setServerUrl(const QUrl& serverUrl) override;
+    std::optional<QString> serverUsername() const override;
+    void setServerUsername(const QString& username) override;
+
 private:
     KConfigGroup slideshowGroup() const;
     void writeSlideshowEntry(const char* key, const QVariant& value);
+    std::optional<QString> readServerEntry(const char* key) const;
+    void writeServerEntry(const char* key, const QString& value);
 
     KSharedConfigPtr m_config;
 };
