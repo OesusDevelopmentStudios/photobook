@@ -38,6 +38,7 @@ void Navigator::openImage(const QString& filePath)
     Q_EMIT imageRequested(m_currentPath);
 
     const QString folderPath = QFileInfo(m_currentPath).path();
+    m_requestedFolderPath = folderPath;
     if (folderPath == m_folderPath)
     {
         m_currentIndex = m_imagePaths.indexOf(m_currentPath);
@@ -51,6 +52,15 @@ void Navigator::openImage(const QString& filePath)
     Q_EMIT positionChanged();
 }
 
+void Navigator::openFolder(const QString& folderPath)
+{
+    m_currentPath.clear();  // the first image follows once the folder is listed
+    clearListing();
+    m_requestedFolderPath = normalizedPath(folderPath);
+    startListingFolder(m_requestedFolderPath);
+    Q_EMIT positionChanged();
+}
+
 void Navigator::setSorting(const folder_scanner::Sorting& sorting)
 {
     if (sorting == m_sorting)
@@ -59,13 +69,13 @@ void Navigator::setSorting(const folder_scanner::Sorting& sorting)
     }
 
     m_sorting = sorting;
-    if (m_currentPath.isEmpty())
+    if (m_requestedFolderPath.isEmpty())
     {
         return;
     }
 
     clearListing();
-    startListingFolder(QFileInfo(m_currentPath).path());
+    startListingFolder(m_requestedFolderPath);
     Q_EMIT positionChanged();
 }
 
@@ -142,16 +152,30 @@ void Navigator::takeFolderListing()
 {
     FolderListing listing = m_listingWatcher.result();
 
-    // In the meantime an image in another folder may have been opened, or the sorting changed.
-    if (listing.folderPath != QFileInfo(m_currentPath).path() || listing.sorting != m_sorting)
+    // In the meantime another folder may have been opened, or the sorting changed.
+    if (listing.folderPath != m_requestedFolderPath || listing.sorting != m_sorting)
     {
         return;
     }
 
     m_folderPath = listing.folderPath;
     m_imagePaths = std::move(listing.imagePaths);
-    m_currentIndex = m_imagePaths.indexOf(m_currentPath);
-    Q_EMIT positionChanged();
+    if (!m_currentPath.isEmpty())
+    {
+        m_currentIndex = m_imagePaths.indexOf(m_currentPath);
+        Q_EMIT positionChanged();
+        return;
+    }
+
+    // A folder was opened: show its first image.
+    if (m_imagePaths.isEmpty())
+    {
+        Q_EMIT positionChanged();
+        Q_EMIT folderHasNoImages(m_folderPath);
+        return;
+    }
+
+    goToIndex(0);
 }
 
 void Navigator::goToIndex(int index)

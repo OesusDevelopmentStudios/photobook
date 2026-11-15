@@ -44,8 +44,9 @@ public:
     slideshow::Slideshow* slideshow() const;
     connection::Connection* connection() const;
 
-    // An image chosen in a file dialog, which gives a URL
+    // An image or folder chosen in a file dialog, which gives a URL
     Q_INVOKABLE void openImage(const QUrl& fileUrl);
+    Q_INVOKABLE void openFolder(const QUrl& folderUrl);
 
 private:
     std::unique_ptr<settings::Settings> m_settings;

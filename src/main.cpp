@@ -10,6 +10,7 @@
 #include <QApplication>
 #include <QCommandLineParser>
 #include <QDir>
+#include <QFileInfo>
 #include <QQmlApplicationEngine>
 #include <QQuickStyle>
 
@@ -48,15 +49,27 @@ int main(int argc, char* argv[])
         pictorio::utils::readCommandLineOptions(commandLineParser, QDir::currentPath());
 
     pictorio::app_manager::AppManager appManager;
-    if (!commandLineOptions.imagePaths.isEmpty())
+    const bool openedAtStart = !commandLineOptions.imagePaths.isEmpty();
+    if (openedAtStart)
     {
-        appManager.navigator()->openImage(commandLineOptions.imagePaths.first());
+        const QString& path = commandLineOptions.imagePaths.first();
+        if (QFileInfo(path).isDir())
+        {
+            appManager.navigator()->openFolder(path);  // e.g. pictorio ~/Pictures/holiday
+        }
+        else
+        {
+            appManager.navigator()->openImage(path);
+        }
     }
 
     QQmlApplicationEngine qmlEngine;
     KLocalization::setupLocalizedContext(&qmlEngine);  // makes KI18n.i18n*() work in QML
 
-    qmlEngine.setInitialProperties({{QStringLiteral("appManager"), QVariant::fromValue(&appManager)}});
+    qmlEngine.setInitialProperties({
+        {QStringLiteral("appManager"), QVariant::fromValue(&appManager)},
+        {QStringLiteral("openedAtStart"), openedAtStart},
+    });
 
     // The QML module URI is the application ID (see ecm_add_qml_module in src/CMakeLists.txt).
     qmlEngine.loadFromModule(pictorio::utils::applicationId, QStringLiteral("Main"));

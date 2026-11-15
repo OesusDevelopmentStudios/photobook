@@ -8,13 +8,14 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.ki18n
 
-// Shown when the app starts without an image: open one, or connect to a server.
+// Shown when the app starts without an image: open an image or a folder, or connect to a server.
 Kirigami.Page {
     id: page
 
     required property Connection connection
 
     signal imageChosen(url fileUrl)
+    signal folderChosen(url folderUrl)
     signal serverPageRequested()
 
     readonly property bool loggedIn: connection.state === Connection.State.LoggedIn
@@ -63,6 +64,14 @@ Kirigami.Page {
         Controls.Button {
             Layout.alignment: Qt.AlignHCenter
             Layout.preferredWidth: Kirigami.Units.gridUnit * 14
+            icon.name: "folder-open"
+            text: KI18n.i18nc("@action:button", "Open Folder…")
+            onClicked: openFolderDialog.open()
+        }
+
+        Controls.Button {
+            Layout.alignment: Qt.AlignHCenter
+            Layout.preferredWidth: Kirigami.Units.gridUnit * 14
             icon.name: page.loggedIn ? "user-identity" : "network-server"
             text: page.loggedIn ? KI18n.i18nc("@action:button", "Account")
                                 : KI18n.i18nc("@action:button", "Connect to Server…")
@@ -80,5 +89,12 @@ Kirigami.Page {
             KI18n.i18nc("@item:inlistbox File type filter", "All files (*)")
         ]
         onAccepted: page.imageChosen(selectedFile)
+    }
+
+    FolderDialog {
+        id: openFolderDialog
+
+        title: KI18n.i18nc("@title:window", "Open Folder")
+        onAccepted: page.folderChosen(selectedFolder)
     }
 }

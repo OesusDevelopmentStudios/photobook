@@ -28,7 +28,7 @@ void addCommandLineOptions(QCommandLineParser& parser)
 {
     KAboutData::applicationData().setupCommandLine(&parser);
     parser.addPositionalArgument(
-        QStringLiteral("images"), i18nc("@info:shell", "Images to open"), QStringLiteral("[images...]"));
+        QStringLiteral("images"), i18nc("@info:shell", "Images, or a folder, to open"), QStringLiteral("[images...]"));
 }
 
 CommandLineOptions readCommandLineOptions(const QCommandLineParser& parser, const QString& workingDirectory)

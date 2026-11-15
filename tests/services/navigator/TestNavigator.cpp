@@ -60,6 +60,8 @@ const QStringList holidayImages{
 const QString petsFolder = QStringLiteral("/photos/pets");
 const QStringList petImages{QStringLiteral("/photos/pets/cat.jpg"), QStringLiteral("/photos/pets/dog.jpg")};
 
+const QString emptyFolder = QStringLiteral("/photos/empty");
+
 const QString singleImageFolder = QStringLiteral("/photos/single");
 const QString singleImage = QStringLiteral("/photos/single/only.jpg");
 
@@ -91,6 +93,11 @@ private Q_SLOTS:
     void wrapsAroundWhenEnabled();
     void singleImageDoesNotWrapAround();
 
+    void opensAFolderAtItsFirstImage();
+    void opensAFolderInTheChosenOrder();
+    void reportsAFolderWithoutImages();
+    void anImageOpenedMeanwhileWinsOverTheFolder();
+
 private:
     void openAndWaitForListing(const QString& filePath);
     void waitForListing();
@@ -105,6 +112,7 @@ void TestNavigator::init()
     folderScanner->listings.insert(holidayFolder, holidayImages);
     folderScanner->listings.insert(petsFolder, petImages);
     folderScanner->listings.insert(singleImageFolder, {singleImage});
+    folderScanner->listings.insert(emptyFolder, {});
     m_folderScanner = folderScanner.get();
     m_navigator = createNavigator(std::move(folderScanner));
 }
@@ -270,6 +278,59 @@ void TestNavigator::singleImageDoesNotWrapAround()
     QCOMPARE(m_navigator->currentIndex(), 0);
     QVERIFY(!m_navigator->canGoToNext());
     QVERIFY(!m_navigator->canGoToPrevious());
+}
+
+void TestNavigator::opensAFolderAtItsFirstImage()
+{
+    QSignalSpy requestSpy(m_navigator.get(), &Navigator::imageRequested);
+
+    m_navigator->openFolder(holidayFolder);
+
+    QTRY_COMPARE(requestSpy.count(), 1);
+    QCOMPARE(requestSpy.first().first().toString(), holidayImages.first());
+    QCOMPARE(m_navigator->currentIndex(), 0);
+    QCOMPARE(m_navigator->imageCount(), 3);
+    QVERIFY(m_navigator->canGoToNext());
+}
+
+void TestNavigator::opensAFolderInTheChosenOrder()
+{
+    m_navigator->setSorting({SortOrder::Date});
+    QSignalSpy requestSpy(m_navigator.get(), &Navigator::imageRequested);
+
+    m_navigator->openFolder(holidayFolder);
+
+    QTRY_COMPARE(requestSpy.count(), 1);
+    QCOMPARE(requestSpy.first().first().toString(), holidayImages.last());  // the fake reverses for date order
+}
+
+void TestNavigator::reportsAFolderWithoutImages()
+{
+    QSignalSpy requestSpy(m_navigator.get(), &Navigator::imageRequested);
+    QSignalSpy emptySpy(m_navigator.get(), &Navigator::folderHasNoImages);
+
+    m_navigator->openFolder(emptyFolder);
+
+    QTRY_COMPARE(emptySpy.count(), 1);
+    QCOMPARE(emptySpy.first().first().toString(), emptyFolder);
+    QCOMPARE(requestSpy.count(), 0);
+    QCOMPARE(m_navigator->currentIndex(), -1);
+}
+
+void TestNavigator::anImageOpenedMeanwhileWinsOverTheFolder()
+{
+    m_folderScanner->gate.acquire(openGate);
+    QSignalSpy requestSpy(m_navigator.get(), &Navigator::imageRequested);
+    m_navigator->openFolder(holidayFolder);
+    m_navigator->openImage(petImages.last());
+
+    m_folderScanner->gate.release(2);  // both listings finish, in either order
+
+    QTRY_COMPARE(m_folderScanner->listingCount.load(), 2);
+    QTRY_COMPARE(m_navigator->imageCount(), 2);
+    QCOMPARE(m_navigator->currentIndex(), 1);
+    QCOMPARE(requestSpy.count(), 1);  // only the image; the folder's first image is not shown
+    QCOMPARE(requestSpy.first().first().toString(), petImages.last());
 }
 
 void TestNavigator::openAndWaitForListing(const QString& filePath)

@@ -68,4 +68,9 @@ void AppManager::openImage(const QUrl& fileUrl)
     m_navigator->openImage(fileUrl.toLocalFile());
 }
 
+void AppManager::openFolder(const QUrl& folderUrl)
+{
+    m_navigator->openFolder(folderUrl.toLocalFile());
+}
+
 }  // namespace pictorio::app_manager

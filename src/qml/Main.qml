@@ -12,6 +12,7 @@ Kirigami.ApplicationWindow {
     id: root
 
     required property AppManager appManager
+    required property bool openedAtStart  // an image or a folder was given on the command line
 
     title: appManager.viewer.hasImage
         ? KI18n.i18nc("@title:window %1 is a file name", "%1 — Pictorio", appManager.viewer.fileName)
@@ -25,8 +26,8 @@ Kirigami.ApplicationWindow {
     pageStack.globalToolBar.style: appManager.slideshow.running ? Kirigami.ApplicationHeaderStyle.None
                                                                 : Kirigami.ApplicationHeaderStyle.Auto
 
-    // Started with an image: the viewer; without: the welcome page.
-    pageStack.initialPage: appManager.viewer.fileName.length > 0 ? viewerPage : welcomePage
+    // Started with an image or a folder: the viewer; without: the welcome page.
+    pageStack.initialPage: openedAtStart ? viewerPage : welcomePage
 
     // One page at a time: side by side, the image would get only part of a wide window.
     pageStack.columnView.columnResizeMode: Kirigami.ColumnView.SingleColumn
@@ -58,6 +59,10 @@ Kirigami.ApplicationWindow {
                 root.appManager.openImage(fileUrl);
                 root.pageStack.replace(viewerPage);
             }
+            onFolderChosen: folderUrl => {
+                root.appManager.openFolder(folderUrl);  // its first image follows once it is listed
+                root.pageStack.replace(viewerPage);
+            }
             onServerPageRequested: root.showServerPage()
         }
     }
@@ -75,6 +80,14 @@ Kirigami.ApplicationWindow {
 
         AccountPage {
             connection: root.appManager.connection
+        }
+    }
+
+    Connections {
+        target: root.appManager.navigator
+
+        function onFolderHasNoImages(folderPath: string) {
+            root.showPassiveNotification(KI18n.i18nc("@info %1 is a folder", "No images in %1", folderPath));
         }
     }
 

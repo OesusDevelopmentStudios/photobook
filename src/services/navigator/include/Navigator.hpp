@@ -43,6 +43,8 @@ public:
     ~Navigator() override;
 
     void openImage(const QString& filePath);
+    // Lists the folder and then shows its first image in the current order.
+    void openFolder(const QString& folderPath);
     void setSorting(const folder_scanner::Sorting& sorting);  // lists the folder again if it changed
     void setWrapAround(bool wrapAround);  // after the last image comes the first, and the other way round
     Q_INVOKABLE void goToPrevious();
@@ -56,6 +58,7 @@ public:
 Q_SIGNALS:
     void imageRequested(const QString& filePath);  // the image to show now
     void positionChanged();
+    void folderHasNoImages(const QString& folderPath);  // after openFolder()
 
 private:
     void startListingFolder(const QString& folderPath);
@@ -71,7 +74,8 @@ private:
     bool m_wrapAround = false;
 
     QString m_currentPath;
-    QString m_folderPath;  // the folder m_imagePaths belongs to
+    QString m_requestedFolderPath;  // the folder being shown, whose listing is wanted
+    QString m_folderPath;           // the folder m_imagePaths belongs to
     QStringList m_imagePaths;
     int m_currentIndex = -1;
 };
