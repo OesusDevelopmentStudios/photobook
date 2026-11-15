@@ -64,6 +64,7 @@ private Q_SLOTS:
     void initTestCase();
 
     void listsImageTypes();
+    void listsFolders();
     void opensEveryListedImageType_data();
     void opensEveryListedImageType();
 
@@ -84,13 +85,22 @@ void TestDesktopFile::listsImageTypes()
     QVERIFY(mimeTypesInDesktopFile().contains(QStringLiteral("image/jpeg")));
 }
 
+// So that Dolphin offers "Open with Pictorio" on folders too
+void TestDesktopFile::listsFolders()
+{
+    QVERIFY(mimeTypesInDesktopFile().contains(QStringLiteral("inode/directory")));
+}
+
 void TestDesktopFile::opensEveryListedImageType_data()
 {
     QTest::addColumn<QString>("mimeType");
 
     for (const QString& mimeType : mimeTypesInDesktopFile())
     {
-        QTest::newRow(qPrintable(mimeType)) << mimeType;
+        if (mimeType.startsWith(QLatin1String("image/")))
+        {
+            QTest::newRow(qPrintable(mimeType)) << mimeType;
+        }
     }
 }
 
