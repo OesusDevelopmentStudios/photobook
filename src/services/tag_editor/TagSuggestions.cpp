@@ -62,6 +62,11 @@ int TagSuggestions::count() const
     return static_cast<int>(m_suggestions.size());
 }
 
+QString TagSuggestions::tagAt(int row) const
+{
+    return row >= 0 && row < count() ? m_suggestions.at(row).tag : QString();
+}
+
 int TagSuggestions::rowCount(const QModelIndex& parent) const
 {
     return parent.isValid() ? 0 : count();

@@ -16,6 +16,7 @@ Rectangle {
     id: footer
 
     required property Viewer viewer
+    required property TagEditor tagEditor
     property bool shown: false
     property bool expanded: false
     property real maximumDetailsHeight: Kirigami.Units.gridUnit * 10  // more scrolls
@@ -105,6 +106,37 @@ Rectangle {
             }
 
             Controls.ToolButton {
+                visible: footer.expanded && footer.tagEditor.canEdit && !footer.tagEditor.editing
+                icon.name: "document-edit"
+                text: KI18n.i18nc("@action:button", "Edit Tags")
+                onClicked: footer.tagEditor.startEditing()
+            }
+
+            Controls.BusyIndicator {
+                Layout.preferredHeight: Kirigami.Units.iconSizes.medium
+                Layout.preferredWidth: Kirigami.Units.iconSizes.medium
+                visible: running
+                running: footer.tagEditor.saving
+            }
+
+            Controls.Button {
+                visible: footer.tagEditor.editing
+                icon.name: "dialog-ok-apply"
+                text: KI18n.i18nc("@action:button Save the tag changes", "Save")
+                enabled: footer.tagEditor.hasChanges && !footer.tagEditor.saving
+                onClicked: footer.tagEditor.save()
+            }
+
+            Controls.Button {
+                visible: footer.tagEditor.editing
+                icon.name: "dialog-cancel"
+                text: KI18n.i18nc("@action:button Drop the tag changes", "Cancel")
+                enabled: !footer.tagEditor.saving
+                onClicked: footer.tagEditor.cancel()
+            }
+
+            Controls.ToolButton {
+                enabled: !footer.tagEditor.editing  // the editing happens in the expanded part
                 icon.name: footer.expanded ? "arrow-down" : "arrow-up"
                 text: footer.expanded ? KI18n.i18nc("@action:button", "Hide Details")
                                       : KI18n.i18nc("@action:button", "Show Details")
@@ -151,6 +183,107 @@ Rectangle {
         }
     }
 
+    // A tag while editing. Kept: ✕ removes it. Added: marked new; ✕ drops it. Removed: struck through; a
+    // click keeps it after all.
+    component EditedTagChip: Kirigami.Chip {
+        id: chip
+
+        required property var modelData
+        required property TagEditor tagEditor
+        readonly property bool added: modelData.change === TagEditor.Change.Added
+        readonly property bool removed: modelData.change === TagEditor.Change.Removed
+
+        text: modelData.name
+        icon.name: added ? "list-add" : ""
+        font.strikeout: removed
+        opacity: removed ? 0.6 : 1
+        closable: !removed
+        checkable: false
+        enabled: !tagEditor.saving
+        onRemoved: tagEditor.removeTag(modelData.tag)
+        onClicked: {
+            if (removed) {
+                tagEditor.restoreTag(modelData.tag);
+            }
+        }
+
+        Controls.ToolTip.text: removed ? KI18n.i18nc("@info:tooltip", "Keep this tag") : ""
+        Controls.ToolTip.visible: removed && hovered
+        Controls.ToolTip.delay: Kirigami.Units.toolTipDelay
+    }
+
+    // Where a tag is typed, with the server's suggestions above it. Enter adds the highlighted suggestion,
+    // or what was typed; up and down move through the suggestions.
+    component TagField: Controls.TextField {
+        id: field
+
+        required property TagEditor tagEditor
+        readonly property TagSuggestions suggestions: tagEditor.suggestions
+
+        function add(text: string) {
+            if (tagEditor.addTag(text)) {
+                field.clear();
+            }
+        }
+
+        placeholderText: KI18n.i18nc("@info:placeholder", "A tag, e.g. author:sample_artist")
+        enabled: !tagEditor.saving
+        onTextChanged: suggestions.typedText = text
+        onAccepted: add(suggestionList.currentIndex >= 0 ? suggestions.tagAt(suggestionList.currentIndex) : text)
+        onVisibleChanged: {
+            if (visible) {
+                forceActiveFocus();
+            }
+        }
+
+        Keys.onDownPressed: suggestionList.currentIndex = Math.min(suggestionList.currentIndex + 1,
+                                                                   suggestionList.count - 1)
+        Keys.onUpPressed: suggestionList.currentIndex = Math.max(suggestionList.currentIndex - 1, -1)
+
+        Controls.Popup {
+            y: -height  // above: the footer is at the bottom of the window
+            width: field.width
+            padding: 0
+            visible: field.activeFocus && field.suggestions.count > 0
+            closePolicy: Controls.Popup.NoAutoClose  // shown while there are suggestions
+
+            contentItem: ListView {
+                id: suggestionList
+
+                implicitHeight: contentHeight
+                model: field.suggestions
+                currentIndex: -1
+                onCountChanged: currentIndex = -1  // new suggestions: nothing chosen yet
+
+                delegate: Controls.ItemDelegate {
+                    id: suggestion
+
+                    required property string tag
+                    required property int imageCount
+
+                    width: ListView.view.width
+                    highlighted: ListView.isCurrentItem
+                    onClicked: field.add(tag)
+
+                    contentItem: RowLayout {
+                        spacing: Kirigami.Units.largeSpacing
+
+                        Controls.Label {
+                            Layout.fillWidth: true
+                            text: suggestion.tag
+                            elide: Text.ElideRight
+                        }
+
+                        Controls.Label {
+                            text: suggestion.imageCount  // images with the tag
+                            color: Kirigami.Theme.disabledTextColor
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     Component {
         id: detailsComponent
 
@@ -168,7 +301,7 @@ Rectangle {
 
                 // A library image's tags, one line per namespace
                 Repeater {
-                    model: footer.viewer.tagGroups
+                    model: footer.tagEditor.editing ? [] : footer.viewer.tagGroups
 
                     delegate: DetailRow {
                         id: tagGroup
@@ -197,9 +330,55 @@ Rectangle {
                     }
                 }
 
+                // While editing: what Save will do to each tag
+                Repeater {
+                    model: footer.tagEditor.editing ? footer.tagEditor.tagGroups : []
+
+                    delegate: DetailRow {
+                        id: editedGroup
+
+                        required property var modelData
+
+                        Layout.fillWidth: true
+                        label: modelData.namespace + ":"
+
+                        Flow {
+                            Layout.fillWidth: true
+                            spacing: Kirigami.Units.smallSpacing
+
+                            Repeater {
+                                model: editedGroup.modelData.tags
+
+                                delegate: EditedTagChip {
+                                    tagEditor: footer.tagEditor
+                                }
+                            }
+                        }
+                    }
+                }
+
+                DetailRow {
+                    Layout.fillWidth: true
+                    visible: footer.tagEditor.editing
+                    label: KI18n.i18nc("@label Add a tag", "Add:")
+
+                    TagField {
+                        Layout.fillWidth: true
+                        visible: footer.tagEditor.editing
+                        tagEditor: footer.tagEditor
+                    }
+                }
+
+                Kirigami.InlineMessage {
+                    Layout.fillWidth: true
+                    visible: footer.tagEditor.editing && footer.tagEditor.errorMessage.length > 0
+                    type: Kirigami.MessageType.Error
+                    text: footer.tagEditor.errorMessage
+                }
+
                 Kirigami.Separator {
                     Layout.fillWidth: true
-                    visible: footer.viewer.tagGroups.length > 0
+                    visible: footer.viewer.tagGroups.length > 0 || footer.tagEditor.editing
                 }
 
                 DetailRow {

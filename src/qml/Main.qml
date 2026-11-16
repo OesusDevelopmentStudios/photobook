@@ -97,6 +97,7 @@ Kirigami.ApplicationWindow {
             navigator: root.appManager.navigator
             slideshow: root.appManager.slideshow
             connection: root.appManager.connection
+            tagEditor: root.appManager.tagEditor
             onServerPageRequested: root.showServerPage()
             onLibraryRequested: root.showLibrary()
         }

@@ -21,12 +21,16 @@ Kirigami.Page {
     required property Navigator navigator
     required property Slideshow slideshow
     required property Connection connection
+    required property TagEditor tagEditor
 
     signal serverPageRequested()
     signal libraryRequested()
 
     readonly property bool presenting: slideshow.running
-    readonly property bool canStartSlideshow: viewer.hasImage && (navigator.canGoToNext || navigator.canGoToPrevious)
+    // Unsaved tag changes are saved or dropped first; stepping on would lose them.
+    readonly property bool canStep: !tagEditor.hasChanges
+    readonly property bool canStartSlideshow: canStep && viewer.hasImage
+                                              && (navigator.canGoToNext || navigator.canGoToPrevious)
 
     // Only the position, which keeps its width; a long file name would push the controls around. The name is
     // in the details footer and the window title.
@@ -46,7 +50,7 @@ Kirigami.Page {
             text: KI18n.i18nc("@action:intoolbar Previous image in the folder or the library", "Previous")
             displayHint: Kirigami.DisplayHint.IconOnly
             shortcut: "Left"
-            enabled: page.navigator.canGoToPrevious
+            enabled: page.canStep && page.navigator.canGoToPrevious
             onTriggered: page.navigator.goToPrevious()
         },
         Kirigami.Action {
@@ -54,7 +58,7 @@ Kirigami.Page {
             text: KI18n.i18nc("@action:intoolbar Next image in the folder or the library", "Next")
             displayHint: Kirigami.DisplayHint.IconOnly
             shortcut: "Right"
-            enabled: page.navigator.canGoToNext
+            enabled: page.canStep && page.navigator.canGoToNext
             onTriggered: page.navigator.goToNext()
         },
         // Library images play in the library's order, so there is no order to choose.
@@ -338,6 +342,7 @@ Kirigami.Page {
             anchors.right: parent.right
             anchors.bottom: parent.bottom
             viewer: page.viewer
+            tagEditor: page.tagEditor
             shown: detailsZoneHover.hovered || expanded  // expanded, it stays until collapsed
             maximumDetailsHeight: page.height * 0.4
         }

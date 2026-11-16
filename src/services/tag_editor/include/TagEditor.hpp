@@ -64,8 +64,8 @@ public:
     bool isEditing() const;
     bool hasChanges() const;
     bool isSaving() const;
-    // While editing: the tags by namespace, each with its change:
-    // a list of {"namespace": "general", "tags": [{"tag": "general:beach", "name": "beach", "change": Added}]}
+    // While editing: the tags by namespace, each with its change (a Change, as a number):
+    // a list of {"namespace": "general", "tags": [{"tag": "general:beach", "name": "beach", "change": 1}]}
     QVariantList tagGroups() const;
     QString errorMessage() const;
     TagSuggestions* suggestions() const;

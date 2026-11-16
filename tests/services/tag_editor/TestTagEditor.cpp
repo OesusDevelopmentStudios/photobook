@@ -63,7 +63,7 @@ QHash<QString, TagEditor::Change> changesShown(const TagEditor& editor)
         {
             const QVariantMap tag = entry.toMap();
             changes.insert(tag.value(QStringLiteral("tag")).toString(),
-                           tag.value(QStringLiteral("change")).value<TagEditor::Change>());
+                           static_cast<TagEditor::Change>(tag.value(QStringLiteral("change")).toInt()));
         }
     }
 
