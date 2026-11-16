@@ -89,6 +89,7 @@ public:
     Q_INVOKABLE void clearSelection();
     int selectedCount() const;
     QList<int> selectedImageIds() const;  // in the order of the results
+    QList<server_client::Image> selectedImages() const;
 
     int rowCount(const QModelIndex& parent = {}) const override;
     QVariant data(const QModelIndex& index, int role) const override;

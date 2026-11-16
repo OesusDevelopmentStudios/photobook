@@ -13,6 +13,11 @@ std::unique_ptr<TagEditor> createTagEditor(connection::Connection* connection)
     return std::make_unique<TagEditor>(connection);
 }
 
+std::unique_ptr<BulkTagEditor> createBulkTagEditor(connection::Connection* connection)
+{
+    return std::make_unique<BulkTagEditor>(connection);
+}
+
 std::unique_ptr<TagSuggestions> createTagSuggestions(connection::Connection* connection)
 {
     return std::make_unique<TagSuggestions>(connection);

@@ -4,6 +4,7 @@
 # Changing the tags of images on the server (see include/). hlp/ holds the rules a change is checked
 # against before it is sent.
 add_library(pictorio_tag_editor STATIC
+    include/BulkTagEditor.hpp
     include/TagEditor.hpp
     include/TagSuggestions.hpp
     include/TagEditorFactory.hpp
@@ -19,6 +20,7 @@ add_library(pictorio_tag_editor STATIC
     impl/Namespaces.cpp
     impl/NamespaceRows.hpp
     impl/NamespaceRows.cpp
+    BulkTagEditor.cpp
     TagEditor.cpp
     TagSuggestions.cpp
     TagEditorFactory.cpp

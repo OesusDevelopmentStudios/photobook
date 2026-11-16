@@ -8,6 +8,7 @@
 #include <QObject>
 #include <QtQmlIntegration/qqmlintegration.h>
 
+#include "BulkTagEditor.hpp"
 #include "Connection.hpp"
 #include "Library.hpp"
 #include "LibraryView.hpp"
@@ -85,6 +86,14 @@ struct ForeignTagEditor
     Q_GADGET
     QML_FOREIGN(pictorio::tag_editor::TagEditor)
     QML_NAMED_ELEMENT(TagEditor)
+    QML_UNCREATABLE("Provided by AppManager")
+};
+
+struct ForeignBulkTagEditor
+{
+    Q_GADGET
+    QML_FOREIGN(pictorio::tag_editor::BulkTagEditor)
+    QML_NAMED_ELEMENT(BulkTagEditor)
     QML_UNCREATABLE("Provided by AppManager")
 };
 

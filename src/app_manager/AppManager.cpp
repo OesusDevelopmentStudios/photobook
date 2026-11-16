@@ -72,6 +72,7 @@ AppManager::AppManager(QObject* parent)
     , m_library(library::createLibrary(m_connection.get()))
     , m_libraryView(library_view::createLibraryView(m_settings.get()))
     , m_tagEditor(tag_editor::createTagEditor(m_connection.get()))
+    , m_bulkTagEditor(tag_editor::createBulkTagEditor(m_connection.get()))
     , m_serverCredentials(std::make_shared<network_access::ServerCredentials>())
     , m_networkAccessFactory(network_access::createNetworkAccessFactory(
           m_serverCredentials,
@@ -84,6 +85,15 @@ AppManager::AppManager(QObject* parent)
     connect(m_navigator.get(), &navigator::Navigator::imageRequested, this, [this]() {
         m_tagEditor->setImage(std::nullopt);
     });
+
+    // Tags for many images at once: the selected ones, and each as the server has it after the change.
+    connect(m_library.get(), &library::Library::selectionChanged, this, [this]() {
+        m_bulkTagEditor->setImages(m_library->selectedImages());
+    });
+    connect(m_bulkTagEditor.get(),
+            &tag_editor::BulkTagEditor::imageUpdated,
+            m_library.get(),
+            &library::Library::replaceImage);
 
     // Saved tags: the grid and the viewer show the image as the server answered.
     connect(m_tagEditor.get(), &tag_editor::TagEditor::saved, this, [this](const server_client::Image& image) {
@@ -144,6 +154,11 @@ library_view::LibraryView* AppManager::libraryView() const
 tag_editor::TagEditor* AppManager::tagEditor() const
 {
     return m_tagEditor.get();
+}
+
+tag_editor::BulkTagEditor* AppManager::bulkTagEditor() const
+{
+    return m_bulkTagEditor.get();
 }
 
 QQmlNetworkAccessManagerFactory* AppManager::networkAccessFactory() const

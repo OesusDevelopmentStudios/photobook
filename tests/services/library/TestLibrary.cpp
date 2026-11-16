@@ -396,6 +396,7 @@ void TestLibrary::selectsARange()
     m_library->selectRange(0, false);
 
     QCOMPARE(m_library->selectedImageIds(), QList<int>({1, 2, 3}));  // in the order of the results
+    QCOMPARE(m_library->selectedImages().last().originalFilename, QStringLiteral("photo_3.jpg"));
 
     m_library->selectRange(1, false);
     QCOMPARE(m_library->selectedImageIds(), QList<int>({2, 3}));  // the range still starts at the third

@@ -49,6 +49,8 @@ QVariant NamespaceRows::data(const QModelIndex& index, int role) const
         return row.dropdown;
     case FixedValuesRole:
         return row.fixedValues;
+    case KeepableRole:
+        return row.keepable;
     case OptionsRole:
         return row.options;
     case ValueRole:
@@ -68,6 +70,7 @@ QHash<int, QByteArray> NamespaceRows::roleNames() const
         {NamespaceRole, "namespaceName"},
         {DropdownRole, "dropdown"},
         {FixedValuesRole, "fixedValues"},
+        {KeepableRole, "keepable"},
         {OptionsRole, "options"},
         {ValueRole, "value"},
         {ChangedRole, "changed"},

@@ -207,15 +207,26 @@ int Library::selectedCount() const
 QList<int> Library::selectedImageIds() const
 {
     QList<int> imageIds;
+    for (const server_client::Image& image : selectedImages())
+    {
+        imageIds.append(image.id);
+    }
+
+    return imageIds;
+}
+
+QList<server_client::Image> Library::selectedImages() const
+{
+    QList<server_client::Image> images;
     for (const server_client::Image& image : m_images)
     {
         if (m_selectedImageIds.contains(image.id))
         {
-            imageIds.append(image.id);
+            images.append(image);
         }
     }
 
-    return imageIds;
+    return images;
 }
 
 // The tiles whose selection changed are told, from the first to the last of them.

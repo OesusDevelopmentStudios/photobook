@@ -25,10 +25,11 @@ public:
         QString namespaceName;
         bool dropdown = false;     // a built-in one-tag namespace: one tag or none, chosen from `options`
         bool fixedValues = false;  // only `options` may be chosen, e.g. the ratings
+        bool keepable = false;     // the dropdown offers "keep as is" first, for many images at once
         QStringList options;       // for a dropdown: the names to choose from
         QString value;             // for a dropdown: the name after the changes; empty: none
-        bool changed = false;      // for a dropdown: the value differs from the image's
-        QVariantList tags;         // {"tag", "name", "change"} of each tag in the namespace
+        bool changed = false;      // for a dropdown: the value differs from the image's, or is not kept as is
+        QVariantList tags;         // {"tag", "name", "change", and for many images "count"} of each tag
 
         bool operator==(const Row&) const = default;
     };
@@ -38,6 +39,7 @@ public:
         NamespaceRole = Qt::UserRole + 1,
         DropdownRole,
         FixedValuesRole,
+        KeepableRole,
         OptionsRole,
         ValueRole,
         ChangedRole,
