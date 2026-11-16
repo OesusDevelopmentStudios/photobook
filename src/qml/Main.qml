@@ -46,6 +46,10 @@ Kirigami.ApplicationWindow {
 
     // Back to the library if it is in the page stack; otherwise it comes in place of the current page.
     function showLibrary() {
+        afterTagChangesSettled(showLibraryNow);
+    }
+
+    function showLibraryNow() {
         const pages = pageStack.items;
         for (let index = pages.length - 1; index >= 0; --index) {
             if (pages[index] instanceof LibraryPage) {
@@ -56,10 +60,67 @@ Kirigami.ApplicationWindow {
         pageStack.replace(libraryPage);
     }
 
+    // Unsaved tag changes would be lost on leaving the viewer: the user saves or drops them first, or stays.
+    property var actionAfterTagChanges: null
+
+    function afterTagChangesSettled(action) {
+        if (!appManager.tagEditor.hasChanges) {
+            action();
+            return;
+        }
+
+        actionAfterTagChanges = action;
+        unsavedTagsDialog.open();
+    }
+
     // On top of the current page, so going back returns to it.
     function showViewer() {
         if (!(pageStack.currentItem instanceof ViewerPage)) {
             pageStack.push(viewerPage);
+        }
+    }
+
+    onClosing: close => {
+        if (appManager.tagEditor.hasChanges) {
+            close.accepted = false;
+            afterTagChangesSettled(() => root.close());
+        }
+    }
+
+    Kirigami.PromptDialog {
+        id: unsavedTagsDialog
+
+        title: KI18n.i18nc("@title:window", "Unsaved Tags")
+        subtitle: KI18n.i18nc("@info", "Save the changes to this image's tags?")
+        standardButtons: Kirigami.Dialog.Save | Kirigami.Dialog.Discard | Kirigami.Dialog.Cancel
+
+        onAccepted: root.appManager.tagEditor.save()  // the action follows once saved
+        onDiscarded: {
+            root.appManager.tagEditor.cancel();
+            close();
+            root.runActionAfterTagChanges();
+        }
+        onRejected: root.actionAfterTagChanges = null
+    }
+
+    function runActionAfterTagChanges() {
+        const action = actionAfterTagChanges;
+        actionAfterTagChanges = null;
+        action?.();
+    }
+
+    // Saved: on with what the user wanted. Refused: the user stays, with the reason in the details footer.
+    Connections {
+        target: root.appManager.tagEditor
+
+        function onSaved() {
+            root.runActionAfterTagChanges();
+        }
+
+        function onErrorMessageChanged() {
+            if (root.appManager.tagEditor.errorMessage.length > 0) {
+                root.actionAfterTagChanges = null;
+            }
         }
     }
 
@@ -100,6 +161,7 @@ Kirigami.ApplicationWindow {
             tagEditor: root.appManager.tagEditor
             onServerPageRequested: root.showServerPage()
             onLibraryRequested: root.showLibrary()
+            onLeaveRequested: root.afterTagChangesSettled(() => root.pageStack.pop())
         }
     }
 

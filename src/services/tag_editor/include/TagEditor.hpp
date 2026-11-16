@@ -62,7 +62,7 @@ public:
 
     bool canEdit() const;
     bool isEditing() const;
-    bool hasChanges() const;
+    bool hasChanges() const;  // also a tag typed but not added yet: save() adds it
     bool isSaving() const;
     // While editing: the tags by namespace, each with its change (a Change, as a number):
     // a list of {"namespace": "general", "tags": [{"tag": "general:beach", "name": "beach", "change": 1}]}

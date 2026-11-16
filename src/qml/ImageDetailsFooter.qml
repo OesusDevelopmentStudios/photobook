@@ -229,6 +229,17 @@ Rectangle {
         placeholderText: KI18n.i18nc("@info:placeholder", "A tag, e.g. author:sample_artist")
         enabled: !tagEditor.saving
         onTextChanged: suggestions.typedText = text
+
+        // The editor may clear the text itself: on Cancel, or when Save has added it.
+        Connections {
+            target: field.suggestions
+
+            function onTypedTextChanged() {
+                if (field.text !== field.suggestions.typedText) {
+                    field.text = field.suggestions.typedText;
+                }
+            }
+        }
         onAccepted: add(suggestionList.currentIndex >= 0 ? suggestions.tagAt(suggestionList.currentIndex) : text)
         onVisibleChanged: {
             if (visible) {

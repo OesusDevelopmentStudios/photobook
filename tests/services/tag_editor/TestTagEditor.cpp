@@ -94,6 +94,10 @@ private Q_SLOTS:
     void dropsAnAddedTagWhenRemoved();
     void keepsTheChangesWhenTheServerRefuses();
     void anotherImageEndsEditing();
+    void countsTypedTextAsAChange();
+    void savesTheTypedTagToo();
+    void doesNotSaveARefusedTypedTag();
+    void cancelClearsTheTypedText();
 
 private:
     void startEditingTheBeachPhoto();
@@ -327,6 +331,57 @@ void TestTagEditor::anotherImageEndsEditing()
     m_editor->setImage(another);
 
     QVERIFY(!m_editor->isEditing());
+    QVERIFY(!m_editor->hasChanges());
+}
+
+// Typed, not added yet: going on would lose it as well.
+void TestTagEditor::countsTypedTextAsAChange()
+{
+    startEditingTheBeachPhoto();
+    QSignalSpy changesChanged(m_editor.get(), &TagEditor::changesChanged);
+
+    m_editor->suggestions()->setTypedText(QStringLiteral("author:example"));
+
+    QVERIFY(m_editor->hasChanges());
+    QVERIFY(changesChanged.count() > 0);
+}
+
+void TestTagEditor::savesTheTypedTagToo()
+{
+    startEditingTheBeachPhoto();
+    m_editor->removeTag(QStringLiteral("general:summer"));
+    m_editor->suggestions()->setTypedText(QStringLiteral("Sunset"));
+    QSignalSpy saved(m_editor.get(), &TagEditor::saved);
+
+    m_editor->save();
+
+    QTRY_COMPARE(saved.count(), 1);
+    const QJsonObject body = QJsonDocument::fromJson(m_server->requestsTo("PATCH", imageUrl).first().body).object();
+    QCOMPARE(body.value(QStringLiteral("add_tags")).toArray(), QJsonArray{QStringLiteral("general:sunset")});
+    QVERIFY(m_editor->suggestions()->typedText().isEmpty());
+}
+
+void TestTagEditor::doesNotSaveARefusedTypedTag()
+{
+    startEditingTheBeachPhoto();
+    m_editor->suggestions()->setTypedText(QStringLiteral("rating:nsfw"));
+
+    m_editor->save();
+
+    QVERIFY(m_editor->errorMessage().contains(QStringLiteral("rating:nsfw")));
+    QVERIFY(m_editor->isEditing());
+    QVERIFY(m_server->requestsTo("PATCH", imageUrl).isEmpty());
+    QCOMPARE(m_editor->suggestions()->typedText(), QStringLiteral("rating:nsfw"));  // to correct it
+}
+
+void TestTagEditor::cancelClearsTheTypedText()
+{
+    startEditingTheBeachPhoto();
+    m_editor->suggestions()->setTypedText(QStringLiteral("beach"));
+
+    m_editor->cancel();
+
+    QVERIFY(m_editor->suggestions()->typedText().isEmpty());
     QVERIFY(!m_editor->hasChanges());
 }
 

@@ -25,6 +25,14 @@ Kirigami.Page {
 
     signal serverPageRequested()
     signal libraryRequested()
+    signal leaveRequested()  // back, while there are unsaved tag changes; the window asks first
+
+    onBackRequested: event => {
+        if (tagEditor.hasChanges) {
+            event.accepted = true;  // the page stays until the changes are saved or dropped
+            leaveRequested();
+        }
+    }
 
     readonly property bool presenting: slideshow.running
     // Unsaved tag changes are saved or dropped first; stepping on would lose them.

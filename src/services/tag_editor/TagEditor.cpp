@@ -106,7 +106,15 @@ TagEditor::TagEditor(connection::Connection* connection, QObject* parent)
     , m_suggestions(std::make_unique<TagSuggestions>(connection))
     , m_namespaceNames(builtinNamespaces)
     , m_singleValueNamespaces(builtinSingleValueNamespaces)
-{}
+{
+    // A tag typed but not added yet counts as a change too.
+    connect(m_suggestions.get(), &TagSuggestions::typedTextChanged, this, [this]() {
+        if (m_editing)
+        {
+            Q_EMIT changesChanged();
+        }
+    });
+}
 
 TagEditor::~TagEditor() = default;
 
@@ -224,6 +232,18 @@ void TagEditor::save()
         return;
     }
 
+    // Typed, not added yet: added now, as the user expects it saved. Refused: nothing is saved.
+    const QString typedTag = m_suggestions->typedText().trimmed();
+    if (!typedTag.isEmpty())
+    {
+        if (!addTag(typedTag))
+        {
+            return;
+        }
+
+        m_suggestions->setTypedText({});
+    }
+
     if (!hasChanges())
     {
         endEditing();
@@ -280,7 +300,7 @@ bool TagEditor::isEditing() const
 
 bool TagEditor::hasChanges() const
 {
-    return !m_additions.isEmpty() || !m_removals.isEmpty();
+    return !m_additions.isEmpty() || !m_removals.isEmpty() || !m_suggestions->typedText().trimmed().isEmpty();
 }
 
 bool TagEditor::isSaving() const
