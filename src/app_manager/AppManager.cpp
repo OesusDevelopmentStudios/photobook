@@ -18,6 +18,45 @@
 #include "ViewTransformFactory.hpp"
 #include "ViewerFactory.hpp"
 
+namespace
+{
+
+using pictorio::server_client::TakenAtSource;
+using pictorio::viewer::Viewer;
+
+Viewer::TakenAtSource takenAtSourceFor(TakenAtSource source)
+{
+    switch (source)
+    {
+    case TakenAtSource::Exif:
+        return Viewer::TakenAtSource::Photo;
+    case TakenAtSource::FileMtime:
+        return Viewer::TakenAtSource::FileDate;
+    case TakenAtSource::ImportTime:
+        break;
+    }
+
+    return Viewer::TakenAtSource::ImportTime;
+}
+
+// The details the viewer shows with a library image
+Viewer::ImageDetails detailsOf(const pictorio::server_client::Image& image)
+{
+    Viewer::ImageDetails details;
+    details.fileName = image.originalFilename;
+    details.displaySize = QSize(image.width, image.height);
+    details.mimeType = image.mimeType;
+    details.fileSize = image.fileSize;
+    details.takenAt = image.takenAt;
+    details.takenAtSource = takenAtSourceFor(image.takenAtSource);
+    details.importedAt = image.importedAt;
+    details.location = image.storagePath;
+    details.tags = image.tags;
+    return details;
+}
+
+}  // namespace
+
 namespace pictorio::app_manager
 {
 
@@ -117,10 +156,7 @@ void AppManager::showLibraryImage(int row)
         return;
     }
 
-    m_viewer->openServerImage(m_connection->client()->imageFileUrl(image->id),
-                              image->originalFilename,
-                              QSize(image->width, image->height),
-                              image->mimeType);
+    m_viewer->openServerImage(m_connection->client()->imageFileUrl(image->id), detailsOf(*image));
 }
 
 }  // namespace pictorio::app_manager

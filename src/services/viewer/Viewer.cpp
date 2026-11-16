@@ -6,14 +6,33 @@
 #include "Viewer.hpp"
 
 #include <QFileInfo>
+#include <QVariantMap>
 
 namespace
 {
+
+using pictorio::viewer::Viewer;
 
 // Formats whose files may hold an animation. Only the file itself can tell; a still one shows as well.
 bool mayBeAnimated(const QString& mimeType)
 {
     return mimeType == QLatin1String("image/gif") || mimeType == QLatin1String("image/webp");
+}
+
+// The details a local file gives
+Viewer::ImageDetails detailsOf(const pictorio::image_loader::ImageInfo& imageInfo)
+{
+    const QFileInfo file(imageInfo.filePath);
+    Viewer::ImageDetails details;
+    details.fileName = file.fileName();
+    details.displaySize = imageInfo.displaySize;
+    details.mimeType = imageInfo.mimeType;
+    details.fileSize = file.size();
+    details.takenAt = imageInfo.captureDate;
+    details.takenAtSource =
+        imageInfo.captureDate.isValid() ? Viewer::TakenAtSource::Photo : Viewer::TakenAtSource::Unknown;
+    details.location = file.path();
+    return details;
 }
 
 }  // namespace
@@ -35,7 +54,7 @@ void Viewer::openImage(const QString& filePath)
     m_fileName = QFileInfo(filePath).fileName();
     if (result.has_value())
     {
-        m_currentImage = ShownImage{QUrl::fromLocalFile(result->filePath), result->displaySize, result->animated};
+        m_currentImage = ShownImage{QUrl::fromLocalFile(result->filePath), result->animated, false, detailsOf(*result)};
         m_errorMessage.clear();
     }
     else
@@ -47,13 +66,10 @@ void Viewer::openImage(const QString& filePath)
     Q_EMIT currentImageChanged();
 }
 
-void Viewer::openServerImage(const QUrl& fileUrl,
-                             const QString& fileName,
-                             const QSize& displaySize,
-                             const QString& mimeType)
+void Viewer::openServerImage(const QUrl& fileUrl, const ImageDetails& details)
 {
-    m_fileName = fileName;
-    m_currentImage = ShownImage{fileUrl, displaySize, mayBeAnimated(mimeType)};
+    m_fileName = details.fileName;
+    m_currentImage = ShownImage{fileUrl, mayBeAnimated(details.mimeType), true, details};
     m_errorMessage.clear();
     Q_EMIT currentImageChanged();
 }
@@ -75,7 +91,7 @@ QUrl Viewer::imageSource() const
 
 QSize Viewer::imageDisplaySize() const
 {
-    return hasImage() ? m_currentImage->displaySize : QSize();
+    return hasImage() ? m_currentImage->details.displaySize : QSize();
 }
 
 bool Viewer::imageAnimated() const
@@ -86,6 +102,74 @@ bool Viewer::imageAnimated() const
 QString Viewer::errorMessage() const
 {
     return m_errorMessage;
+}
+
+bool Viewer::isFromLibrary() const
+{
+    return hasImage() && m_currentImage->fromLibrary;
+}
+
+QString Viewer::mimeType() const
+{
+    return hasImage() ? m_currentImage->details.mimeType : QString();
+}
+
+qint64 Viewer::fileSize() const
+{
+    return hasImage() ? m_currentImage->details.fileSize : 0;
+}
+
+QDateTime Viewer::takenAt() const
+{
+    return hasImage() ? m_currentImage->details.takenAt : QDateTime();
+}
+
+Viewer::TakenAtSource Viewer::takenAtSource() const
+{
+    return hasImage() ? m_currentImage->details.takenAtSource : TakenAtSource::Unknown;
+}
+
+QDateTime Viewer::importedAt() const
+{
+    return hasImage() ? m_currentImage->details.importedAt : QDateTime();
+}
+
+QString Viewer::location() const
+{
+    return hasImage() ? m_currentImage->details.location : QString();
+}
+
+// The server sorts the tags by namespace, so each namespace's tags are next to each other.
+QVariantList Viewer::tagGroups() const
+{
+    QVariantList groups;
+    QString groupNamespace;
+    QStringList groupNames;
+    const auto finishGroup = [&]() {
+        if (!groupNames.isEmpty())
+        {
+            groups.append(
+                QVariantMap{{QStringLiteral("namespace"), groupNamespace}, {QStringLiteral("names"), groupNames}});
+        }
+    };
+
+    const QStringList tags = hasImage() ? m_currentImage->details.tags : QStringList();
+    for (const QString& tag : tags)
+    {
+        const qsizetype colon = tag.indexOf(QLatin1Char(':'));
+        const QString namespaceName = tag.left(qMax(colon, 0));
+        if (namespaceName != groupNamespace)
+        {
+            finishGroup();
+            groupNamespace = namespaceName;
+            groupNames.clear();
+        }
+
+        groupNames.append(tag.mid(colon + 1));
+    }
+
+    finishGroup();
+    return groups;
 }
 
 }  // namespace pictorio::viewer

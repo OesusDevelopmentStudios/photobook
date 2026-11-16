@@ -8,6 +8,7 @@
 #include <KLocalizedString>
 #include <QSignalSpy>
 #include <QTest>
+#include <QTimeZone>
 
 #include "Viewer.hpp"
 #include "ViewerFactory.hpp"
@@ -47,6 +48,27 @@ ImageInfo landscapePhoto()
     return imageInfo;
 }
 
+const QUrl serverFileUrl(QStringLiteral("https://photos.example.org/api/v1/images/5/file"));
+
+// As the library gives it: portrait, with tags sorted by namespace
+pictorio::viewer::Viewer::ImageDetails libraryPhoto()
+{
+    pictorio::viewer::Viewer::ImageDetails details;
+    details.fileName = QStringLiteral("beach.jpg");
+    details.displaySize = QSize(3000, 4000);
+    details.mimeType = QStringLiteral("image/jpeg");
+    details.fileSize = 3100000;
+    details.takenAt = QDateTime(QDate(2025, 7, 14), QTime(18, 3));
+    details.takenAtSource = pictorio::viewer::Viewer::TakenAtSource::FileDate;
+    details.importedAt = QDateTime(QDate(2026, 11, 15), QTime(19, 22), QTimeZone::UTC);
+    details.location = QStringLiteral("photo/sample_artist/2025/beach_aaaaaaaa.jpg");
+    details.tags = QStringList{QStringLiteral("author:sample_artist"),
+                               QStringLiteral("category:photo"),
+                               QStringLiteral("general:beach"),
+                               QStringLiteral("general:summer")};
+    return details;
+}
+
 }  // namespace
 
 namespace pictorio::viewer
@@ -71,6 +93,12 @@ private Q_SLOTS:
     void mayAnimateServerImages_data();
     void mayAnimateServerImages();
     void clearsErrorWhenServerImageOpens();
+
+    void givesTheDetailsOfALocalFile();
+    void knowsWhenALocalFileHasNoDate();
+    void givesTheDetailsOfALibraryImage();
+    void groupsTagsByNamespace();
+    void forgetsTheDetailsWhenAnImageCannotBeOpened();
 
 private:
     std::unique_ptr<Viewer> m_viewer;
@@ -159,14 +187,13 @@ void TestViewer::notifiesOncePerOpen()
 void TestViewer::opensServerImage()
 {
     QSignalSpy changeSpy(m_viewer.get(), &Viewer::currentImageChanged);
-    const QUrl fileUrl(QStringLiteral("https://photos.example.org/api/v1/images/5/file"));
 
-    m_viewer->openServerImage(fileUrl, QStringLiteral("beach.jpg"), QSize(3000, 4000), QStringLiteral("image/jpeg"));
+    m_viewer->openServerImage(serverFileUrl, libraryPhoto());
 
     QVERIFY(m_imageLoader->requestedPaths.isEmpty());  // nothing on this computer
     QVERIFY(m_viewer->hasImage());
     QCOMPARE(m_viewer->fileName(), QStringLiteral("beach.jpg"));
-    QCOMPARE(m_viewer->imageSource(), fileUrl);
+    QCOMPARE(m_viewer->imageSource(), serverFileUrl);
     QCOMPARE(m_viewer->imageDisplaySize(), QSize(3000, 4000));
     QVERIFY(!m_viewer->imageAnimated());
     QCOMPARE(changeSpy.count(), 1);
@@ -187,11 +214,10 @@ void TestViewer::mayAnimateServerImages()
 {
     QFETCH(QString, mimeType);
     QFETCH(bool, animated);
+    Viewer::ImageDetails details = libraryPhoto();
+    details.mimeType = mimeType;
 
-    m_viewer->openServerImage(QUrl(QStringLiteral("https://photos.example.org/api/v1/images/5/file")),
-                              QStringLiteral("waves"),
-                              QSize(400, 300),
-                              mimeType);
+    m_viewer->openServerImage(serverFileUrl, details);
 
     QCOMPARE(m_viewer->imageAnimated(), animated);
 }
@@ -201,13 +227,76 @@ void TestViewer::clearsErrorWhenServerImageOpens()
     m_imageLoader->nextResult = std::unexpected(ImageLoadError::FileNotFound);
     m_viewer->openImage(QStringLiteral("/photos/missing.jpg"));
 
-    m_viewer->openServerImage(QUrl(QStringLiteral("https://photos.example.org/api/v1/images/5/file")),
-                              QStringLiteral("beach.jpg"),
-                              QSize(4000, 3000),
-                              QStringLiteral("image/jpeg"));
+    m_viewer->openServerImage(serverFileUrl, libraryPhoto());
 
     QVERIFY(m_viewer->hasImage());
     QVERIFY(m_viewer->errorMessage().isEmpty());
+}
+
+void TestViewer::givesTheDetailsOfALocalFile()
+{
+    ImageInfo photo = landscapePhoto();
+    photo.captureDate = QDateTime(QDate(2025, 7, 14), QTime(18, 3));
+    m_imageLoader->nextResult = photo;
+
+    m_viewer->openImage(QStringLiteral("/photos/beach.jpg"));
+
+    QVERIFY(!m_viewer->isFromLibrary());
+    QCOMPARE(m_viewer->mimeType(), QStringLiteral("image/jpeg"));
+    QCOMPARE(m_viewer->takenAt(), photo.captureDate);
+    QCOMPARE(m_viewer->takenAtSource(), Viewer::TakenAtSource::Photo);
+    QVERIFY(!m_viewer->importedAt().isValid());
+    QCOMPARE(m_viewer->location(), QStringLiteral("/photos"));
+    QVERIFY(m_viewer->tagGroups().isEmpty());
+}
+
+void TestViewer::knowsWhenALocalFileHasNoDate()
+{
+    m_imageLoader->nextResult = landscapePhoto();
+
+    m_viewer->openImage(QStringLiteral("/photos/beach.jpg"));
+
+    QVERIFY(!m_viewer->takenAt().isValid());
+    QCOMPARE(m_viewer->takenAtSource(), Viewer::TakenAtSource::Unknown);
+}
+
+void TestViewer::givesTheDetailsOfALibraryImage()
+{
+    m_viewer->openServerImage(serverFileUrl, libraryPhoto());
+
+    QVERIFY(m_viewer->isFromLibrary());
+    QCOMPARE(m_viewer->fileSize(), Q_INT64_C(3100000));
+    QCOMPARE(m_viewer->takenAtSource(), Viewer::TakenAtSource::FileDate);
+    QCOMPARE(m_viewer->importedAt(), QDateTime(QDate(2026, 11, 15), QTime(19, 22), QTimeZone::UTC));
+    QCOMPARE(m_viewer->location(), QStringLiteral("photo/sample_artist/2025/beach_aaaaaaaa.jpg"));
+}
+
+void TestViewer::groupsTagsByNamespace()
+{
+    m_viewer->openServerImage(serverFileUrl, libraryPhoto());
+
+    const QVariantList groups = m_viewer->tagGroups();
+
+    QCOMPARE(groups.size(), 3);
+    QCOMPARE(groups.at(0).toMap().value(QStringLiteral("namespace")).toString(), QStringLiteral("author"));
+    QCOMPARE(groups.at(0).toMap().value(QStringLiteral("names")).toStringList(),
+             QStringList{QStringLiteral("sample_artist")});
+    QCOMPARE(groups.at(1).toMap().value(QStringLiteral("namespace")).toString(), QStringLiteral("category"));
+    QCOMPARE(groups.at(2).toMap().value(QStringLiteral("namespace")).toString(), QStringLiteral("general"));
+    QCOMPARE(groups.at(2).toMap().value(QStringLiteral("names")).toStringList(),
+             QStringList({QStringLiteral("beach"), QStringLiteral("summer")}));
+}
+
+void TestViewer::forgetsTheDetailsWhenAnImageCannotBeOpened()
+{
+    m_viewer->openServerImage(serverFileUrl, libraryPhoto());
+    m_imageLoader->nextResult = std::unexpected(ImageLoadError::FileNotFound);
+
+    m_viewer->openImage(QStringLiteral("/photos/missing.jpg"));
+
+    QVERIFY(!m_viewer->isFromLibrary());
+    QVERIFY(m_viewer->tagGroups().isEmpty());
+    QVERIFY(m_viewer->location().isEmpty());
 }
 
 }  // namespace pictorio::viewer
