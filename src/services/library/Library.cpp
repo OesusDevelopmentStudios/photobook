@@ -157,6 +157,96 @@ void Library::replaceImage(const server_client::Image& image)
     Q_EMIT dataChanged(changed, changed);
 }
 
+void Library::toggleSelected(int row)
+{
+    const std::optional<server_client::Image> image = imageAt(row);
+    if (!image.has_value())
+    {
+        return;
+    }
+
+    QSet<int> selection = m_selectedImageIds;
+    if (!selection.remove(image->id))
+    {
+        selection.insert(image->id);
+    }
+
+    m_rangeStartRow = row;
+    setSelection(selection);
+}
+
+void Library::selectRange(int row, bool addToSelection)
+{
+    if (row < 0 || row >= count())
+    {
+        return;
+    }
+
+    const int start = m_rangeStartRow >= 0 ? m_rangeStartRow : row;  // no start yet: this image alone
+    QSet<int> selection = addToSelection ? m_selectedImageIds : QSet<int>();
+    for (int rangeRow = std::min(start, row); rangeRow <= std::max(start, row); ++rangeRow)
+    {
+        selection.insert(m_images.at(rangeRow).id);
+    }
+
+    m_rangeStartRow = start;
+    setSelection(selection);
+}
+
+void Library::clearSelection()
+{
+    m_rangeStartRow = -1;
+    setSelection({});
+}
+
+int Library::selectedCount() const
+{
+    return static_cast<int>(m_selectedImageIds.size());
+}
+
+QList<int> Library::selectedImageIds() const
+{
+    QList<int> imageIds;
+    for (const server_client::Image& image : m_images)
+    {
+        if (m_selectedImageIds.contains(image.id))
+        {
+            imageIds.append(image.id);
+        }
+    }
+
+    return imageIds;
+}
+
+// The tiles whose selection changed are told, from the first to the last of them.
+void Library::setSelection(const QSet<int>& imageIds)
+{
+    if (imageIds == m_selectedImageIds)
+    {
+        return;
+    }
+
+    const QSet<int> changed = (imageIds - m_selectedImageIds) + (m_selectedImageIds - imageIds);
+    m_selectedImageIds = imageIds;
+    int firstRow = -1;
+    int lastRow = -1;
+    for (int row = 0; row < count(); ++row)
+    {
+        if (changed.contains(m_images.at(row).id))
+        {
+            firstRow = firstRow < 0 ? row : firstRow;
+            lastRow = row;
+        }
+    }
+
+    if (firstRow >= 0)
+    {
+        Q_EMIT dataChanged(index(firstRow), index(lastRow), {SelectedRole});
+    }
+
+    Q_EMIT selectionChanged();
+}
+
 int Library::rowCount(const QModelIndex& parent) const
 {
     return parent.isValid() ? 0 : count();
@@ -187,6 +277,8 @@ QVariant Library::data(const QModelIndex& index, int role) const
         return image.width;
     case HeightRole:
         return image.height;
+    case SelectedRole:
+        return m_selectedImageIds.contains(image.id);
     default:
         return {};
     }
@@ -202,6 +294,7 @@ QHash<int, QByteArray> Library::roleNames() const
         {TakenAtRole, "takenAt"},
         {WidthRole, "imageWidth"},
         {HeightRole, "imageHeight"},
+        {SelectedRole, "selected"},
     };
 }
 
@@ -296,12 +389,20 @@ void Library::clearImages()
 {
     m_nextCursor.clear();
     m_complete = true;
+    const bool hadSelection = !m_selectedImageIds.isEmpty();
+    m_selectedImageIds.clear();  // the new results start without a selection
+    m_rangeStartRow = -1;
     if (!m_images.isEmpty())
     {
         beginResetModel();
         m_images.clear();
         endResetModel();
         Q_EMIT countChanged();
+    }
+
+    if (hadSelection)
+    {
+        Q_EMIT selectionChanged();
     }
 }
 

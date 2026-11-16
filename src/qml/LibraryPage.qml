@@ -109,6 +109,12 @@ Kirigami.Page {
     }
 
     Kirigami.Action {
+        shortcut: "Escape"
+        enabled: page.loggedIn && page.isCurrentPage && page.library.selectedCount > 0
+        onTriggered: page.library.clearSelection()
+    }
+
+    Kirigami.Action {
         shortcut: StandardKey.Find
         enabled: page.loggedIn && page.isCurrentPage
         onTriggered: {
@@ -240,6 +246,8 @@ Kirigami.Page {
                     thumbnailSize: grid.thumbnailSize
                     useLargeThumbnail: grid.largeThumbnails
                     onOpenRequested: row => page.imageOpenRequested(row)
+                    onSelectionToggled: row => page.library.toggleSelected(row)
+                    onRangeSelected: (row, addToSelection) => page.library.selectRange(row, addToSelection)
                 }
 
                 footer: Item {

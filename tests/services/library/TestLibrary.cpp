@@ -73,6 +73,14 @@ private Q_SLOTS:
     void hasNoTotalIfTheServerCannotCount();
     void replacesAnImageAfterItChanged();
 
+    void togglesTheSelectionOfAnImage();
+    void selectsARange();
+    void addsARangeToTheSelection();
+    void startsARangeAtTheClickedImage();
+    void keepsTheSelectionWhilePagesLoad();
+    void emptiesTheSelectionForANewSearch();
+    void tellsTheTilesWhoseSelectionChanged();
+
 private:
     void logIn();
     QList<HttpRequest> searches() const;
@@ -358,6 +366,109 @@ void TestLibrary::replacesAnImageAfterItChanged()
     notShown.id = 99;
     m_library->replaceImage(notShown);
     QCOMPARE(dataChanged.count(), 1);  // not in the results: nothing changes
+}
+
+// Ctrl+click
+void TestLibrary::togglesTheSelectionOfAnImage()
+{
+    logIn();
+    QTRY_COMPARE(m_library->count(), 2);
+    QSignalSpy selectionChanged(m_library.get(), &Library::selectionChanged);
+
+    m_library->toggleSelected(1);
+    QCOMPARE(m_library->selectedImageIds(), QList<int>{2});
+    QVERIFY(m_library->data(m_library->index(1), Library::SelectedRole).toBool());
+
+    m_library->toggleSelected(1);
+    QCOMPARE(m_library->selectedCount(), 0);
+    QCOMPARE(selectionChanged.count(), 2);
+}
+
+// Shift+click: from where the range started, instead of the selection so far
+void TestLibrary::selectsARange()
+{
+    logIn();
+    QTRY_COMPARE(m_library->count(), 2);
+    m_library->loadMore();
+    QTRY_COMPARE(m_library->count(), 3);
+
+    m_library->toggleSelected(2);
+    m_library->selectRange(0, false);
+
+    QCOMPARE(m_library->selectedImageIds(), QList<int>({1, 2, 3}));  // in the order of the results
+
+    m_library->selectRange(1, false);
+    QCOMPARE(m_library->selectedImageIds(), QList<int>({2, 3}));  // the range still starts at the third
+}
+
+// Ctrl+Shift+click
+void TestLibrary::addsARangeToTheSelection()
+{
+    logIn();
+    QTRY_COMPARE(m_library->count(), 2);
+    m_library->loadMore();
+    QTRY_COMPARE(m_library->count(), 3);
+    m_library->toggleSelected(0);
+    m_library->toggleSelected(2);
+
+    m_library->selectRange(1, true);
+
+    QCOMPARE(m_library->selectedImageIds(), QList<int>({1, 2, 3}));
+}
+
+void TestLibrary::startsARangeAtTheClickedImage()
+{
+    logIn();
+    QTRY_COMPARE(m_library->count(), 2);
+
+    m_library->selectRange(1, false);  // no range started yet
+
+    QCOMPARE(m_library->selectedImageIds(), QList<int>{2});
+}
+
+void TestLibrary::keepsTheSelectionWhilePagesLoad()
+{
+    logIn();
+    QTRY_COMPARE(m_library->count(), 2);
+    m_library->toggleSelected(0);
+
+    m_library->loadMore();
+    QTRY_COMPARE(m_library->count(), 3);
+    server_client::Image retagged = *m_library->imageAt(0);
+    retagged.tags = {QStringLiteral("general:sunset")};
+    m_library->replaceImage(retagged);
+
+    QCOMPARE(m_library->selectedImageIds(), QList<int>{1});
+}
+
+void TestLibrary::emptiesTheSelectionForANewSearch()
+{
+    logIn();
+    QTRY_COMPARE(m_library->count(), 2);
+    m_library->toggleSelected(0);
+    QSignalSpy selectionChanged(m_library.get(), &Library::selectionChanged);
+
+    m_library->search(QStringLiteral("category:photo"));
+
+    QCOMPARE(m_library->selectedCount(), 0);
+    QCOMPARE(selectionChanged.count(), 1);
+}
+
+void TestLibrary::tellsTheTilesWhoseSelectionChanged()
+{
+    logIn();
+    QTRY_COMPARE(m_library->count(), 2);
+    m_library->loadMore();
+    QTRY_COMPARE(m_library->count(), 3);
+    m_library->toggleSelected(0);
+    QSignalSpy dataChanged(m_library.get(), &Library::dataChanged);
+
+    m_library->selectRange(2, false);  // the first stays, the second and third are new
+
+    QCOMPARE(dataChanged.count(), 1);
+    QCOMPARE(dataChanged.first().at(0).toModelIndex().row(), 1);
+    QCOMPARE(dataChanged.first().at(1).toModelIndex().row(), 2);
+    QCOMPARE(dataChanged.first().at(2).value<QList<int>>(), QList<int>{Library::SelectedRole});
 }
 
 }  // namespace pictorio::library

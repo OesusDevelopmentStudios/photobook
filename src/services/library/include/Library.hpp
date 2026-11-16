@@ -9,6 +9,7 @@
 
 #include <QAbstractListModel>
 #include <QList>
+#include <QSet>
 
 #include "ApiTypes.hpp"
 #include "Connection.hpp"
@@ -30,6 +31,7 @@ class Library : public QAbstractListModel
     Q_PROPERTY(QString effectiveQuery READ effectiveQuery NOTIFY effectiveQueryChanged)
     Q_PROPERTY(int count READ count NOTIFY countChanged)
     Q_PROPERTY(int totalCount READ totalCount NOTIFY totalCountChanged)
+    Q_PROPERTY(int selectedCount READ selectedCount NOTIFY selectionChanged)
 
 public:
     enum class Order
@@ -50,6 +52,7 @@ public:
         TakenAtRole,
         WidthRole,
         HeightRole,
+        SelectedRole,  // chosen for changing the tags of many images at once
     };
 
     static constexpr int pageSize = 100;
@@ -77,6 +80,16 @@ public:
     // The image with the same id gets this one's data, e.g. after its tags changed on the server.
     void replaceImage(const server_client::Image& image);
 
+    // Selecting images, as in Dolphin. The selection is kept by image, so it stays while pages load; a new
+    // search empties it.
+    Q_INVOKABLE void toggleSelected(int row);  // Ctrl+click; also where a range starts
+    // Shift+click: the images from where the last range started to this one; added to the selection, or
+    // instead of it.
+    Q_INVOKABLE void selectRange(int row, bool addToSelection);
+    Q_INVOKABLE void clearSelection();
+    int selectedCount() const;
+    QList<int> selectedImageIds() const;  // in the order of the results
+
     int rowCount(const QModelIndex& parent = {}) const override;
     QVariant data(const QModelIndex& index, int role) const override;
     QHash<int, QByteArray> roleNames() const override;
@@ -90,12 +103,14 @@ Q_SIGNALS:
     void effectiveQueryChanged();
     void countChanged();
     void totalCountChanged();
+    void selectionChanged();
 
 private:
     bool isLoggedIn() const;
     void loadPage(const QString& cursor);
     void loadTotalCount();
     void setTotalCount(int totalCount);
+    void setSelection(const QSet<int>& imageIds);
     void addPage(const server_client::ImagePage& page);
     void clearImages();
     void setLoading(bool loading);
@@ -114,6 +129,8 @@ private:
     QString m_errorMessage;
     QString m_effectiveQuery;
     int m_totalCount = -1;
+    QSet<int> m_selectedImageIds;
+    int m_rangeStartRow = -1;  // none yet
 };
 
 }  // namespace pictorio::library

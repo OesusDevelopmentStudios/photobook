@@ -11,8 +11,8 @@ import org.kde.kirigami as Kirigami
 import org.kde.ki18n
 
 // One image in the library grid, its thumbnail cropped square. Hovered, it is highlighted and shows its
-// details; clicked, it opens. Kept light, as many are made while scrolling: the details exist only while the
-// tile is hovered.
+// details; clicked, it opens; Ctrl+ and Shift+clicked, it is selected as in Dolphin. Kept light, as many are
+// made while scrolling: the details exist only while the tile is hovered.
 Item {
     id: tile
 
@@ -23,6 +23,7 @@ Item {
     required property date takenAt
     required property int imageWidth
     required property int imageHeight
+    required property bool selected
 
     // The size the grid's tiles were chosen at. The tile may stretch a little to fill its row, but the
     // thumbnail is decoded at this size, so stretching the window does not load every thumbnail again.
@@ -34,24 +35,42 @@ Item {
     readonly property real padding: Kirigami.Units.smallSpacing
 
     signal openRequested(int row)
+    signal selectionToggled(int row)                       // Ctrl+click
+    signal rangeSelected(int row, bool addToSelection)  // Shift+click; with Ctrl, added to the selection
 
     HoverHandler {
         id: hover
     }
 
-    // A tap, not the start of a scroll: the grid takes over a drag.
+    // Taps, not the start of a scroll: the grid takes over a drag. Each handler takes only its modifiers.
     TapHandler {
+        acceptedModifiers: Qt.NoModifier
         onTapped: tile.openRequested(tile.index)
     }
 
-    // As Breeze highlights a hovered item in a list
+    TapHandler {
+        acceptedModifiers: Qt.ControlModifier
+        onTapped: tile.selectionToggled(tile.index)
+    }
+
+    TapHandler {
+        acceptedModifiers: Qt.ShiftModifier
+        onTapped: tile.rangeSelected(tile.index, false)
+    }
+
+    TapHandler {
+        acceptedModifiers: Qt.ControlModifier | Qt.ShiftModifier
+        onTapped: tile.rangeSelected(tile.index, true)
+    }
+
+    // As Breeze highlights a hovered or a selected item in a list
     Rectangle {
         anchors.fill: parent
-        visible: hover.hovered
+        visible: hover.hovered || tile.selected
         radius: Kirigami.Units.cornerRadius
-        color: Qt.alpha(Kirigami.Theme.hoverColor, 0.3)
-        border.color: Kirigami.Theme.hoverColor
-        border.width: 1
+        color: tile.selected ? Qt.alpha(Kirigami.Theme.highlightColor, 0.5) : Qt.alpha(Kirigami.Theme.hoverColor, 0.3)
+        border.color: tile.selected ? Kirigami.Theme.highlightColor : Kirigami.Theme.hoverColor
+        border.width: tile.selected ? 2 : 1
     }
 
     // Shows until the thumbnail has loaded
@@ -70,6 +89,33 @@ Item {
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
             smooth: true
+        }
+    }
+
+    // Selected: tinted, so a selection reads at a glance next to a hovered tile
+    Rectangle {
+        anchors.fill: frame
+        visible: tile.selected
+        color: Qt.alpha(Kirigami.Theme.highlightColor, 0.25)
+    }
+
+    // Selected: a check in the corner as well
+    Rectangle {
+        anchors.top: frame.top
+        anchors.left: frame.left
+        anchors.margins: Kirigami.Units.smallSpacing
+        width: Kirigami.Units.iconSizes.small + Kirigami.Units.smallSpacing
+        height: width
+        radius: width / 2
+        visible: tile.selected
+        color: Kirigami.Theme.highlightColor
+
+        Kirigami.Icon {
+            anchors.centerIn: parent
+            width: Kirigami.Units.iconSizes.small
+            height: width
+            source: "checkmark"
+            color: Kirigami.Theme.highlightedTextColor
         }
     }
 
