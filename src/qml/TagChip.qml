@@ -13,27 +13,29 @@ Kirigami.Chip {
 
     required property var modelData  // {"tag", "name", "change", and for many images "count"}
     required property TagRowsEditor editor
-    readonly property bool added: modelData.change === TagRowsEditor.Change.Added
-    readonly property bool removed: modelData.change === TagRowsEditor.Change.Removed
+    // Not "added" and "removed": a property named removed would hide the Chip's removed() signal, and ✕ would
+    // do nothing.
+    readonly property bool isAdded: modelData.change === TagRowsEditor.Change.Added
+    readonly property bool isRemoved: modelData.change === TagRowsEditor.Change.Removed
 
     text: (modelData.count ?? 0) > 0
           ? KI18n.i18nc("@item %1 is a tag, %2 how many selected images have it", "%1 (%2)", modelData.name,
                         modelData.count)
           : modelData.name
-    icon.name: added ? "list-add" : ""
-    font.strikeout: removed
-    opacity: removed ? 0.6 : 1
-    closable: !removed
+    icon.name: isAdded ? "list-add" : ""
+    font.strikeout: isRemoved
+    opacity: isRemoved ? 0.6 : 1
+    closable: !isRemoved
     checkable: false
     enabled: !editor.busy
     onRemoved: editor.removeTag(modelData.tag)
     onClicked: {
-        if (removed) {
+        if (isRemoved) {
             editor.restoreTag(modelData.tag);
         }
     }
 
-    Controls.ToolTip.text: removed ? KI18n.i18nc("@info:tooltip", "Keep this tag") : ""
-    Controls.ToolTip.visible: removed && hovered
+    Controls.ToolTip.text: isRemoved ? KI18n.i18nc("@info:tooltip", "Keep this tag") : ""
+    Controls.ToolTip.visible: isRemoved && hovered
     Controls.ToolTip.delay: Kirigami.Units.toolTipDelay
 }

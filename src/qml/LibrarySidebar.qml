@@ -106,6 +106,8 @@ Rectangle {
                 spacing: Kirigami.Units.smallSpacing
 
                 Controls.RadioButton {
+                    id: randomOrder
+
                     Layout.fillWidth: true
                     text: KI18n.i18nc("@option:radio Sort order", "Random")
                     checked: sidebar.library.order === Library.Order.Random
@@ -113,7 +115,13 @@ Rectangle {
                     onToggled: sidebar.library.order = Library.Order.Random
                 }
 
+                // No taller than the radio button, so this row is spaced like the others
                 Controls.ToolButton {
+                    Layout.preferredHeight: randomOrder.implicitHeight
+                    Layout.preferredWidth: randomOrder.implicitHeight
+                    padding: 0
+                    icon.width: Kirigami.Units.iconSizes.small
+                    icon.height: Kirigami.Units.iconSizes.small
                     icon.name: "media-playlist-shuffle"
                     text: KI18n.i18nc("@action:button", "Shuffle Again")
                     display: Controls.AbstractButton.IconOnly
