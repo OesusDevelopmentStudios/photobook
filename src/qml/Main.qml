@@ -36,6 +36,9 @@ Kirigami.ApplicationWindow {
         return appManager.connection.state === Connection.State.NoServer ? welcomePage : libraryPage;
     }
 
+    // Back only: going forward again is a click on the same image or page.
+    pageStack.globalToolBar.showNavigationButtons: Kirigami.ApplicationHeaderStyle.ShowBackButton
+
     // One page at a time: side by side, the image would get only part of a wide window.
     pageStack.columnView.columnResizeMode: Kirigami.ColumnView.SingleColumn
 

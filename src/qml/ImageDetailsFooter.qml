@@ -73,6 +73,14 @@ Rectangle {
         }
     }
 
+    // Never shown: measures a tag chip, so the namespace names line up with their chips.
+    Kirigami.Chip {
+        id: chipHeight
+
+        visible: false
+        text: "x"
+    }
+
     // The image underneath does not react to clicks, drags and the wheel on the footer.
     MouseArea {
         anchors.fill: parent
@@ -163,14 +171,18 @@ Rectangle {
         id: row
 
         property string label
+        // The height of the value's first line, e.g. of a tag chip, so the name lines up with it
+        property real firstLineHeight: 0
         default property alias value: valueArea.data
 
         spacing: Kirigami.Units.largeSpacing
 
         Controls.Label {
             Layout.preferredWidth: Kirigami.Units.gridUnit * 7
+            Layout.preferredHeight: Math.max(implicitHeight, row.firstLineHeight)
             Layout.alignment: Qt.AlignTop
             horizontalAlignment: Text.AlignRight
+            verticalAlignment: Text.AlignVCenter
             text: row.label
             color: Kirigami.Theme.disabledTextColor
             elide: Text.ElideRight
@@ -321,6 +333,7 @@ Rectangle {
 
                         Layout.fillWidth: true
                         label: modelData.namespace + ":"  // as written in a tag, e.g. "author:"
+                        firstLineHeight: chipHeight.implicitHeight
 
                         Flow {
                             Layout.fillWidth: true
@@ -352,6 +365,7 @@ Rectangle {
 
                         Layout.fillWidth: true
                         label: modelData.namespace + ":"
+                        firstLineHeight: chipHeight.implicitHeight
 
                         Flow {
                             Layout.fillWidth: true
