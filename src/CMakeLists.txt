@@ -36,6 +36,7 @@ add_subdirectory(services/token_store)
 add_subdirectory(services/connection)
 add_subdirectory(services/library)
 add_subdirectory(services/library_view)
+add_subdirectory(services/tag_editor)
 add_subdirectory(services/network_access)
 
 # The application. main.cpp only wires things together; logic lives in the libraries above.
