@@ -13,6 +13,7 @@
 #include <KLocalizedString>
 
 #include "FakeTagRowsEditor.hpp"
+#include "TestServices.hpp"
 
 // The application's QML module, as main.cpp uses it
 Q_IMPORT_QML_PLUGIN(io_github_oesusdevelopmentstudios_pictorioPlugin)
@@ -43,6 +44,8 @@ int main(int argc, char* argv[])
     KLocalizedString::setApplicationDomain("pictorio");
     QQuickStyle::setStyle(QStringLiteral("org.kde.desktop"));
     qmlRegisterType<pictorio::tests::FakeTagRowsEditor>("pictorio.tests", 1, 0, "FakeTagRowsEditor");
+    pictorio::tests::TestServices services;
+    qmlRegisterSingletonInstance("pictorio.tests", 1, 0, "TestServices", &services);
 
     Setup setup;
     return quick_test_main_with_setup(argc, argv, "TestQml", QUICK_TEST_SOURCE_DIR, &setup);

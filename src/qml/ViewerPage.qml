@@ -328,32 +328,14 @@ Kirigami.Page {
         explanation: page.viewer.errorMessage
     }
 
-    // The pointer near the bottom edge brings in the details footer. The footer is inside the zone: as a
-    // sibling on top, it would take the hover from the zone, hide, give it back, and flicker.
-    Item {
-        id: detailsZone
-
+    ImageDetailsZone {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        height: detailsFooter.implicitHeight + Kirigami.Units.gridUnit * 2
         visible: page.viewer.hasImage && !page.presenting
-
-        HoverHandler {
-            id: detailsZoneHover
-        }
-
-        ImageDetailsFooter {
-            id: detailsFooter
-
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            viewer: page.viewer
-            tagEditor: page.tagEditor
-            shown: detailsZoneHover.hovered || expanded  // expanded, it stays until collapsed
-            availableHeight: page.height  // up to the toolbar
-        }
+        viewer: page.viewer
+        tagEditor: page.tagEditor
+        availableHeight: page.height
     }
 
     SlideshowControls {

@@ -58,6 +58,7 @@ set(qmlFiles
     qml/LibrarySidebar.qml
     qml/LibraryTile.qml
     qml/ImageDetailsFooter.qml
+    qml/ImageDetailsZone.qml
     qml/TagChip.qml
     qml/TagNameField.qml
     qml/TagValueBox.qml

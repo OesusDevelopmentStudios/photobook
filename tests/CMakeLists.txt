@@ -105,7 +105,7 @@ target_compile_definitions(TestDesktopFile PRIVATE
 
 # The QML tests, tst_*.qml in qml/: one Qt Quick Test executable that uses the application's QML module,
 # offscreen. Qt's messages go to stderr, not to the system journal, so failures show in the test output.
-add_executable(TestQml qml/TestQml.cpp qml/FakeTagRowsEditor.hpp)
+add_executable(TestQml qml/TestQml.cpp qml/FakeTagRowsEditor.hpp qml/TestServices.hpp)
 target_link_libraries(TestQml PRIVATE
     pictorio_ui
     pictorio_uiplugin
