@@ -74,6 +74,7 @@ ecm_target_qml_sources(pictorio SOURCES
     qml/TagNameField.qml
     qml/TagValueBox.qml
     qml/TagRowContent.qml
+    qml/BulkTagPanel.qml
 )
 
 target_link_libraries(pictorio PRIVATE

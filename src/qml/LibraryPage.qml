@@ -17,6 +17,7 @@ Kirigami.Page {
 
     required property Library library
     required property LibraryView libraryView
+    required property BulkTagEditor bulkTagEditor
     required property Navigator navigator
     required property Connection connection
 
@@ -173,9 +174,11 @@ Kirigami.Page {
 
             Layout.fillHeight: true
             Layout.preferredWidth: Kirigami.Units.gridUnit * 14
-            visible: page.libraryView.sidebarVisible
+            // Also while images are selected: the panel for their tags is there.
+            visible: page.libraryView.sidebarVisible || page.library.selectedCount > 0
             library: page.library
             libraryView: page.libraryView
+            bulkTagEditor: page.bulkTagEditor
             onTileSizeRequested: gridUnits => page.resizeTiles(() => page.libraryView.tileSize = gridUnits)
         }
 

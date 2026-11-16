@@ -186,6 +186,7 @@ Kirigami.ApplicationWindow {
         LibraryPage {
             library: root.appManager.library
             libraryView: root.appManager.libraryView
+            bulkTagEditor: root.appManager.bulkTagEditor
             navigator: root.appManager.navigator
             connection: root.appManager.connection
             onOpenImageRequested: openImageDialog.open()
