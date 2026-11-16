@@ -25,10 +25,14 @@ src/
 ├── utils/              small helpers shared by several services
 └── qml/                user interface (presentation only)
 tests/                  mirrors src/: tests/utils/TestAppIdentity.cpp tests src/utils/AppIdentity.cpp
+└── qml/                QML tests, tst_<component>.qml, with C++ fakes such as FakeTagRowsEditor
 ```
 
 **QML contains presentation only.** Decisions (sorting, paging, what to upload, when to delete) live in
-C++ services, where they can be unit-tested.
+C++ services, where they can be unit-tested. What the QML itself does (a click reaching the right call,
+a part showing the right state) is tested in `tests/qml/` with Qt Quick Test. The tests load the
+application's QML module and run offscreen as part of `ctest`. Put the item under test in the file's
+visible root item, not in the `TestCase`, which is invisible: an invisible item gets no clicks.
 
 ### Service layout
 

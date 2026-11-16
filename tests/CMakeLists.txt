@@ -102,3 +102,19 @@ ecm_add_test(packaging/TestDesktopFile.cpp
 target_compile_definitions(TestDesktopFile PRIVATE
     DESKTOP_FILE="${PROJECT_SOURCE_DIR}/packaging/io.github.oesusdevelopmentstudios.pictorio.desktop"
 )
+
+# The QML tests, tst_*.qml in qml/: one Qt Quick Test executable that uses the application's QML module,
+# offscreen. Qt's messages go to stderr, not to the system journal, so failures show in the test output.
+add_executable(TestQml qml/TestQml.cpp qml/FakeTagRowsEditor.hpp)
+target_link_libraries(TestQml PRIVATE
+    pictorio_ui
+    pictorio_uiplugin
+    Qt6::QuickTest
+    Qt6::QuickControls2
+    Qt6::Widgets
+    KF6::I18n
+    KF6::I18nQml
+)
+target_compile_definitions(TestQml PRIVATE QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/qml")
+add_test(NAME TestQml COMMAND TestQml)
+set_tests_properties(TestQml PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_FORCE_STDERR_LOGGING=1")

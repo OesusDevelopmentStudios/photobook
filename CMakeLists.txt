@@ -72,7 +72,7 @@ add_subdirectory(packaging)
 # BUILD_TESTING is ON by default (set by KDECMakeSettings). Turn it off with -DBUILD_TESTING=OFF,
 # e.g. for packaging. Run the tests with: ctest --test-dir <build dir>
 if(BUILD_TESTING)
-    find_package(Qt6 ${QT_MIN_VERSION} REQUIRED COMPONENTS Test)
+    find_package(Qt6 ${QT_MIN_VERSION} REQUIRED COMPONENTS Test QuickTest)
     add_subdirectory(tests)
 endif()
 
