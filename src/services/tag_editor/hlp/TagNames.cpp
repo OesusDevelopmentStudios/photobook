@@ -76,22 +76,6 @@ QString TagName::text() const
     return namespaceName + QLatin1Char(':') + name;
 }
 
-std::expected<TagName, QString> tagFromTypedText(const QString& typedText, const QSet<QString>& namespaceNames)
-{
-    // Split at the first ':' only if the part before it is a namespace, so "re:zero" stays one general tag.
-    const qsizetype colon = typedText.indexOf(QLatin1Char(':'));
-    if (colon >= 0)
-    {
-        const QString prefix = typedText.left(colon).trimmed().toLower();
-        if (namespaceNames.contains(prefix))
-        {
-            return tagFromTypedName(prefix, typedText.mid(colon + 1));
-        }
-    }
-
-    return tagFromTypedName(generalNamespace, typedText);
-}
-
 std::expected<TagName, QString> tagFromTypedName(const QString& namespaceName, const QString& typedName)
 {
     static const QRegularExpression spaces(QStringLiteral(" +"));
@@ -109,6 +93,28 @@ TagName tagFromServer(const QString& text)
 {
     const qsizetype colon = text.indexOf(QLatin1Char(':'));
     return colon < 0 ? TagName{generalNamespace, text} : TagName{text.left(colon), text.mid(colon + 1)};
+}
+
+QList<TagName> tagNamesOf(const QStringList& texts)
+{
+    QList<TagName> tags;
+    for (const QString& text : texts)
+    {
+        tags.append(tagFromServer(text));
+    }
+
+    return tags;
+}
+
+QStringList textsOf(const QList<TagName>& tags)
+{
+    QStringList texts;
+    for (const TagName& tag : tags)
+    {
+        texts.append(tag.text());
+    }
+
+    return texts;
 }
 
 QList<TagName> tagsAfterChange(const QList<TagName>& current,

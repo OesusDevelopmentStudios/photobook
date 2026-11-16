@@ -21,6 +21,7 @@
 namespace pictorio::tag_editor
 {
 
+class Namespaces;
 class NamespaceRows;
 
 // Changing the tags of the library image on screen, laid out like the server's folder-import form: a row
@@ -92,28 +93,12 @@ Q_SIGNALS:
     void saved(const server_client::Image& image);  // as the server answered: its tags are now the image's
 
 private:
-    struct NamespaceInfo
-    {
-        QString name;
-        bool singleValue = false;
-        bool builtin = false;
-        std::optional<QStringList> allowedValues;  // nothing: any name
-
-        bool hasDropdown() const;  // the built-in one-tag namespaces; custom ones have an add field
-    };
-
     // Applies the change if the server would allow the image's tags after it; otherwise says why.
     bool applyIfAllowed(const QStringList& additions, const QStringList& removals);
     std::optional<QString> restrictionProblem(const QStringList& additions, const QStringList& removals) const;
-    std::optional<QString> notAllowedProblem(const QString& namespaceName, const QString& name) const;
     QStringList tagsAfter(const QStringList& additions, const QStringList& removals) const;
-    const NamespaceInfo* namespaceInfo(const QString& namespaceName) const;
-    QSet<QString> namespaceNames() const;
-    QSet<QString> singleValueNamespaces() const;
     void announceHasChanges();
     bool addTypedNames();
-    void loadNamespaces();
-    void loadKnownValues();
     void updateRows();
     void clearTypedNames();
     void endEditing();
@@ -122,6 +107,7 @@ private:
 
     connection::Connection* m_connection;
     std::unique_ptr<TagSuggestions> m_suggestions;
+    std::unique_ptr<Namespaces> m_namespaces;
     std::unique_ptr<NamespaceRows> m_rows;
     std::optional<server_client::Image> m_image;
     bool m_editing = false;
@@ -129,9 +115,7 @@ private:
     bool m_hadChanges = false;  // to announce hasChanges only when it changes
     QStringList m_additions;    // as the server writes tags, e.g. "general:beach"
     QStringList m_removals;
-    QHash<QString, QString> m_typedNames;       // by namespace
-    QList<NamespaceInfo> m_namespaces;          // in the server's order: built-in ones first
-    QHash<QString, QStringList> m_knownValues;  // of one-tag namespaces without a fixed list, most used first
+    QHash<QString, QString> m_typedNames;  // by namespace
     QString m_errorMessage;
 };
 

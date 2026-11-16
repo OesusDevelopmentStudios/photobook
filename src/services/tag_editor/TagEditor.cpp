@@ -11,73 +11,18 @@
 #include <QJsonArray>
 #include <QVariantMap>
 
-#include "hlp/SearchTerm.hpp"
+#include "hlp/Restrictions.hpp"
+#include "hlp/TagMessages.hpp"
 #include "hlp/TagNames.hpp"
 #include "impl/NamespaceRows.hpp"
+#include "impl/Namespaces.hpp"
 
 namespace
 {
 
-using pictorio::server_client::ApiError;
 using pictorio::tag_editor::TagEditor;
 using pictorio::tag_editor::tagFromServer;
 using pictorio::tag_editor::TagName;
-
-// The tags of one-tag namespaces offered in their dropdown: the most used ones
-constexpr int knownValueCount = 50;
-
-QList<TagName> tagNamesOf(const QStringList& texts)
-{
-    QList<TagName> tags;
-    for (const QString& text : texts)
-    {
-        tags.append(tagFromServer(text));
-    }
-
-    return tags;
-}
-
-QStringList textsOf(const QList<TagName>& tags)
-{
-    QStringList texts;
-    for (const TagName& tag : tags)
-    {
-        texts.append(tag.text());
-    }
-
-    return texts;
-}
-
-QString restrictedMessage(const QStringList& tags)
-{
-    return i18nc("@info %1 is a list of tags",
-                 "An admin has restricted these tags for your account: %1",
-                 tags.join(QStringLiteral(", ")));
-}
-
-// The server's refusal as a sentence for the user
-QString describeError(const ApiError& error)
-{
-    if (error.code == QLatin1String("tag_restricted"))
-    {
-        QStringList tags;
-        for (const QJsonValue& tag : error.problem.value(QStringLiteral("tags")).toArray())
-        {
-            tags.append(tag.toString());
-        }
-
-        return restrictedMessage(tags);
-    }
-
-    if (error.code == pictorio::server_client::networkErrorCode)
-    {
-        return i18nc("@info %1 is the reason, e.g. Connection refused", "The server does not answer: %1", error.detail);
-    }
-
-    return error.detail.isEmpty()
-               ? error.title
-               : i18nc("@info %1 is a title, %2 an explanation", "%1. %2", error.title, error.detail);
-}
 
 QVariantMap tagEntry(const TagName& tag, TagEditor::Change change)
 {
@@ -97,24 +42,13 @@ TagEditor::TagEditor(connection::Connection* connection, QObject* parent)
     : QObject(parent)
     , m_connection(connection)
     , m_suggestions(std::make_unique<TagSuggestions>(connection))
+    , m_namespaces(std::make_unique<Namespaces>(connection))
     , m_rows(std::make_unique<NamespaceRows>())
-    // The server's built-in namespaces, in its order, until its full list has arrived
-    , m_namespaces{
-          {QStringLiteral("category"), true, true, std::nullopt},
-          {QStringLiteral("author"), false, true, std::nullopt},
-          {QStringLiteral("character"), false, true, std::nullopt},
-          {QStringLiteral("rating"), true, true, std::nullopt},
-          {QStringLiteral("album"), false, true, std::nullopt},
-          {QStringLiteral("general"), false, true, std::nullopt},
-      }
-{}
+{
+    connect(m_namespaces.get(), &Namespaces::changed, this, &TagEditor::updateRows);
+}
 
 TagEditor::~TagEditor() = default;
-
-bool TagEditor::NamespaceInfo::hasDropdown() const
-{
-    return singleValue && builtin;
-}
 
 void TagEditor::setImage(const std::optional<server_client::Image>& image)
 {
@@ -136,8 +70,7 @@ void TagEditor::startEditing()
     }
 
     m_editing = true;
-    loadNamespaces();  // custom ones, and the allowed values; the built-in ones are known until then
-    loadKnownValues();
+    m_namespaces->load();  // custom ones, and the allowed values; the built-in ones are known until then
     m_suggestions->setExcludedTags(m_image->tags);
     Q_EMIT editingChanged();
     updateRows();
@@ -157,7 +90,7 @@ bool TagEditor::addTag(const QString& namespaceName, const QString& typedName)
         return false;
     }
 
-    if (const std::optional<QString> problem = notAllowedProblem(namespaceName, tag->name))
+    if (const std::optional<QString> problem = m_namespaces->notAllowedProblem(namespaceName, tag->name))
     {
         setErrorMessage(*problem);
         return false;
@@ -165,7 +98,7 @@ bool TagEditor::addTag(const QString& namespaceName, const QString& typedName)
 
     bool added = false;
     const QString text = tag->text();
-    const bool singleValue = singleValueNamespaces().contains(namespaceName);
+    const bool singleValue = m_namespaces->singleValueNames().contains(namespaceName);
     if (m_removals.contains(text) || (singleValue && m_image->tags.contains(text)))
     {
         added = restoreTag(text);  // the image's own tag back
@@ -261,7 +194,7 @@ bool TagEditor::restoreTag(const QString& tag)
     // A tag replaced by an addition in a single-value namespace comes back when that addition goes.
     QStringList additions = m_additions;
     const QString namespaceName = tagFromServer(tag).namespaceName;
-    if (singleValueNamespaces().contains(namespaceName))
+    if (m_namespaces->singleValueNames().contains(namespaceName))
     {
         additions.removeIf([&](const QString& added) { return tagFromServer(added).namespaceName == namespaceName; });
     }
@@ -402,77 +335,22 @@ bool TagEditor::applyIfAllowed(const QStringList& additions, const QStringList& 
 // message names the image's tags that the restrictions which apply mention.
 std::optional<QString> TagEditor::restrictionProblem(const QStringList& additions, const QStringList& removals) const
 {
-    const QList<TagName> after = tagNamesOf(tagsAfter(additions, removals));
-    QStringList offending;
-    for (const QString& text : m_connection->restrictedTags())
-    {
-        const std::optional<SearchTerm> term = SearchTerm::parse(text, namespaceNames());
-        if (term.has_value() && term->matches(after, m_image->takenAt))
-        {
-            offending += textsOf(term->mentionedAmong(after));
-        }
-    }
-
+    const QStringList offending = restrictedTagsAmong(m_connection->restrictedTags(),
+                                                      m_namespaces->names(),
+                                                      tagNamesOf(tagsAfter(additions, removals)),
+                                                      m_image->takenAt);
     if (offending.isEmpty())
     {
         return std::nullopt;
     }
 
-    offending.removeDuplicates();
-    offending.sort();
     return restrictedMessage(offending);
-}
-
-// e.g. a rating that is not one of the server's rating values
-std::optional<QString> TagEditor::notAllowedProblem(const QString& namespaceName, const QString& name) const
-{
-    const NamespaceInfo* info = namespaceInfo(namespaceName);
-    if (info == nullptr || !info->allowedValues.has_value() || info->allowedValues->contains(name))
-    {
-        return std::nullopt;
-    }
-
-    return i18nc("@info %1 is a namespace, %2 a list of names",
-                 "A %1 tag can only be one of: %2",
-                 namespaceName,
-                 info->allowedValues->join(QStringLiteral(", ")));
 }
 
 QStringList TagEditor::tagsAfter(const QStringList& additions, const QStringList& removals) const
 {
     return textsOf(tagsAfterChange(
-        tagNamesOf(m_image->tags), tagNamesOf(additions), tagNamesOf(removals), singleValueNamespaces()));
-}
-
-const TagEditor::NamespaceInfo* TagEditor::namespaceInfo(const QString& namespaceName) const
-{
-    const auto found = std::ranges::find(m_namespaces, namespaceName, &NamespaceInfo::name);
-    return found == m_namespaces.end() ? nullptr : &*found;
-}
-
-QSet<QString> TagEditor::namespaceNames() const
-{
-    QSet<QString> names;
-    for (const NamespaceInfo& info : m_namespaces)
-    {
-        names.insert(info.name);
-    }
-
-    return names;
-}
-
-QSet<QString> TagEditor::singleValueNamespaces() const
-{
-    QSet<QString> names;
-    for (const NamespaceInfo& info : m_namespaces)
-    {
-        if (info.singleValue)
-        {
-            names.insert(info.name);
-        }
-    }
-
-    return names;
+        tagNamesOf(m_image->tags), tagNamesOf(additions), tagNamesOf(removals), m_namespaces->singleValueNames()));
 }
 
 void TagEditor::announceHasChanges()
@@ -499,64 +377,6 @@ bool TagEditor::addTypedNames()
     return true;
 }
 
-void TagEditor::loadNamespaces()
-{
-    server_client::ServerClient* client = m_connection->client();
-    if (client == nullptr)
-    {
-        return;
-    }
-
-    client->namespaces().then(this, [this](const server_client::Result<QList<server_client::Namespace>>& answer) {
-        if (!answer.has_value())
-        {
-            return;  // the built-in ones are still known
-        }
-
-        m_namespaces.clear();
-        for (const server_client::Namespace& info : *answer)
-        {
-            m_namespaces.append({info.name, info.singleValue, info.isBuiltin, info.allowedValues});
-        }
-
-        loadKnownValues();  // for one-tag namespaces only the server knew of
-        updateRows();
-    });
-}
-
-// For dropdowns without a fixed list, i.e. category's: the tags already in use
-void TagEditor::loadKnownValues()
-{
-    server_client::ServerClient* client = m_connection->client();
-    if (client == nullptr)
-    {
-        return;
-    }
-
-    for (const NamespaceInfo& info : m_namespaces)
-    {
-        if (!info.hasDropdown() || info.allowedValues.has_value() || m_knownValues.contains(info.name))
-        {
-            continue;
-        }
-
-        m_knownValues.insert(info.name, {});  // asked once
-        client->tags({}, info.name, knownValueCount)
-            .then(
-                this,
-                [this, namespaceName = info.name](const server_client::Result<QList<server_client::TagCount>>& answer) {
-                    QStringList names;
-                    for (const server_client::TagCount& known : answer.value_or(QList<server_client::TagCount>()))
-                    {
-                        names.append(tagFromServer(known.tag).name);
-                    }
-
-                    m_knownValues.insert(namespaceName, names);
-                    updateRows();
-                });
-    }
-}
-
 void TagEditor::updateRows()
 {
     if (!m_editing || !m_image.has_value())
@@ -567,7 +387,7 @@ void TagEditor::updateRows()
 
     const QStringList after = tagsAfter(m_additions, m_removals);
     QList<NamespaceRows::Row> rows;
-    for (const NamespaceInfo& info : m_namespaces)
+    for (const Namespaces::Info& info : m_namespaces->all())
     {
         QList<QPair<TagName, Change>> entries;
         QString valueBefore;
@@ -607,7 +427,7 @@ void TagEditor::updateRows()
         row.tags = tags;
         if (row.dropdown)
         {
-            row.options = info.allowedValues.value_or(m_knownValues.value(info.name));
+            row.options = info.allowedValues.value_or(m_namespaces->knownValues(info.name));
             for (const QString& name : {valueBefore, valueAfter})
             {
                 if (!name.isEmpty() && !row.options.contains(name))

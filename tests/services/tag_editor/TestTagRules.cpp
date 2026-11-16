@@ -6,6 +6,7 @@
 #include <KLocalizedString>
 #include <QTest>
 
+#include "hlp/Restrictions.hpp"
 #include "hlp/SearchTerm.hpp"
 #include "hlp/TagNames.hpp"
 
@@ -64,6 +65,7 @@ private Q_SLOTS:
     void refusesInvalidTerms_data();
     void refusesInvalidTerms();
     void namesTheTagsATermMentions();
+    void namesTheRestrictedTagsOfAnImage();
 };
 
 void TestTagRules::initTestCase()
@@ -76,12 +78,9 @@ void TestTagRules::normalisesTypedTags_data()
     QTest::addColumn<QString>("typed");
     QTest::addColumn<QString>("tag");
 
-    QTest::newRow("no namespace: general") << QStringLiteral("Summer") << QStringLiteral("general:summer");
+    QTest::newRow("capitals") << QStringLiteral("Summer") << QStringLiteral("general:summer");
     QTest::newRow("spaces") << QStringLiteral("  On the   Beach ") << QStringLiteral("general:on_the_beach");
-    QTest::newRow("namespace") << QStringLiteral("Author:Sample Artist") << QStringLiteral("author:sample_artist");
-    QTest::newRow("namespace in capitals") << QStringLiteral("CATEGORY:Photo") << QStringLiteral("category:photo");
-    QTest::newRow("spaces around the colon") << QStringLiteral("author : kid") << QStringLiteral("author:kid");
-    QTest::newRow("not a namespace") << QStringLiteral("re:zero") << QStringLiteral("general:re:zero");
+    QTest::newRow("a colon is part of the name") << QStringLiteral("re:zero") << QStringLiteral("general:re:zero");
     QTest::newRow("unicode") << QStringLiteral("ĄĘ") << QStringLiteral("general:ąę");
     QTest::newRow("no case") << QStringLiteral("日本") << QStringLiteral("general:日本");
 }
@@ -91,7 +90,7 @@ void TestTagRules::normalisesTypedTags()
     QFETCH(QString, typed);
     QFETCH(QString, tag);
 
-    const std::expected<TagName, QString> result = tagFromTypedText(typed, namespaces);
+    const std::expected<TagName, QString> result = tagFromTypedName(generalNamespace, typed);
 
     QVERIFY(result.has_value());
     QCOMPARE(result->text(), tag);
@@ -103,7 +102,6 @@ void TestTagRules::refusesInvalidNames_data()
 
     QTest::newRow("empty") << QString();
     QTest::newRow("only spaces") << QStringLiteral("   ");
-    QTest::newRow("namespace only") << QStringLiteral("author:");
     QTest::newRow("dot") << QStringLiteral(".");
     QTest::newRow("two dots") << QStringLiteral("..");
     QTest::newRow("slash") << QStringLiteral("a/b");
@@ -121,7 +119,7 @@ void TestTagRules::refusesInvalidNames()
 {
     QFETCH(QString, typed);
 
-    const std::expected<TagName, QString> result = tagFromTypedText(typed, namespaces);
+    const std::expected<TagName, QString> result = tagFromTypedName(generalNamespace, typed);
 
     QVERIFY(!result.has_value());
     QVERIFY(!result.error().isEmpty());  // says why
@@ -136,9 +134,9 @@ void TestTagRules::countsCharactersNotBytes()
         longest += QStringLiteral("😀");
     }
 
-    QVERIFY(tagFromTypedText(QString(100, QLatin1Char('a')), namespaces).has_value());
-    QVERIFY(tagFromTypedText(longest, namespaces).has_value());
-    QVERIFY(!tagFromTypedText(longest + QStringLiteral("😀"), namespaces).has_value());
+    QVERIFY(tagFromTypedName(generalNamespace, QString(100, QLatin1Char('a'))).has_value());
+    QVERIFY(tagFromTypedName(generalNamespace, longest).has_value());
+    QVERIFY(!tagFromTypedName(generalNamespace, longest + QStringLiteral("😀")).has_value());
 }
 
 // In a namespace's own row: the namespace is the row's, and a ':' is part of the name.
@@ -318,6 +316,21 @@ void TestTagRules::namesTheTagsATermMentions()
 
     QCOMPARE(both->mentionedAmong(tags), tagsFrom({QStringLiteral("general:nude"), QStringLiteral("general:photo")}));
     QVERIFY(anyCharacter->mentionedAmong(tags).isEmpty());
+}
+
+// Each restriction that applies names the image's tags it mentions; restrictions that do not apply say nothing.
+void TestTagRules::namesTheRestrictedTagsOfAnImage()
+{
+    const QStringList restrictions{
+        QStringLiteral("rating:nsfw"), QStringLiteral("general:nude,photo"), QStringLiteral("character:*")};
+    const QList<TagName> image =
+        tagsFrom({QStringLiteral("rating:nsfw"), QStringLiteral("general:photo"), QStringLiteral("general:nude")});
+
+    QCOMPARE(
+        restrictedTagsAmong(restrictions, namespaces, image, QDateTime()),
+        QStringList({QStringLiteral("general:nude"), QStringLiteral("general:photo"), QStringLiteral("rating:nsfw")}));
+    QVERIFY(restrictedTagsAmong(restrictions, namespaces, tagsFrom({QStringLiteral("general:photo")}), QDateTime())
+                .isEmpty());
 }
 
 }  // namespace pictorio::tag_editor
