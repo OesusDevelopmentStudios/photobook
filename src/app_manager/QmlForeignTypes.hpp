@@ -13,6 +13,8 @@
 #include "LibraryView.hpp"
 #include "Navigator.hpp"
 #include "Slideshow.hpp"
+#include "TagEditor.hpp"
+#include "TagSuggestions.hpp"
 #include "ViewTransform.hpp"
 #include "Viewer.hpp"
 
@@ -76,6 +78,22 @@ struct ForeignLibraryView
     QML_FOREIGN(pictorio::library_view::LibraryView)
     QML_NAMED_ELEMENT(LibraryView)
     QML_UNCREATABLE("Provided by AppManager")
+};
+
+struct ForeignTagEditor
+{
+    Q_GADGET
+    QML_FOREIGN(pictorio::tag_editor::TagEditor)
+    QML_NAMED_ELEMENT(TagEditor)
+    QML_UNCREATABLE("Provided by AppManager")
+};
+
+struct ForeignTagSuggestions
+{
+    Q_GADGET
+    QML_FOREIGN(pictorio::tag_editor::TagSuggestions)
+    QML_NAMED_ELEMENT(TagSuggestions)
+    QML_UNCREATABLE("Provided by TagEditor")
 };
 
 }  // namespace pictorio::app_manager

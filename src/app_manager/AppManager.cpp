@@ -15,6 +15,7 @@
 #include "NavigatorFactory.hpp"
 #include "SettingsFactory.hpp"
 #include "SlideshowFactory.hpp"
+#include "TagEditorFactory.hpp"
 #include "ViewTransformFactory.hpp"
 #include "ViewerFactory.hpp"
 
@@ -70,6 +71,7 @@ AppManager::AppManager(QObject* parent)
     , m_connection(connection::createConnection(m_settings.get()))
     , m_library(library::createLibrary(m_connection.get()))
     , m_libraryView(library_view::createLibraryView(m_settings.get()))
+    , m_tagEditor(tag_editor::createTagEditor(m_connection.get()))
     , m_serverCredentials(std::make_shared<network_access::ServerCredentials>())
     , m_networkAccessFactory(network_access::createNetworkAccessFactory(
           m_serverCredentials,
@@ -77,6 +79,17 @@ AppManager::AppManager(QObject* parent)
 {
     connect(m_navigator.get(), &navigator::Navigator::imageRequested, m_viewer.get(), &viewer::Viewer::openImage);
     connect(m_navigator.get(), &navigator::Navigator::libraryImageRequested, this, &AppManager::showLibraryImage);
+
+    // Only library images have tags to edit.
+    connect(m_navigator.get(), &navigator::Navigator::imageRequested, this, [this]() {
+        m_tagEditor->setImage(std::nullopt);
+    });
+
+    // Saved tags: the grid and the viewer show the image as the server answered.
+    connect(m_tagEditor.get(), &tag_editor::TagEditor::saved, this, [this](const server_client::Image& image) {
+        m_library->replaceImage(image);
+        m_viewer->updateDetails(detailsOf(image));
+    });
 
     // Every newly opened image starts fitted to the window and not rotated.
     connect(m_viewer.get(), &viewer::Viewer::currentImageChanged, m_viewTransform.get(), [this]() {
@@ -128,6 +141,11 @@ library_view::LibraryView* AppManager::libraryView() const
     return m_libraryView.get();
 }
 
+tag_editor::TagEditor* AppManager::tagEditor() const
+{
+    return m_tagEditor.get();
+}
+
 QQmlNetworkAccessManagerFactory* AppManager::networkAccessFactory() const
 {
     return m_networkAccessFactory.get();
@@ -151,6 +169,7 @@ void AppManager::openLibraryImage(int row)
 void AppManager::showLibraryImage(int row)
 {
     const std::optional<server_client::Image> image = m_library->imageAt(row);
+    m_tagEditor->setImage(image);
     if (!image.has_value() || m_connection->client() == nullptr)
     {
         return;

@@ -99,6 +99,7 @@ private Q_SLOTS:
     void givesTheDetailsOfALibraryImage();
     void groupsTagsByNamespace();
     void forgetsTheDetailsWhenAnImageCannotBeOpened();
+    void updatesTheDetailsWithoutReopening();
 
 private:
     std::unique_ptr<Viewer> m_viewer;
@@ -297,6 +298,24 @@ void TestViewer::forgetsTheDetailsWhenAnImageCannotBeOpened()
     QVERIFY(!m_viewer->isFromLibrary());
     QVERIFY(m_viewer->tagGroups().isEmpty());
     QVERIFY(m_viewer->location().isEmpty());
+}
+
+// After a tag change the image stays as it is on screen; only its details change.
+void TestViewer::updatesTheDetailsWithoutReopening()
+{
+    m_viewer->openServerImage(serverFileUrl, libraryPhoto());
+    QSignalSpy imageChanged(m_viewer.get(), &Viewer::currentImageChanged);
+    QSignalSpy detailsChanged(m_viewer.get(), &Viewer::detailsChanged);
+    Viewer::ImageDetails retagged = libraryPhoto();
+    retagged.tags = {QStringLiteral("general:sunset")};
+    retagged.location = QStringLiteral("photo/sunset_aaaaaaaa.jpg");
+
+    m_viewer->updateDetails(retagged);
+
+    QCOMPARE(imageChanged.count(), 0);
+    QCOMPARE(detailsChanged.count(), 1);
+    QCOMPARE(m_viewer->location(), QStringLiteral("photo/sunset_aaaaaaaa.jpg"));
+    QCOMPARE(m_viewer->tagGroups().size(), 1);
 }
 
 }  // namespace pictorio::viewer

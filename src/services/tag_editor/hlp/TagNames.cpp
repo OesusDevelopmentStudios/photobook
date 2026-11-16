@@ -107,4 +107,34 @@ TagName tagFromServer(const QString& text)
     return colon < 0 ? TagName{generalNamespace, text} : TagName{text.left(colon), text.mid(colon + 1)};
 }
 
+QList<TagName> tagsAfterChange(const QList<TagName>& current,
+                               const QList<TagName>& additions,
+                               const QList<TagName>& removals,
+                               const QSet<QString>& singleValueNamespaces)
+{
+    QList<TagName> tags;
+    for (const TagName& tag : current)
+    {
+        if (!removals.contains(tag))
+        {
+            tags.append(tag);
+        }
+    }
+
+    for (const TagName& added : additions)
+    {
+        if (singleValueNamespaces.contains(added.namespaceName))
+        {
+            tags.removeIf([&](const TagName& tag) { return tag.namespaceName == added.namespaceName; });
+        }
+
+        if (!tags.contains(added))
+        {
+            tags.append(added);
+        }
+    }
+
+    return tags;
+}
+
 }  // namespace pictorio::tag_editor

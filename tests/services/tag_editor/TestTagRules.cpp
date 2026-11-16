@@ -53,6 +53,8 @@ private Q_SLOTS:
     void refusesInvalidNames();
     void countsCharactersNotBytes();
     void readsTagsAsTheServerWritesThem();
+    void worksOutTheTagsAfterAChange();
+    void replacesTheTagOfASingleValueNamespace();
 
     void matchesTerms_data();
     void matchesTerms();
@@ -144,6 +146,38 @@ void TestTagRules::readsTagsAsTheServerWritesThem()
              (TagName{QStringLiteral("category"), QStringLiteral("photo")}));
     QCOMPARE(tagFromServer(QStringLiteral("general:re:zero")),
              (TagName{QStringLiteral("general"), QStringLiteral("re:zero")}));
+}
+
+void TestTagRules::worksOutTheTagsAfterAChange()
+{
+    const QList<TagName> current = tagsFrom({QStringLiteral("category:photo"), QStringLiteral("general:summer")});
+
+    const QList<TagName> after =
+        tagsAfterChange(current,
+                        tagsFrom({QStringLiteral("general:beach"), QStringLiteral("general:summer")}),
+                        tagsFrom({QStringLiteral("general:summer")}),
+                        {QStringLiteral("category")});
+
+    // Removed, then added again: kept. Added: at the end.
+    QCOMPARE(
+        after,
+        tagsFrom(
+            {QStringLiteral("category:photo"), QStringLiteral("general:beach"), QStringLiteral("general:summer")}));
+}
+
+void TestTagRules::replacesTheTagOfASingleValueNamespace()
+{
+    const QList<TagName> current = tagsFrom({QStringLiteral("category:photo"), QStringLiteral("author:kid")});
+    const QSet<QString> singleValue{QStringLiteral("category")};
+
+    const QList<TagName> newCategory =
+        tagsAfterChange(current, tagsFrom({QStringLiteral("category:artwork")}), {}, singleValue);
+    const QList<TagName> secondAuthor =
+        tagsAfterChange(current, tagsFrom({QStringLiteral("author:apo")}), {}, singleValue);
+
+    QCOMPARE(newCategory, tagsFrom({QStringLiteral("author:kid"), QStringLiteral("category:artwork")}));
+    QCOMPARE(secondAuthor,
+             tagsFrom({QStringLiteral("category:photo"), QStringLiteral("author:kid"), QStringLiteral("author:apo")}));
 }
 
 void TestTagRules::matchesTerms_data()

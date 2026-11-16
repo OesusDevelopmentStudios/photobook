@@ -1,0 +1,337 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * SPDX-FileCopyrightText: 2026 OesusDevelopmentStudios
+ */
+
+#include <memory>
+
+#include <KLocalizedString>
+#include <QSignalSpy>
+#include <QTemporaryDir>
+#include <QTest>
+
+#include "Connection.hpp"
+#include "ServerClientFactory.hpp"
+#include "SettingsFactory.hpp"
+#include "TagEditor.hpp"
+#include "TagEditorFactory.hpp"
+#include "fakes/FakeServer.hpp"
+#include "fakes/FakeTokenStore.hpp"
+#include "fakes/ImageJson.hpp"
+
+namespace pictorio::tag_editor
+{
+
+namespace
+{
+
+using connection::Connection;
+using fakes::FakeServer;
+using server_client::HttpRequest;
+
+const QString serverUrl = QStringLiteral("https://photos.example.org");
+const QString imageUrl = serverUrl + QStringLiteral("/api/v1/images/5");
+
+QJsonObject namespaceJson(const QString& name, bool singleValue)
+{
+    return {
+        {QStringLiteral("name"), name},
+        {QStringLiteral("single_value"), singleValue},
+        {QStringLiteral("is_builtin"), name != QLatin1String("weather")},
+        {QStringLiteral("in_path_template"), name == QLatin1String("category")},
+    };
+}
+
+// A photo of the library, as the search gave it
+server_client::Image beachPhoto()
+{
+    server_client::Image image;
+    image.id = 5;
+    image.originalFilename = QStringLiteral("beach.jpg");
+    image.takenAt = QDateTime(QDate(2025, 7, 14), QTime(18, 3));
+    image.tags = {QStringLiteral("category:photo"), QStringLiteral("general:summer")};
+    return image;
+}
+
+// What a tag looks like while editing: {tag: change}, e.g. {"general:beach": Added}
+QHash<QString, TagEditor::Change> changesShown(const TagEditor& editor)
+{
+    QHash<QString, TagEditor::Change> changes;
+    for (const QVariant& group : editor.tagGroups())
+    {
+        for (const QVariant& entry : group.toMap().value(QStringLiteral("tags")).toList())
+        {
+            const QVariantMap tag = entry.toMap();
+            changes.insert(tag.value(QStringLiteral("tag")).toString(),
+                           tag.value(QStringLiteral("change")).value<TagEditor::Change>());
+        }
+    }
+
+    return changes;
+}
+
+}  // namespace
+
+// The user "kid" is restricted from rating:nsfw, and from images that are both nude and a photo.
+class TestTagEditor : public QObject
+{
+    Q_OBJECT
+
+private Q_SLOTS:
+    void initTestCase();
+    void init();
+
+    void needsALibraryImage();
+    void collectsChangesUntilSaved();
+    void savesAllChangesInOnePatch();
+    void cancelDropsTheChanges();
+    void tidiesTypedTags();
+    void usesTheServersNamespaces();
+    void refusesAnInvalidTag();
+    void refusesARestrictedTag();
+    void refusesARestrictedCombination();
+    void replacesTheTagOfASingleValueNamespace();
+    void dropsAnAddedTagWhenRemoved();
+    void keepsTheChangesWhenTheServerRefuses();
+    void anotherImageEndsEditing();
+
+private:
+    void startEditingTheBeachPhoto();
+
+    std::unique_ptr<QTemporaryDir> m_folder;
+    std::unique_ptr<settings::Settings> m_settings;
+    std::shared_ptr<FakeServer> m_server;
+    std::unique_ptr<Connection> m_connection;
+    std::unique_ptr<TagEditor> m_editor;
+};
+
+void TestTagEditor::initTestCase()
+{
+    KLocalizedString::setApplicationDomain("pictorio");
+}
+
+// Logged in from the last run
+void TestTagEditor::init()
+{
+    m_editor.reset();
+    m_folder = std::make_unique<QTemporaryDir>();
+    m_settings = settings::createSettings(m_folder->filePath(QStringLiteral("pictoriorc")));
+    m_settings->setServerUrl(QUrl(serverUrl));
+    m_server = std::make_shared<FakeServer>();
+    m_server->answer(
+        "GET",
+        serverUrl + QStringLiteral("/api/v1/auth/me"),
+        fakes::jsonResponse(200,
+                            {{QStringLiteral("id"), 2},
+                             {QStringLiteral("username"), QStringLiteral("kid")},
+                             {QStringLiteral("role"), QStringLiteral("user")},
+                             {QStringLiteral("restricted_tags"),
+                              QJsonArray{QStringLiteral("rating:nsfw"), QStringLiteral("general:nude,photo")}}}));
+    m_server->answer("GET",
+                     serverUrl + QStringLiteral("/api/v1/namespaces"),
+                     fakes::jsonResponse(200,
+                                         {{QStringLiteral("items"),
+                                           QJsonArray{namespaceJson(QStringLiteral("category"), true),
+                                                      namespaceJson(QStringLiteral("rating"), true),
+                                                      namespaceJson(QStringLiteral("general"), false),
+                                                      namespaceJson(QStringLiteral("weather"), true)}}}));
+    m_server->answerWith("PATCH", imageUrl, [](const HttpRequest&) {
+        QJsonObject image = fakes::imageJson(5);
+        image[QStringLiteral("tags")] = QJsonArray{QStringLiteral("category:photo"), QStringLiteral("general:sunset")};
+        return fakes::jsonResponse(200, image);
+    });
+
+    auto keyring = std::make_shared<fakes::Keyring>();
+    keyring->tokens.insert(serverUrl, QStringLiteral("pk_kept"));
+    auto serverClientFactory = [server = m_server](const QUrl& url) {
+        return server_client::createServerClient(url, server);
+    };
+    m_connection = std::make_unique<Connection>(
+        serverClientFactory, std::make_unique<fakes::FakeTokenStore>(keyring), m_settings.get());
+    m_connection->restoreLogin();
+    QTRY_COMPARE(m_connection->state(), Connection::State::LoggedIn);
+    m_editor = createTagEditor(m_connection.get());
+}
+
+void TestTagEditor::startEditingTheBeachPhoto()
+{
+    m_editor->setImage(beachPhoto());
+    m_editor->startEditing();
+    QVERIFY(m_editor->isEditing());
+}
+
+void TestTagEditor::needsALibraryImage()
+{
+    m_editor->setImage(std::nullopt);  // e.g. a local file
+
+    m_editor->startEditing();
+
+    QVERIFY(!m_editor->canEdit());
+    QVERIFY(!m_editor->isEditing());
+}
+
+void TestTagEditor::collectsChangesUntilSaved()
+{
+    startEditingTheBeachPhoto();
+
+    QVERIFY(m_editor->addTag(QStringLiteral("beach")));
+    QVERIFY(m_editor->removeTag(QStringLiteral("general:summer")));
+
+    QVERIFY(m_editor->hasChanges());
+    QVERIFY(m_server->requestsTo("PATCH", imageUrl).isEmpty());
+    const QHash<QString, TagEditor::Change> shown = changesShown(*m_editor);
+    QCOMPARE(shown.value(QStringLiteral("category:photo")), TagEditor::Change::Kept);
+    QCOMPARE(shown.value(QStringLiteral("general:beach")), TagEditor::Change::Added);
+    QCOMPARE(shown.value(QStringLiteral("general:summer")), TagEditor::Change::Removed);
+}
+
+void TestTagEditor::savesAllChangesInOnePatch()
+{
+    startEditingTheBeachPhoto();
+    m_editor->addTag(QStringLiteral("sunset"));
+    m_editor->removeTag(QStringLiteral("general:summer"));
+    QSignalSpy saved(m_editor.get(), &TagEditor::saved);
+
+    m_editor->save();
+
+    QTRY_COMPARE(saved.count(), 1);
+    const QList<HttpRequest> patches = m_server->requestsTo("PATCH", imageUrl);
+    QCOMPARE(patches.size(), 1);
+    const QJsonObject body = QJsonDocument::fromJson(patches.first().body).object();
+    QCOMPARE(body.value(QStringLiteral("add_tags")).toArray(), QJsonArray{QStringLiteral("general:sunset")});
+    QCOMPARE(body.value(QStringLiteral("remove_tags")).toArray(), QJsonArray{QStringLiteral("general:summer")});
+    const auto image = saved.first().first().value<server_client::Image>();
+    QCOMPARE(image.tags, QStringList({QStringLiteral("category:photo"), QStringLiteral("general:sunset")}));
+    QVERIFY(!m_editor->isEditing());
+    QVERIFY(!m_editor->hasChanges());
+}
+
+void TestTagEditor::cancelDropsTheChanges()
+{
+    startEditingTheBeachPhoto();
+    m_editor->addTag(QStringLiteral("beach"));
+
+    m_editor->cancel();
+
+    QVERIFY(!m_editor->isEditing());
+    QVERIFY(!m_editor->hasChanges());
+    QVERIFY(m_server->requestsTo("PATCH", imageUrl).isEmpty());
+}
+
+void TestTagEditor::tidiesTypedTags()
+{
+    startEditingTheBeachPhoto();
+
+    m_editor->addTag(QStringLiteral("  On the   Beach "));
+
+    QCOMPARE(changesShown(*m_editor).value(QStringLiteral("general:on_the_beach")), TagEditor::Change::Added);
+}
+
+// A custom namespace is known once the server has listed it.
+void TestTagEditor::usesTheServersNamespaces()
+{
+    startEditingTheBeachPhoto();
+    QTRY_VERIFY(!m_server->requestsTo("GET", serverUrl + QStringLiteral("/api/v1/namespaces")).isEmpty());
+
+    m_editor->addTag(QStringLiteral("Weather: Rain"));
+
+    QCOMPARE(changesShown(*m_editor).value(QStringLiteral("weather:rain")), TagEditor::Change::Added);
+}
+
+void TestTagEditor::refusesAnInvalidTag()
+{
+    startEditingTheBeachPhoto();
+
+    QVERIFY(!m_editor->addTag(QStringLiteral("beach,sand")));
+
+    QVERIFY(!m_editor->errorMessage().isEmpty());
+    QVERIFY(!m_editor->hasChanges());
+}
+
+void TestTagEditor::refusesARestrictedTag()
+{
+    startEditingTheBeachPhoto();
+
+    QVERIFY(!m_editor->addTag(QStringLiteral("rating:nsfw")));
+
+    QVERIFY(m_editor->errorMessage().contains(QStringLiteral("rating:nsfw")));
+    QVERIFY(!m_editor->hasChanges());
+    QVERIFY(m_server->requestsTo("PATCH", imageUrl).isEmpty());
+}
+
+// "general:nude,photo": each tag alone is allowed, both together are not.
+void TestTagEditor::refusesARestrictedCombination()
+{
+    startEditingTheBeachPhoto();
+
+    QVERIFY(m_editor->addTag(QStringLiteral("photo")));
+    QVERIFY(!m_editor->addTag(QStringLiteral("nude")));
+
+    QVERIFY(m_editor->errorMessage().contains(QStringLiteral("general:nude, general:photo")));
+    QVERIFY(!changesShown(*m_editor).contains(QStringLiteral("general:nude")));
+}
+
+void TestTagEditor::replacesTheTagOfASingleValueNamespace()
+{
+    startEditingTheBeachPhoto();
+
+    m_editor->addTag(QStringLiteral("category:artwork"));
+    QCOMPARE(changesShown(*m_editor).value(QStringLiteral("category:photo")), TagEditor::Change::Removed);
+
+    m_editor->restoreTag(QStringLiteral("category:photo"));
+    QCOMPARE(changesShown(*m_editor).value(QStringLiteral("category:photo")), TagEditor::Change::Kept);
+    QVERIFY(!changesShown(*m_editor).contains(QStringLiteral("category:artwork")));
+    QVERIFY(!m_editor->hasChanges());
+}
+
+void TestTagEditor::dropsAnAddedTagWhenRemoved()
+{
+    startEditingTheBeachPhoto();
+    m_editor->addTag(QStringLiteral("beach"));
+
+    m_editor->removeTag(QStringLiteral("general:beach"));
+
+    QVERIFY(!changesShown(*m_editor).contains(QStringLiteral("general:beach")));
+    QVERIFY(!m_editor->hasChanges());
+}
+
+// e.g. a restriction the app did not know of yet
+void TestTagEditor::keepsTheChangesWhenTheServerRefuses()
+{
+    m_server->answerWith("PATCH", imageUrl, [](const HttpRequest&) {
+        return fakes::jsonResponse(403,
+                                   {{QStringLiteral("type"), QStringLiteral("about:blank")},
+                                    {QStringLiteral("title"), QStringLiteral("Tag not allowed")},
+                                    {QStringLiteral("status"), 403},
+                                    {QStringLiteral("code"), QStringLiteral("tag_restricted")},
+                                    {QStringLiteral("tags"), QJsonArray{QStringLiteral("general:beach")}}});
+    });
+    startEditingTheBeachPhoto();
+    m_editor->addTag(QStringLiteral("beach"));
+
+    m_editor->save();
+
+    QTRY_VERIFY(m_editor->errorMessage().contains(QStringLiteral("general:beach")));
+    QVERIFY(!m_editor->isSaving());
+    QVERIFY(m_editor->isEditing());
+    QVERIFY(m_editor->hasChanges());
+}
+
+void TestTagEditor::anotherImageEndsEditing()
+{
+    startEditingTheBeachPhoto();
+    m_editor->addTag(QStringLiteral("beach"));
+    server_client::Image another = beachPhoto();
+    another.id = 6;
+
+    m_editor->setImage(another);
+
+    QVERIFY(!m_editor->isEditing());
+    QVERIFY(!m_editor->hasChanges());
+}
+
+}  // namespace pictorio::tag_editor
+
+QTEST_GUILESS_MAIN(pictorio::tag_editor::TestTagEditor)
+
+#include "TestTagEditor.moc"

@@ -82,6 +82,7 @@ target_link_libraries(pictorio PRIVATE
     pictorio_network_access
     pictorio_library
     pictorio_library_view
+    pictorio_tag_editor
     Qt6::Widgets
     Qt6::Qml
     Qt6::Quick

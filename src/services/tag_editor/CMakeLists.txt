@@ -4,12 +4,14 @@
 # Changing the tags of images on the server (see include/). hlp/ holds the rules a change is checked
 # against before it is sent.
 add_library(pictorio_tag_editor STATIC
+    include/TagEditor.hpp
     include/TagSuggestions.hpp
     include/TagEditorFactory.hpp
     hlp/TagNames.hpp
     hlp/TagNames.cpp
     hlp/SearchTerm.hpp
     hlp/SearchTerm.cpp
+    TagEditor.cpp
     TagSuggestions.cpp
     TagEditorFactory.cpp
 )
@@ -29,3 +31,7 @@ target_link_libraries(pictorio_tag_editor
     PRIVATE
         KF6::I18n
 )
+
+# TagEditor and TagSuggestions are exposed to QML (app_manager/QmlForeignTypes.hpp); QML tools read their
+# properties from these metatypes.
+qt_extract_metatypes(pictorio_tag_editor)

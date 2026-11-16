@@ -18,6 +18,7 @@
 #include "NetworkAccess.hpp"
 #include "Settings.hpp"
 #include "Slideshow.hpp"
+#include "TagEditor.hpp"
 #include "ViewTransform.hpp"
 #include "Viewer.hpp"
 
@@ -38,6 +39,7 @@ class AppManager : public QObject
     Q_PROPERTY(pictorio::connection::Connection* connection READ connection CONSTANT)
     Q_PROPERTY(pictorio::library::Library* library READ library CONSTANT)
     Q_PROPERTY(pictorio::library_view::LibraryView* libraryView READ libraryView CONSTANT)
+    Q_PROPERTY(pictorio::tag_editor::TagEditor* tagEditor READ tagEditor CONSTANT)
 
 public:
     explicit AppManager(QObject* parent = nullptr);
@@ -50,6 +52,7 @@ public:
     connection::Connection* connection() const;
     library::Library* library() const;
     library_view::LibraryView* libraryView() const;
+    tag_editor::TagEditor* tagEditor() const;
 
     // For the QML engine: images it loads from the server get the login token, and are cached on disk.
     QQmlNetworkAccessManagerFactory* networkAccessFactory() const;
@@ -71,6 +74,7 @@ private:
     std::unique_ptr<connection::Connection> m_connection;  // uses m_settings
     std::unique_ptr<library::Library> m_library;           // uses m_connection
     std::unique_ptr<library_view::LibraryView> m_libraryView;  // uses m_settings
+    std::unique_ptr<tag_editor::TagEditor> m_tagEditor;        // uses m_connection
     std::shared_ptr<network_access::ServerCredentials> m_serverCredentials;
     std::unique_ptr<QQmlNetworkAccessManagerFactory> m_networkAccessFactory;
 };

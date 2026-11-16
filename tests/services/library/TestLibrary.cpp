@@ -71,6 +71,7 @@ private Q_SLOTS:
     void knowsTheTotalOfTheSearch();
     void ignoresTheTotalOfAnOlderSearch();
     void hasNoTotalIfTheServerCannotCount();
+    void replacesAnImageAfterItChanged();
 
 private:
     void logIn();
@@ -337,6 +338,26 @@ void TestLibrary::hasNoTotalIfTheServerCannotCount()
 
     QCOMPARE(m_library->totalCount(), -1);
     QVERIFY(m_library->errorMessage().isEmpty());  // the grid still works
+}
+
+void TestLibrary::replacesAnImageAfterItChanged()
+{
+    logIn();
+    QTRY_COMPARE(m_library->count(), 2);
+    QSignalSpy dataChanged(m_library.get(), &Library::dataChanged);
+    server_client::Image retagged = *m_library->imageAt(1);
+    retagged.tags = {QStringLiteral("general:sunset")};
+
+    m_library->replaceImage(retagged);
+
+    QCOMPARE(m_library->imageAt(1)->tags, QStringList{QStringLiteral("general:sunset")});
+    QCOMPARE(dataChanged.count(), 1);
+    QCOMPARE(dataChanged.first().first().toModelIndex().row(), 1);
+
+    server_client::Image notShown = retagged;
+    notShown.id = 99;
+    m_library->replaceImage(notShown);
+    QCOMPARE(dataChanged.count(), 1);  // not in the results: nothing changes
 }
 
 }  // namespace pictorio::library

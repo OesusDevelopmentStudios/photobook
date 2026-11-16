@@ -74,6 +74,8 @@ public:
     int totalCount() const;          // over all pages; -1 until the server has said, or if it could not
     bool hasMoreToLoad() const;      // the server has more results than the pages loaded so far
     std::optional<server_client::Image> imageAt(int row) const;  // nothing for a row that is not there
+    // The image with the same id gets this one's data, e.g. after its tags changed on the server.
+    void replaceImage(const server_client::Image& image);
 
     int rowCount(const QModelIndex& parent = {}) const override;
     QVariant data(const QModelIndex& index, int role) const override;

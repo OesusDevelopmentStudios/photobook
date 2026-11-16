@@ -35,14 +35,14 @@ class Viewer : public QObject
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY currentImageChanged)
 
     // The details of the image on screen
-    Q_PROPERTY(bool fromLibrary READ isFromLibrary NOTIFY currentImageChanged)
-    Q_PROPERTY(QString mimeType READ mimeType NOTIFY currentImageChanged)
-    Q_PROPERTY(qint64 fileSize READ fileSize NOTIFY currentImageChanged)
-    Q_PROPERTY(QDateTime takenAt READ takenAt NOTIFY currentImageChanged)
-    Q_PROPERTY(TakenAtSource takenAtSource READ takenAtSource NOTIFY currentImageChanged)
-    Q_PROPERTY(QDateTime importedAt READ importedAt NOTIFY currentImageChanged)
-    Q_PROPERTY(QString location READ location NOTIFY currentImageChanged)
-    Q_PROPERTY(QVariantList tagGroups READ tagGroups NOTIFY currentImageChanged)
+    Q_PROPERTY(bool fromLibrary READ isFromLibrary NOTIFY detailsChanged)
+    Q_PROPERTY(QString mimeType READ mimeType NOTIFY detailsChanged)
+    Q_PROPERTY(qint64 fileSize READ fileSize NOTIFY detailsChanged)
+    Q_PROPERTY(QDateTime takenAt READ takenAt NOTIFY detailsChanged)
+    Q_PROPERTY(TakenAtSource takenAtSource READ takenAtSource NOTIFY detailsChanged)
+    Q_PROPERTY(QDateTime importedAt READ importedAt NOTIFY detailsChanged)
+    Q_PROPERTY(QString location READ location NOTIFY detailsChanged)
+    Q_PROPERTY(QVariantList tagGroups READ tagGroups NOTIFY detailsChanged)
 
 public:
     // Where the date an image was taken comes from
@@ -76,6 +76,9 @@ public:
     // An image in the server's library, loaded from fileUrl by the page. The MIME type tells whether it may be
     // animated.
     void openServerImage(const QUrl& fileUrl, const ImageDetails& details);
+    // New details of the library image on screen, e.g. after its tags changed. The image itself stays, so
+    // the view keeps its zoom.
+    void updateDetails(const ImageDetails& details);
 
     bool hasImage() const;
     QString fileName() const;  // also set when opening failed, for the error message
@@ -95,7 +98,8 @@ public:
     QVariantList tagGroups() const;
 
 Q_SIGNALS:
-    void currentImageChanged();
+    void currentImageChanged();  // also changes the details
+    void detailsChanged();
 
 private:
     struct ShownImage

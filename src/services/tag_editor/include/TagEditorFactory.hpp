@@ -7,10 +7,14 @@
 
 #include <memory>
 
+#include "TagEditor.hpp"
 #include "TagSuggestions.hpp"
 
 namespace pictorio::tag_editor
 {
+
+// The connection is not owned and must outlive the editor.
+std::unique_ptr<TagEditor> createTagEditor(connection::Connection* connection);
 
 // The connection is not owned and must outlive the suggestions.
 std::unique_ptr<TagSuggestions> createTagSuggestions(connection::Connection* connection);

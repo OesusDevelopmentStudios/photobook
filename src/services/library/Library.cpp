@@ -5,6 +5,7 @@
 
 #include "Library.hpp"
 
+#include <algorithm>
 #include <limits>
 
 #include <KLocalizedString>
@@ -141,6 +142,19 @@ int Library::totalCount() const
 bool Library::hasMoreToLoad() const
 {
     return !m_complete;
+}
+
+void Library::replaceImage(const server_client::Image& image)
+{
+    const auto found = std::ranges::find(m_images, image.id, &server_client::Image::id);
+    if (found == m_images.end())
+    {
+        return;
+    }
+
+    *found = image;
+    const QModelIndex changed = index(static_cast<int>(std::distance(m_images.begin(), found)));
+    Q_EMIT dataChanged(changed, changed);
 }
 
 int Library::rowCount(const QModelIndex& parent) const

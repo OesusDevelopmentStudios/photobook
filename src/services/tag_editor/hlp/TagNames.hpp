@@ -7,6 +7,7 @@
 
 #include <expected>
 
+#include <QList>
 #include <QSet>
 #include <QString>
 
@@ -32,5 +33,12 @@ std::expected<TagName, QString> tagFromTypedText(const QString& typedText, const
 
 // A tag as the server writes it, always with its namespace, e.g. "category:photo"
 TagName tagFromServer(const QString& text);
+
+// An image's tags after a change, worked out as the server does: removals first, then additions; in a
+// single-value namespace an added tag replaces the one there.
+QList<TagName> tagsAfterChange(const QList<TagName>& current,
+                               const QList<TagName>& additions,
+                               const QList<TagName>& removals,
+                               const QSet<QString>& singleValueNamespaces);
 
 }  // namespace pictorio::tag_editor

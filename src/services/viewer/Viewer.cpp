@@ -64,6 +64,7 @@ void Viewer::openImage(const QString& filePath)
     }
 
     Q_EMIT currentImageChanged();
+    Q_EMIT detailsChanged();
 }
 
 void Viewer::openServerImage(const QUrl& fileUrl, const ImageDetails& details)
@@ -72,6 +73,16 @@ void Viewer::openServerImage(const QUrl& fileUrl, const ImageDetails& details)
     m_currentImage = ShownImage{fileUrl, mayBeAnimated(details.mimeType), true, details};
     m_errorMessage.clear();
     Q_EMIT currentImageChanged();
+    Q_EMIT detailsChanged();
+}
+
+void Viewer::updateDetails(const ImageDetails& details)
+{
+    if (hasImage() && m_currentImage->fromLibrary)
+    {
+        m_currentImage->details = details;
+        Q_EMIT detailsChanged();
+    }
 }
 
 bool Viewer::hasImage() const
