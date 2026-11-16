@@ -72,6 +72,7 @@ public:
     QString effectiveQuery() const;  // the search with the user's hidden-by-default filters added
     int count() const;               // loaded so far
     int totalCount() const;          // over all pages; -1 until the server has said, or if it could not
+    bool hasMoreToLoad() const;      // the server has more results than the pages loaded so far
     std::optional<server_client::Image> imageAt(int row) const;  // nothing for a row that is not there
 
     int rowCount(const QModelIndex& parent = {}) const override;

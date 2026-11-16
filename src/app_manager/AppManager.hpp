@@ -57,10 +57,12 @@ public:
     // An image or folder chosen in a file dialog, which gives a URL
     Q_INVOKABLE void openImage(const QUrl& fileUrl);
     Q_INVOKABLE void openFolder(const QUrl& folderUrl);
-    // An image of the library grid, by its row: shown from the server, without a folder to step through
+    // An image of the library grid, by its row; next and previous step through the library's results.
     Q_INVOKABLE void openLibraryImage(int row);
 
 private:
+    void showLibraryImage(int row);  // from the server, in the viewer
+
     std::unique_ptr<settings::Settings> m_settings;
     std::unique_ptr<viewer::Viewer> m_viewer;
     std::unique_ptr<view_transform::ViewTransform> m_viewTransform;

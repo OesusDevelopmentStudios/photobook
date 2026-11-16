@@ -69,6 +69,7 @@ Slideshow::Slideshow(navigator::Navigator* navigator, settings::Settings* settin
     applyIntervalSeconds(m_settings->slideshowIntervalSeconds().value_or(defaultIntervalSeconds));
     connect(&m_timer, &QTimer::timeout, this, &Slideshow::showNextImage);
     connect(m_navigator, &navigator::Navigator::imageRequested, this, &Slideshow::restartIntervalIfShowing);
+    connect(m_navigator, &navigator::Navigator::libraryImageRequested, this, &Slideshow::restartIntervalIfShowing);
 }
 
 Slideshow::~Slideshow() = default;

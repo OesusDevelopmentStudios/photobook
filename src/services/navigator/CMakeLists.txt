@@ -16,6 +16,7 @@ target_include_directories(pictorio_navigator PUBLIC
 target_link_libraries(pictorio_navigator
     PUBLIC
         pictorio_folder_scanner
+        pictorio_library
         Qt6::Core
     PRIVATE
         Qt6::Concurrent  # lists the folder in the background

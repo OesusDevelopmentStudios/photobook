@@ -138,6 +138,11 @@ int Library::totalCount() const
     return m_totalCount;
 }
 
+bool Library::hasMoreToLoad() const
+{
+    return !m_complete;
+}
+
 int Library::rowCount(const QModelIndex& parent) const
 {
     return parent.isValid() ? 0 : count();

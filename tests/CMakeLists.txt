@@ -40,6 +40,10 @@ ecm_add_test(services/navigator/TestNavigator.cpp
     LINK_LIBRARIES pictorio_navigator Qt6::Test
 )
 
+ecm_add_test(services/navigator/TestLibraryNavigation.cpp
+    LINK_LIBRARIES pictorio_navigator pictorio_library Qt6::Test
+)
+
 ecm_add_test(services/slideshow/TestSlideshow.cpp
     LINK_LIBRARIES pictorio_slideshow Qt6::Test
 )

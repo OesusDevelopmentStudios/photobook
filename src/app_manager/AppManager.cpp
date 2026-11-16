@@ -37,6 +37,7 @@ AppManager::AppManager(QObject* parent)
           QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QStringLiteral("/server")))
 {
     connect(m_navigator.get(), &navigator::Navigator::imageRequested, m_viewer.get(), &viewer::Viewer::openImage);
+    connect(m_navigator.get(), &navigator::Navigator::libraryImageRequested, this, &AppManager::showLibraryImage);
 
     // Every newly opened image starts fitted to the window and not rotated.
     connect(m_viewer.get(), &viewer::Viewer::currentImageChanged, m_viewTransform.get(), [this]() {
@@ -105,13 +106,17 @@ void AppManager::openFolder(const QUrl& folderUrl)
 
 void AppManager::openLibraryImage(int row)
 {
+    m_navigator->openLibraryImage(m_library.get(), row);
+}
+
+void AppManager::showLibraryImage(int row)
+{
     const std::optional<server_client::Image> image = m_library->imageAt(row);
     if (!image.has_value() || m_connection->client() == nullptr)
     {
         return;
     }
 
-    m_navigator->clear();  // previous and next would step through the last local folder
     m_viewer->openServerImage(m_connection->client()->imageFileUrl(image->id),
                               image->originalFilename,
                               QSize(image->width, image->height),

@@ -20,6 +20,7 @@
 #include "SettingsFactory.hpp"
 #include "fakes/FakeServer.hpp"
 #include "fakes/FakeTokenStore.hpp"
+#include "fakes/ImageJson.hpp"
 
 namespace pictorio::library
 {
@@ -29,56 +30,13 @@ namespace
 
 using connection::Connection;
 using fakes::FakeServer;
+using fakes::imagePageJson;
+using fakes::jsonResponse;
 using server_client::HttpRequest;
-using server_client::HttpResponse;
 
 const QString serverUrl = QStringLiteral("https://photos.example.org");
 const QString imagesUrl = serverUrl + QStringLiteral("/api/v1/images");
 const QString countUrl = serverUrl + QStringLiteral("/api/v1/images/count");
-
-QJsonObject imageJson(int imageId)
-{
-    const QString moment = QStringLiteral("2026-11-15T19:22:03Z");
-    return {
-        {QStringLiteral("id"), imageId},
-        {QStringLiteral("sha256"), QStringLiteral("aa")},
-        {QStringLiteral("original_filename"), QStringLiteral("photo_%1.jpg").arg(imageId)},
-        {QStringLiteral("storage_path"), QStringLiteral("photo/photo_%1.jpg").arg(imageId)},
-        {QStringLiteral("mime_type"), QStringLiteral("image/jpeg")},
-        {QStringLiteral("width"), 40},
-        {QStringLiteral("height"), 30},
-        {QStringLiteral("file_size"), 1},
-        {QStringLiteral("taken_at"), QStringLiteral("2025-07-14T18:03:12")},
-        {QStringLiteral("taken_at_source"), QStringLiteral("exif")},
-        {QStringLiteral("imported_at"), moment},
-        {QStringLiteral("updated_at"), moment},
-        {QStringLiteral("tags"), QJsonArray()},
-        {QStringLiteral("links"), QJsonObject()},
-    };
-}
-
-HttpResponse jsonResponse(int status, const QJsonObject& json)
-{
-    return fakes::response(status, QJsonDocument(json).toJson(QJsonDocument::Compact));
-}
-
-// A page of images, and the cursor of the next page; an empty cursor: the last page.
-HttpResponse page(const QList<int>& imageIds, const QString& nextCursor)
-{
-    QJsonArray items;
-    for (const int imageId : imageIds)
-    {
-        items.append(imageJson(imageId));
-    }
-
-    return jsonResponse(200,
-                        {
-                            {QStringLiteral("items"), items},
-                            {QStringLiteral("next_cursor"),
-                             nextCursor.isEmpty() ? QJsonValue(QJsonValue::Null) : QJsonValue(nextCursor)},
-                            {QStringLiteral("effective_query"), QStringLiteral("-rating:nsfw")},
-                        });
-}
 
 QString parameter(const HttpRequest& request, const QString& name)
 {
@@ -140,17 +98,17 @@ void TestLibrary::init()
     m_server->answerWith("GET", imagesUrl, [](const HttpRequest& request) {
         if (parameter(request, QStringLiteral("q")) == QLatin1String("category:photo"))
         {
-            return page({7}, QString());
+            return imagePageJson({7}, QString());
         }
 
         // Like a real cursor, this one belongs to its search: the sort and the text.
         const QString nextPage = cursorFor(request);
         if (parameter(request, QStringLiteral("cursor")) == nextPage)
         {
-            return page({3}, QString());
+            return imagePageJson({3}, QString());
         }
 
-        return page({1, 2}, nextPage);
+        return imagePageJson({1, 2}, nextPage);
     });
     m_server->answerWith("GET", countUrl, [](const HttpRequest& request) {
         const bool photos = parameter(request, QStringLiteral("q")) == QLatin1String("category:photo");
@@ -193,6 +151,7 @@ void TestLibrary::loadsTheFirstPageOnceLoggedIn()
     QCOMPARE(parameter(request, QStringLiteral("order")), QStringLiteral("desc"));
     QCOMPARE(m_library->effectiveQuery(), QStringLiteral("-rating:nsfw"));
     QVERIFY(m_library->canFetchMore({}));
+    QVERIFY(m_library->hasMoreToLoad());
 }
 
 void TestLibrary::loadsTheNextPageWhenTheGridAsks()
@@ -205,6 +164,7 @@ void TestLibrary::loadsTheNextPageWhenTheGridAsks()
     QTRY_COMPARE(m_library->count(), 3);
     QCOMPARE(parameter(searches().last(), QStringLiteral("cursor")), QStringLiteral("page2:taken_at:"));
     QVERIFY(!m_library->canFetchMore({}));  // that was the last page
+    QVERIFY(!m_library->hasMoreToLoad());
 }
 
 void TestLibrary::searchesAndStartsOver()

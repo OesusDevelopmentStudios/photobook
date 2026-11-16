@@ -10,7 +10,8 @@ import org.kde.kirigami as Kirigami
 import org.kde.ki18n
 
 // Shows the current image with zoom and rotation, or a message when there is none.
-// Previous / next step through the image's folder. During a slideshow the page presents the images:
+// Previous / next step through the image's folder, or the library's search results for an image from the
+// library. During a slideshow the page presents the images:
 // black background and a control bar that appears when the mouse moves.
 Kirigami.Page {
     id: page
@@ -25,17 +26,16 @@ Kirigami.Page {
     signal libraryRequested()
 
     readonly property bool presenting: slideshow.running
-    // A slideshow steps through the image's folder; an image from the server has none.
-    readonly property bool canStartSlideshow: viewer.hasImage && navigator.imageCount > 1
+    readonly property bool canStartSlideshow: viewer.hasImage && (navigator.canGoToNext || navigator.canGoToPrevious)
 
     title: {
         if (viewer.fileName.length === 0) {
             return KI18n.i18nc("@title", "Viewer");
         }
-        if (navigator.currentIndex < 0) {
+        if (navigator.currentIndex < 0 || navigator.imageCount < 1) {  // e.g. the library's total not known yet
             return viewer.fileName;
         }
-        return KI18n.i18nc("@title %1 is a file name, %2 its position in the folder, %3 the number of images",
+        return KI18n.i18nc("@title %1 is a file name, %2 its position among the images, %3 the number of images",
                            "%1 (%2 of %3)", viewer.fileName, navigator.currentIndex + 1, navigator.imageCount);
     }
     padding: 0
@@ -47,7 +47,7 @@ Kirigami.Page {
     actions: [
         Kirigami.Action {
             icon.name: "go-previous"
-            text: KI18n.i18nc("@action:intoolbar Previous image in the folder", "Previous")
+            text: KI18n.i18nc("@action:intoolbar Previous image in the folder or the library", "Previous")
             displayHint: Kirigami.DisplayHint.IconOnly
             shortcut: "Left"
             enabled: page.navigator.canGoToPrevious
@@ -55,15 +55,24 @@ Kirigami.Page {
         },
         Kirigami.Action {
             icon.name: "go-next"
-            text: KI18n.i18nc("@action:intoolbar Next image in the folder", "Next")
+            text: KI18n.i18nc("@action:intoolbar Next image in the folder or the library", "Next")
             displayHint: Kirigami.DisplayHint.IconOnly
             shortcut: "Right"
             enabled: page.navigator.canGoToNext
             onTriggered: page.navigator.goToNext()
         },
+        // Library images play in the library's order, so there is no order to choose.
         Kirigami.Action {
             icon.name: "media-playback-start"
             text: KI18n.i18nc("@action:intoolbar", "Slideshow")
+            visible: page.navigator.browsingLibrary
+            enabled: page.canStartSlideshow
+            onTriggered: page.slideshow.start(page.slideshow.order)
+        },
+        Kirigami.Action {
+            icon.name: "media-playback-start"
+            text: KI18n.i18nc("@action:intoolbar", "Slideshow")
+            visible: !page.navigator.browsingLibrary
             enabled: page.canStartSlideshow
 
             // The order of the last slideshow is checked; F5 starts a slideshow in that order.

@@ -15,7 +15,8 @@ namespace pictorio::slideshow
 {
 
 // Shows the images of the current folder one after another, in the chosen order, starting with the
-// image on screen and starting over after the last one. Moves through the folder with the navigator,
+// image on screen and starting over after the last one. For library images the library's results are shown,
+// in the library's order; the chosen order applies to folders only. Moves with the navigator,
 // so moving by hand works during a slideshow too; every image change restarts the interval.
 // The interval and the last used order are kept in the settings.
 class Slideshow : public QObject
