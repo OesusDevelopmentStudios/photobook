@@ -29,6 +29,31 @@ Kirigami.Page {
     title: KI18n.i18nc("@title", "Library")
     padding: 0
 
+    // From the background colour to transparent, over the edge of the grid. Takes no input, so tiles under
+    // it are still hovered.
+    component EdgeFade: Rectangle {
+        property bool shown: false
+
+        height: Kirigami.Units.gridUnit * 2
+        opacity: shown ? 1 : 0
+        gradient: Gradient {
+            GradientStop {
+                position: 0
+                color: Kirigami.Theme.backgroundColor
+            }
+            GradientStop {
+                position: 1
+                color: Qt.alpha(Kirigami.Theme.backgroundColor, 0)
+            }
+        }
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Kirigami.Units.shortDuration
+            }
+        }
+    }
+
     // A new tile size reflows the grid; the image at the top stays in view instead of jumping away.
     function resizeTiles(resize) {
         const topIndex = grid.indexAt(grid.cellWidth / 2, grid.contentY + grid.cellHeight / 2);
@@ -175,7 +200,9 @@ Kirigami.Page {
                 cacheBuffer: cellHeight * 2  // rows above and below the window are made in advance
                 reuseItems: true  // tiles scrolled away are reused, not made anew
 
-                Controls.ScrollBar.vertical: Controls.ScrollBar {}
+                Controls.ScrollBar.vertical: Controls.ScrollBar {
+                    id: scrollBar
+                }
 
                 // The next page loads while two screens of images are still ahead.
                 function loadMoreIfNearTheEnd() {
@@ -215,6 +242,25 @@ Kirigami.Page {
                         visible: running
                     }
                 }
+            }
+
+            // Tiles scroll away into the background at the edges, and come out of it. Each fade shows only
+            // while there is more to scroll to on its side, so the first and last rows are never covered.
+            EdgeFade {
+                anchors.top: grid.top
+                anchors.left: grid.left
+                anchors.right: grid.right
+                anchors.rightMargin: scrollBar.width  // the scroll bar stays sharp
+                shown: !grid.atYBeginning
+            }
+
+            EdgeFade {
+                anchors.bottom: grid.bottom
+                anchors.left: grid.left
+                anchors.right: grid.right
+                anchors.rightMargin: scrollBar.width
+                shown: !grid.atYEnd
+                rotation: 180  // opaque at the bottom
             }
 
             Kirigami.InlineMessage {
