@@ -124,6 +124,7 @@ private Q_SLOTS:
 
     void setsTheValueOfAOneTagNamespace();
     void setsNoValue();
+    void keepsTheImagesOwnValue();
     void offersTheAllowedRatings();
     void refusesAValueThatIsNotAllowed();
     void offersTheKnownValuesOfAOneTagNamespace();
@@ -386,6 +387,18 @@ void TestTagEditor::setsNoValue()
 
     QVERIFY(rowOf(*m_editor, QStringLiteral("category")).value(QStringLiteral("value")).toString().isEmpty());
     QCOMPARE(changesShown(*m_editor).value(QStringLiteral("category:photo")), TagEditor::Change::Removed);
+}
+
+void TestTagEditor::keepsTheImagesOwnValue()
+{
+    startEditingTheBeachPhoto();
+    m_editor->setSingleValue(QStringLiteral("category"), QStringLiteral("artwork"));
+
+    m_editor->keepValue(QStringLiteral("category"));
+
+    QCOMPARE(rowOf(*m_editor, QStringLiteral("category")).value(QStringLiteral("value")).toString(),
+             QStringLiteral("photo"));
+    QVERIFY(!m_editor->hasChanges());
 }
 
 void TestTagEditor::offersTheAllowedRatings()

@@ -202,158 +202,6 @@ Rectangle {
         }
     }
 
-    // A tag while editing. Kept: ✕ removes it. Added: marked new; ✕ drops it. Removed: struck through; a
-    // click keeps it after all.
-    component EditedTagChip: Kirigami.Chip {
-        id: chip
-
-        required property var modelData
-        required property TagEditor tagEditor
-        readonly property bool added: modelData.change === TagEditor.Change.Added
-        readonly property bool removed: modelData.change === TagEditor.Change.Removed
-
-        text: modelData.name
-        icon.name: added ? "list-add" : ""
-        font.strikeout: removed
-        opacity: removed ? 0.6 : 1
-        closable: !removed
-        checkable: false
-        enabled: !tagEditor.saving
-        onRemoved: tagEditor.removeTag(modelData.tag)
-        onClicked: {
-            if (removed) {
-                tagEditor.restoreTag(modelData.tag);
-            }
-        }
-
-        Controls.ToolTip.text: removed ? KI18n.i18nc("@info:tooltip", "Keep this tag") : ""
-        Controls.ToolTip.visible: removed && hovered
-        Controls.ToolTip.delay: Kirigami.Units.toolTipDelay
-    }
-
-    // A namespace's add field, with the server's suggestions for that namespace above it. Enter adds the
-    // highlighted suggestion, or what was typed; up and down move through the suggestions. What is typed counts
-    // as a change until it is added.
-    component TagField: Controls.TextField {
-        id: field
-
-        required property TagEditor tagEditor
-        required property string namespaceName
-        readonly property TagSuggestions suggestions: tagEditor.suggestions
-
-        placeholderText: KI18n.i18nc("@info:placeholder", "Add a tag…")
-        enabled: !tagEditor.saving
-        onTextChanged: tagEditor.setTypedName(namespaceName, text)
-        onAccepted: {
-            const chosen = suggestionList.currentIndex >= 0 ? suggestions.nameAt(suggestionList.currentIndex) : text;
-            tagEditor.addTag(namespaceName, chosen);  // once added, the editor empties the field
-        }
-
-        Keys.onDownPressed: suggestionList.currentIndex = Math.min(suggestionList.currentIndex + 1,
-                                                                   suggestionList.count - 1)
-        Keys.onUpPressed: suggestionList.currentIndex = Math.max(suggestionList.currentIndex - 1, -1)
-
-        // The editor may change the text itself: emptied once added, or on Cancel.
-        Connections {
-            target: field.tagEditor
-
-            function onTypedNamesChanged() {
-                const typed = field.tagEditor.typedName(field.namespaceName);
-                if (field.text !== typed) {
-                    field.text = typed;
-                }
-            }
-        }
-
-        Controls.Popup {
-            y: -height  // above: the footer is at the bottom of the window
-            width: field.width
-            padding: 0
-            visible: field.activeFocus && field.suggestions.namespaceName === field.namespaceName
-                     && field.suggestions.count > 0
-            closePolicy: Controls.Popup.NoAutoClose  // shown while there are suggestions
-
-            contentItem: ListView {
-                id: suggestionList
-
-                implicitHeight: contentHeight
-                model: field.suggestions
-                currentIndex: -1
-                onCountChanged: currentIndex = -1  // new suggestions: nothing chosen yet
-
-                delegate: Controls.ItemDelegate {
-                    id: suggestion
-
-                    required property string name
-                    required property int imageCount
-
-                    width: ListView.view.width
-                    highlighted: ListView.isCurrentItem
-                    onClicked: field.tagEditor.addTag(field.namespaceName, name)
-
-                    contentItem: RowLayout {
-                        spacing: Kirigami.Units.largeSpacing
-
-                        Controls.Label {
-                            Layout.fillWidth: true
-                            text: suggestion.name
-                            elide: Text.ElideRight
-                        }
-
-                        Controls.Label {
-                            text: suggestion.imageCount  // images with the tag
-                            color: Kirigami.Theme.disabledTextColor
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    // A built-in one-tag namespace's dropdown: "–" for none, then the values. The ratings are fixed (an admin
-    // sets them on the server); category also takes a new value typed in, confirmed with Enter. A value typed
-    // but not confirmed counts as a change, which Save adds. A changed value is bold.
-    component ValueBox: Controls.ComboBox {
-        id: box
-
-        required property TagEditor tagEditor
-        required property string namespaceName
-        required property var options
-        required property string value
-        required property bool changed
-        required property bool fixedValues
-        readonly property string noValue: "–"
-
-        // The editor's value, also after it refused a choice
-        function showValue() {
-            currentIndex = value.length === 0 ? 0 : options.indexOf(value) + 1;
-        }
-
-        function choose(name: string) {
-            tagEditor.setSingleValue(namespaceName, name === noValue ? "" : name);
-            showValue();
-        }
-
-        model: [noValue].concat(options)
-        editable: !fixedValues
-        enabled: !tagEditor.saving
-        font.bold: changed
-        onActivated: index => choose(index === 0 ? "" : options[index - 1])
-        onAccepted: choose(editText.trim())
-        onEditTextChanged: {
-            if (editable) {
-                tagEditor.setTypedName(namespaceName, editText === currentText ? "" : editText);
-            }
-        }
-
-        Controls.ToolTip.text: KI18n.i18nc("@info:tooltip", "Pick one, or type a new one and press Enter")
-        Controls.ToolTip.visible: editable && hovered
-        Controls.ToolTip.delay: Kirigami.Units.toolTipDelay
-        onValueChanged: showValue()
-        onOptionsChanged: Qt.callLater(showValue)  // after the new model is in
-        Component.onCompleted: showValue()
-    }
-
     Component {
         id: detailsComponent
 
@@ -411,6 +259,7 @@ Rectangle {
                         required property string namespaceName
                         required property bool dropdown
                         required property bool fixedValues
+                        required property bool keepable
                         required property var options
                         required property string value
                         required property bool changed
@@ -418,45 +267,21 @@ Rectangle {
 
                         Layout.fillWidth: true
                         label: namespaceName + ":"
-                        firstLineHeight: dropdown ? valueBox.implicitHeight
-                                                     : tags.length > 0 ? chipHeight.implicitHeight
-                                                                       : addField.implicitHeight
+                        firstLineHeight: rowContent.firstLineHeight
 
-                        ValueBox {
-                            id: valueBox
+                        TagRowContent {
+                            id: rowContent
 
-                            Layout.preferredWidth: Kirigami.Units.gridUnit * 12
-                            visible: namespaceRow.dropdown
-                            tagEditor: footer.tagEditor
+                            Layout.fillWidth: true
+                            editor: footer.tagEditor
                             namespaceName: namespaceRow.namespaceName
+                            dropdown: namespaceRow.dropdown
+                            fixedValues: namespaceRow.fixedValues
+                            keepable: namespaceRow.keepable
                             options: namespaceRow.options
                             value: namespaceRow.value
                             changed: namespaceRow.changed
-                            fixedValues: namespaceRow.fixedValues
-                        }
-
-                        // What Save will do to each tag
-                        Flow {
-                            Layout.fillWidth: true
-                            visible: !namespaceRow.dropdown && namespaceRow.tags.length > 0
-                            spacing: Kirigami.Units.smallSpacing
-
-                            Repeater {
-                                model: namespaceRow.dropdown ? [] : namespaceRow.tags
-
-                                delegate: EditedTagChip {
-                                    tagEditor: footer.tagEditor
-                                }
-                            }
-                        }
-
-                        TagField {
-                            id: addField
-
-                            Layout.fillWidth: true
-                            visible: !namespaceRow.dropdown
-                            tagEditor: footer.tagEditor
-                            namespaceName: namespaceRow.namespaceName
+                            tags: namespaceRow.tags
                         }
                     }
                 }

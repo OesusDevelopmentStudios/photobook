@@ -15,6 +15,7 @@
 
 #include "ApiTypes.hpp"
 #include "Connection.hpp"
+#include "TagRowsEditor.hpp"
 #include "TagSuggestions.hpp"
 
 namespace pictorio::tag_editor
@@ -29,17 +30,13 @@ class NamespaceRows;
 // drops them. They stay when the selection changes, and apply to the images selected then. A change that
 // would leave any selected image restricted is refused at once. After applying, each image is asked for
 // again, as the server answers only how many changed.
-class BulkTagEditor : public QObject
+class BulkTagEditor : public TagRowsEditor
 {
     Q_OBJECT
 
     Q_PROPERTY(int imageCount READ imageCount NOTIFY imagesChanged)
     Q_PROPERTY(int maximumImageCount READ maximumImageCountForQml CONSTANT)
-    Q_PROPERTY(bool hasChanges READ hasChanges NOTIFY hasChangesChanged)
     Q_PROPERTY(bool applying READ isApplying NOTIFY applyingChanged)
-    Q_PROPERTY(QAbstractListModel* namespaceRows READ namespaceRows CONSTANT)
-    Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged)
-    Q_PROPERTY(pictorio::tag_editor::TagSuggestions* suggestions READ suggestions CONSTANT)
 
 public:
     static constexpr int maximumImageCount = 1000;  // the most the server changes at once
@@ -51,34 +48,29 @@ public:
     // The selected images, in the order of the results. The changes so far stay.
     void setImages(const QList<server_client::Image>& images);
 
-    // A name typed in a namespace's row; added to every selected image. False if refused; errorMessage says why.
-    Q_INVOKABLE bool addTag(const QString& namespaceName, const QString& typedName);
-    // For category or rating: this value for every image; empty: none for any.
-    Q_INVOKABLE bool setSingleValue(const QString& namespaceName, const QString& typedName);
-    Q_INVOKABLE void keepValue(const QString& namespaceName);  // "keep as is": no change to that namespace
-    // A tag as the server writes it: removed from every image that has it, or an added one dropped
-    Q_INVOKABLE bool removeTag(const QString& tag);
-    Q_INVOKABLE bool restoreTag(const QString& tag);  // not removed after all
-    Q_INVOKABLE void apply();
+    Q_INVOKABLE void apply();  // also adds what is typed and not added yet
     Q_INVOKABLE void clear();
 
-    // What is typed in a namespace's field and not added yet; it counts as a change, and apply() adds it.
-    Q_INVOKABLE void setTypedName(const QString& namespaceName, const QString& text);
-    Q_INVOKABLE QString typedName(const QString& namespaceName) const;
+    // The rows' changes, for every selected image; see TagRowsEditor
+    bool addTag(const QString& namespaceName, const QString& typedName) override;
+    bool setSingleValue(const QString& namespaceName, const QString& typedName) override;
+    void keepValue(const QString& namespaceName) override;  // "keep as is"
+    bool removeTag(const QString& tag) override;            // from every image that has it
+    bool restoreTag(const QString& tag) override;
+    void setTypedName(const QString& namespaceName, const QString& text) override;
+    QString typedName(const QString& namespaceName) const override;
 
     int imageCount() const;
-    bool hasChanges() const;
     bool isApplying() const;
-    QAbstractListModel* namespaceRows() const;
-    QString errorMessage() const;
-    TagSuggestions* suggestions() const;
+    bool isBusy() const override;
+    bool hasChanges() const override;
+    QAbstractListModel* namespaceRows() const override;
+    QString errorMessage() const override;
+    TagSuggestions* suggestions() const override;
 
 Q_SIGNALS:
     void imagesChanged();
-    void hasChangesChanged();
-    void typedNamesChanged();  // e.g. cleared once added
     void applyingChanged();
-    void errorMessageChanged();
     void applied();                                        // the server has changed the images
     void imageUpdated(const server_client::Image& image);  // one of them, as the server has it now
 

@@ -16,6 +16,7 @@
 
 #include "ApiTypes.hpp"
 #include "Connection.hpp"
+#include "TagRowsEditor.hpp"
 #include "TagSuggestions.hpp"
 
 namespace pictorio::tag_editor
@@ -29,28 +30,15 @@ class NamespaceRows;
 // custom ones included, get tags added and removed. Changes are collected and sent together with save(); cancel() drops
 // them. A change the server would refuse (a restricted, invalid or not allowed tag) is refused at once, with the
 // reason, before anything is sent; the server checks again when saving.
-class TagEditor : public QObject
+class TagEditor : public TagRowsEditor
 {
     Q_OBJECT
 
     Q_PROPERTY(bool canEdit READ canEdit NOTIFY imageChanged)
     Q_PROPERTY(bool editing READ isEditing NOTIFY editingChanged)
-    Q_PROPERTY(bool hasChanges READ hasChanges NOTIFY hasChangesChanged)
     Q_PROPERTY(bool saving READ isSaving NOTIFY savingChanged)
-    Q_PROPERTY(QAbstractListModel* namespaceRows READ namespaceRows CONSTANT)
-    Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged)
-    Q_PROPERTY(pictorio::tag_editor::TagSuggestions* suggestions READ suggestions CONSTANT)
 
 public:
-    // What saving does to a tag, for showing it while editing
-    enum class Change
-    {
-        Kept,
-        Added,
-        Removed,  // also a tag that an added one replaces in a single-value namespace
-    };
-    Q_ENUM(Change)
-
     // The connection is not owned and must outlive the editor.
     explicit TagEditor(connection::Connection* connection, QObject* parent = nullptr);
     ~TagEditor() override;
@@ -59,37 +47,31 @@ public:
     void setImage(const std::optional<server_client::Image>& image);
 
     Q_INVOKABLE void startEditing();
-    // A name typed in a namespace's row, e.g. "Sample Artist" for author. False if refused; errorMessage says why.
-    Q_INVOKABLE bool addTag(const QString& namespaceName, const QString& typedName);
-    // For a one-tag namespace: the tag it has after saving; empty: none.
-    Q_INVOKABLE bool setSingleValue(const QString& namespaceName, const QString& typedName);
-    // A tag as the server writes it, e.g. "general:summer": an added one is dropped, a kept one marked removed.
-    Q_INVOKABLE bool removeTag(const QString& tag);
-    Q_INVOKABLE bool restoreTag(const QString& tag);  // a removed one is kept again
-    Q_INVOKABLE void save();
+    Q_INVOKABLE void save();  // also adds what is typed and not added yet
     Q_INVOKABLE void cancel();
 
-    // What is typed in a namespace's field and not added yet. It counts as a change; save() adds it. The
-    // suggestions follow the field typed in last.
-    Q_INVOKABLE void setTypedName(const QString& namespaceName, const QString& text);
-    Q_INVOKABLE QString typedName(const QString& namespaceName) const;
+    // The rows' changes; see TagRowsEditor
+    bool addTag(const QString& namespaceName, const QString& typedName) override;
+    bool setSingleValue(const QString& namespaceName, const QString& typedName) override;
+    void keepValue(const QString& namespaceName) override;  // the image's own value again
+    bool removeTag(const QString& tag) override;
+    bool restoreTag(const QString& tag) override;
+    void setTypedName(const QString& namespaceName, const QString& text) override;
+    QString typedName(const QString& namespaceName) const override;
 
     bool canEdit() const;
     bool isEditing() const;
-    bool hasChanges() const;
     bool isSaving() const;
-    // While editing: a row per namespace, see NamespaceRows
-    QAbstractListModel* namespaceRows() const;
-    QString errorMessage() const;
-    TagSuggestions* suggestions() const;
+    bool isBusy() const override;
+    bool hasChanges() const override;
+    QAbstractListModel* namespaceRows() const override;  // while editing
+    QString errorMessage() const override;
+    TagSuggestions* suggestions() const override;
 
 Q_SIGNALS:
     void imageChanged();
     void editingChanged();
-    void hasChangesChanged();
-    void typedNamesChanged();  // e.g. cleared once added
     void savingChanged();
-    void errorMessageChanged();
     void saved(const server_client::Image& image);  // as the server answered: its tags are now the image's
 
 private:

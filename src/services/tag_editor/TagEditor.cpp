@@ -39,7 +39,7 @@ namespace pictorio::tag_editor
 {
 
 TagEditor::TagEditor(connection::Connection* connection, QObject* parent)
-    : QObject(parent)
+    : TagRowsEditor(parent)
     , m_connection(connection)
     , m_suggestions(std::make_unique<TagSuggestions>(connection))
     , m_namespaces(std::make_unique<Namespaces>(connection))
@@ -157,6 +157,21 @@ bool TagEditor::setSingleValue(const QString& namespaceName, const QString& type
     }
 
     return applyIfAllowed(additions, removals);
+}
+
+void TagEditor::keepValue(const QString& namespaceName)
+{
+    if (!m_editing || m_saving)
+    {
+        return;
+    }
+
+    const auto inNamespace = [&](const QString& tag) { return tagFromServer(tag).namespaceName == namespaceName; };
+    QStringList additions = m_additions;
+    additions.removeIf(inNamespace);
+    QStringList removals = m_removals;
+    removals.removeIf(inNamespace);
+    applyIfAllowed(additions, removals);
 }
 
 bool TagEditor::removeTag(const QString& tag)
@@ -295,6 +310,11 @@ bool TagEditor::hasChanges() const
 }
 
 bool TagEditor::isSaving() const
+{
+    return m_saving;
+}
+
+bool TagEditor::isBusy() const
 {
     return m_saving;
 }
@@ -475,6 +495,7 @@ void TagEditor::setSaving(bool saving)
     {
         m_saving = saving;
         Q_EMIT savingChanged();
+        Q_EMIT busyChanged();
     }
 }
 

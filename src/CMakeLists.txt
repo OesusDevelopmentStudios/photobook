@@ -70,6 +70,10 @@ ecm_target_qml_sources(pictorio SOURCES
     qml/LibrarySidebar.qml
     qml/LibraryTile.qml
     qml/ImageDetailsFooter.qml
+    qml/TagChip.qml
+    qml/TagNameField.qml
+    qml/TagValueBox.qml
+    qml/TagRowContent.qml
 )
 
 target_link_libraries(pictorio PRIVATE

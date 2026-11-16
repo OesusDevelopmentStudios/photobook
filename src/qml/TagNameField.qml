@@ -1,0 +1,90 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-FileCopyrightText: 2026 OesusDevelopmentStudios
+
+// Lets the suggestion list below use the field's id.
+pragma ComponentBehavior: Bound
+
+import QtQuick
+import QtQuick.Controls as Controls
+import QtQuick.Layouts
+import org.kde.kirigami as Kirigami
+import org.kde.ki18n
+
+// A namespace's add field, with the server's suggestions for that namespace above it. Enter adds the highlighted
+// suggestion, or what was typed; up and down move through the suggestions. What is typed counts as a change
+// until it is added.
+Controls.TextField {
+    id: field
+
+    required property TagRowsEditor editor
+    required property string namespaceName
+    readonly property TagSuggestions suggestions: editor.suggestions
+
+    placeholderText: KI18n.i18nc("@info:placeholder", "Add a tag…")
+    enabled: !editor.busy
+    onTextChanged: editor.setTypedName(namespaceName, text)
+    onAccepted: {
+        const chosen = suggestionList.currentIndex >= 0 ? suggestions.nameAt(suggestionList.currentIndex) : text;
+        editor.addTag(namespaceName, chosen);  // once added, the editor empties the field
+    }
+
+    Keys.onDownPressed: suggestionList.currentIndex = Math.min(suggestionList.currentIndex + 1,
+                                                               suggestionList.count - 1)
+    Keys.onUpPressed: suggestionList.currentIndex = Math.max(suggestionList.currentIndex - 1, -1)
+
+    // The editor may change the text itself: emptied once added, or when the changes are dropped.
+    Connections {
+        target: field.editor
+
+        function onTypedNamesChanged() {
+            const typed = field.editor.typedName(field.namespaceName);
+            if (field.text !== typed) {
+                field.text = typed;
+            }
+        }
+    }
+
+    Controls.Popup {
+        y: -height  // above: the field may be at the bottom of the window
+        width: field.width
+        padding: 0
+        visible: field.activeFocus && field.suggestions.namespaceName === field.namespaceName
+                 && field.suggestions.count > 0
+        closePolicy: Controls.Popup.NoAutoClose  // shown while there are suggestions
+
+        contentItem: ListView {
+            id: suggestionList
+
+            implicitHeight: contentHeight
+            model: field.suggestions
+            currentIndex: -1
+            onCountChanged: currentIndex = -1  // new suggestions: nothing chosen yet
+
+            delegate: Controls.ItemDelegate {
+                id: suggestion
+
+                required property string name
+                required property int imageCount
+
+                width: ListView.view.width
+                highlighted: ListView.isCurrentItem
+                onClicked: field.editor.addTag(field.namespaceName, name)
+
+                contentItem: RowLayout {
+                    spacing: Kirigami.Units.largeSpacing
+
+                    Controls.Label {
+                        Layout.fillWidth: true
+                        text: suggestion.name
+                        elide: Text.ElideRight
+                    }
+
+                    Controls.Label {
+                        text: suggestion.imageCount  // images with the tag
+                        color: Kirigami.Theme.disabledTextColor
+                    }
+                }
+            }
+        }
+    }
+}

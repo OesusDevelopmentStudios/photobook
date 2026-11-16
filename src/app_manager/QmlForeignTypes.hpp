@@ -15,6 +15,7 @@
 #include "Navigator.hpp"
 #include "Slideshow.hpp"
 #include "TagEditor.hpp"
+#include "TagRowsEditor.hpp"
 #include "TagSuggestions.hpp"
 #include "ViewTransform.hpp"
 #include "Viewer.hpp"
@@ -95,6 +96,15 @@ struct ForeignBulkTagEditor
     QML_FOREIGN(pictorio::tag_editor::BulkTagEditor)
     QML_NAMED_ELEMENT(BulkTagEditor)
     QML_UNCREATABLE("Provided by AppManager")
+};
+
+// The parts the edit views' rows share; QML reads Change from here
+struct ForeignTagRowsEditor
+{
+    Q_GADGET
+    QML_FOREIGN(pictorio::tag_editor::TagRowsEditor)
+    QML_NAMED_ELEMENT(TagRowsEditor)
+    QML_UNCREATABLE("A base of TagEditor and BulkTagEditor")
 };
 
 struct ForeignTagSuggestions

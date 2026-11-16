@@ -12,7 +12,6 @@
 #include <KLocalizedString>
 #include <QVariantMap>
 
-#include "TagEditor.hpp"
 #include "hlp/Restrictions.hpp"
 #include "hlp/TagMessages.hpp"
 #include "hlp/TagNames.hpp"
@@ -23,7 +22,7 @@ namespace
 {
 
 using pictorio::tag_editor::TagName;
-using Change = pictorio::tag_editor::TagEditor::Change;  // the same numbers in both editors' rows
+using Change = pictorio::tag_editor::TagRowsEditor::Change;
 
 QVariantMap tagEntry(const TagName& tag, Change change, int count)
 {
@@ -41,7 +40,7 @@ namespace pictorio::tag_editor
 {
 
 BulkTagEditor::BulkTagEditor(connection::Connection* connection, QObject* parent)
-    : QObject(parent)
+    : TagRowsEditor(parent)
     , m_connection(connection)
     , m_suggestions(std::make_unique<TagSuggestions>(connection))
     , m_namespaces(std::make_unique<Namespaces>(connection))
@@ -302,6 +301,11 @@ bool BulkTagEditor::isApplying() const
     return m_applying;
 }
 
+bool BulkTagEditor::isBusy() const
+{
+    return m_applying;
+}
+
 QAbstractListModel* BulkTagEditor::namespaceRows() const
 {
     return m_rows.get();
@@ -537,6 +541,7 @@ void BulkTagEditor::setApplying(bool applying)
     {
         m_applying = applying;
         Q_EMIT applyingChanged();
+        Q_EMIT busyChanged();
     }
 }
 
