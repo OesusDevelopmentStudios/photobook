@@ -338,7 +338,8 @@ Kirigami.Page {
             anchors.right: parent.right
             anchors.bottom: parent.bottom
             viewer: page.viewer
-            shown: detailsZoneHover.hovered
+            shown: detailsZoneHover.hovered || expanded  // expanded, it stays until collapsed
+            maximumDetailsHeight: page.height * 0.4
         }
     }
 
