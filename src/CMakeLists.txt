@@ -39,27 +39,15 @@ add_subdirectory(services/library_view)
 add_subdirectory(services/tag_editor)
 add_subdirectory(services/network_access)
 
-# The application. main.cpp only wires things together; logic lives in the libraries above.
-add_executable(pictorio)
+# The user interface: the QML files and the C++ types they use, the AppManager and through it the services. A
+# static library that is also a QML module, so the application and the QML tests use the same one. The URI is
+# the app ID; main.cpp loads Main.qml from it with loadFromModule().
+qt_add_library(pictorio_ui STATIC)
 
-# The executable is also a QML module: QML files are compiled into it, and main.cpp loads them with
-# loadFromModule(). The URI is the app ID. It must differ from the target name, because Qt creates a
-# folder named after the URI next to the executable (a URI "pictorio" would collide with bin/pictorio).
-ecm_add_qml_module(pictorio URI io.github.oesusdevelopmentstudios.pictorio)
+# QML modules go into folders named after their URI under one root, where qmllint and the QML tests find them.
+set(QT_QML_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/qml)
 
-target_sources(pictorio PRIVATE
-    main.cpp
-    app_manager/AppManager.hpp
-    app_manager/AppManager.cpp
-    app_manager/QmlForeignTypes.hpp
-)
-
-# Qt's generated QML type registration includes the headers by file name only.
-target_include_directories(pictorio PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/app_manager
-)
-
-ecm_target_qml_sources(pictorio SOURCES
+set(qmlFiles
     qml/Main.qml
     qml/ViewerPage.qml
     qml/SlideshowControls.qml
@@ -77,7 +65,35 @@ ecm_target_qml_sources(pictorio SOURCES
     qml/BulkTagPanel.qml
 )
 
-target_link_libraries(pictorio PRIVATE
+# At the module's root, though they are in qml/ here: only files at the root see the module's C++ types.
+foreach(qmlFile ${qmlFiles})
+    get_filename_component(fileName ${qmlFile} NAME)
+    set_source_files_properties(${qmlFile} PROPERTIES QT_RESOURCE_ALIAS ${fileName})
+endforeach()
+
+qt_add_qml_module(pictorio_ui
+    URI io.github.oesusdevelopmentstudios.pictorio
+    VERSION 1.0
+    RESOURCE_PREFIX /qt/qml  # where the QML engine looks for modules in the resources
+    SOURCES
+        app_manager/AppManager.hpp
+        app_manager/AppManager.cpp
+        app_manager/QmlForeignTypes.hpp
+    QML_FILES ${qmlFiles}
+)
+
+# Qt gives the module's generated targets (resources, plugin) the folders of generated headers, and they can be
+# built before those exist; with warnings as errors, a missing include folder would stop the build.
+foreach(generatingTarget pictorio_ui pictorio_uiplugin)
+    file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${generatingTarget}_autogen/include)
+endforeach()
+
+# Qt's generated QML type registration includes the headers by file name only.
+target_include_directories(pictorio_ui PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/app_manager
+)
+
+target_link_libraries(pictorio_ui PUBLIC
     pictorio_utils
     pictorio_viewer
     pictorio_view_transform
@@ -88,10 +104,18 @@ target_link_libraries(pictorio PRIVATE
     pictorio_library
     pictorio_library_view
     pictorio_tag_editor
-    Qt6::Widgets
     Qt6::Qml
     Qt6::Quick
     Qt6::QuickControls2
+)
+
+# The application. main.cpp only wires things together; logic lives in the libraries above.
+add_executable(pictorio main.cpp)
+
+target_link_libraries(pictorio PRIVATE
+    pictorio_ui
+    pictorio_uiplugin  # the QML module's types, imported in main.cpp
+    Qt6::Widgets
     KF6::CoreAddons
     KF6::I18n
     KF6::I18nQml

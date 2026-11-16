@@ -12,11 +12,15 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QQmlApplicationEngine>
+#include <QQmlEngineExtensionPlugin>
 #include <QQuickStyle>
 
 #include "app_manager/AppManager.hpp"
 #include "utils/AppIdentity.hpp"
 #include "utils/CommandLine.hpp"
+
+// The user interface's QML module, a static library (see pictorio_ui in src/CMakeLists.txt)
+Q_IMPORT_QML_PLUGIN(io_github_oesusdevelopmentstudios_pictorioPlugin)
 
 namespace
 {
@@ -72,7 +76,7 @@ int main(int argc, char* argv[])
         {QStringLiteral("openedAtStart"), openedAtStart},
     });
 
-    // The QML module URI is the application ID (see ecm_add_qml_module in src/CMakeLists.txt).
+    // The QML module URI is the application ID (see pictorio_ui in src/CMakeLists.txt).
     qmlEngine.loadFromModule(pictorio::utils::applicationId, QStringLiteral("Main"));
 
     const bool mainWindowLoaded = !qmlEngine.rootObjects().isEmpty();

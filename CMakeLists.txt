@@ -26,7 +26,6 @@ list(APPEND CMAKE_MODULE_PATH ${ECM_MODULE_PATH})
 include(KDEInstallDirs)
 include(KDECMakeSettings)
 include(KDECompilerSettings NO_POLICY_SCOPE)
-include(ECMQmlModule)       # ecm_add_qml_module(): QML files compiled into the executable
 include(ECMFindQmlModule)   # ecm_find_qmlmodule(): checks QML modules needed at run time
 include(FeatureSummary)
 

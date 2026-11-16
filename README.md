@@ -67,7 +67,7 @@ ctest --test-dir build --output-on-failure
 Check the QML files with Qt's linter:
 
 ```sh
-cmake --build build --target pictorio_qmllint
+cmake --build build --target pictorio_ui_qmllint
 ```
 
 ### Flatpak

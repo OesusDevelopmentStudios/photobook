@@ -12,7 +12,7 @@ never seen it before.
   ```sh
   clang-format -i <changed C++ files>
   cmake --build build && ctest --test-dir build --output-on-failure
-  cmake --build build --target pictorio_qmllint
+  cmake --build build --target pictorio_ui_qmllint
   ```
 
 ## Code layout
