@@ -69,8 +69,15 @@ private Q_SLOTS:
     void shufflesTheSameWayForTheSameSeed();
     void shufflesDifferentlyForAnotherSeed();
 
+    void findsTheImagesDirectlyInAFolder();
+    void findsTheImagesInSubfoldersWhenAsked();
+    void skipsHiddenFilesAndFolders();
+    void doesNotFollowLinks();
+    void findsNothingInAMissingFolder();
+
 private:
     void createFiles(const QStringList& relativePaths);
+    QStringList foundImages(bool includeSubfolders) const;
     void setModificationTime(const QString& fileName, const QDateTime& modificationTime);
     QStringList listedFileNames(const Sorting& sorting = {}) const;
     QStringList createNumberedFiles(int count);
@@ -199,6 +206,65 @@ void TestFolderScanner::shufflesDifferentlyForAnotherSeed()
     createNumberedFiles(20);
 
     QVERIFY(listedFileNames({SortOrder::Random, 1}) != listedFileNames({SortOrder::Random, 2}));
+}
+
+// The images to upload, as paths in the test folder, e.g. "holiday/beach.jpg"
+QStringList TestFolderScanner::foundImages(bool includeSubfolders) const
+{
+    QStringList relativePaths;
+    for (const QString& path : findImages(m_folder->path(), includeSubfolders))
+    {
+        relativePaths.append(QDir(m_folder->path()).relativeFilePath(path));
+    }
+
+    return relativePaths;
+}
+
+void TestFolderScanner::findsTheImagesDirectlyInAFolder()
+{
+    createFiles({QStringLiteral("img10.jpg"),
+                 QStringLiteral("img2.jpg"),
+                 QStringLiteral("notes.txt"),
+                 QStringLiteral("holiday/beach.jpg")});
+
+    QCOMPARE(foundImages(false), QStringList({QStringLiteral("img2.jpg"), QStringLiteral("img10.jpg")}));
+}
+
+void TestFolderScanner::findsTheImagesInSubfoldersWhenAsked()
+{
+    createFiles({QStringLiteral("cover.png"),
+                 QStringLiteral("holiday/beach.jpg"),
+                 QStringLiteral("holiday/day2/sunset.jpg"),
+                 QStringLiteral("holiday/notes.txt")});
+
+    QCOMPARE(foundImages(true),
+             QStringList({QStringLiteral("cover.png"),
+                          QStringLiteral("holiday/beach.jpg"),
+                          QStringLiteral("holiday/day2/sunset.jpg")}));
+}
+
+// e.g. a thumbnail cache of another program
+void TestFolderScanner::skipsHiddenFilesAndFolders()
+{
+    createFiles({QStringLiteral("photo.jpg"), QStringLiteral(".hidden.png"), QStringLiteral(".thumbnails/photo.png")});
+
+    QCOMPARE(foundImages(true), QStringList{QStringLiteral("photo.jpg")});
+}
+
+// As the server's folder import: a link may lead anywhere, even back into the folder.
+void TestFolderScanner::doesNotFollowLinks()
+{
+    createFiles({QStringLiteral("photo.jpg"), QStringLiteral("elsewhere/far.jpg")});
+    QVERIFY(QFile::link(m_folder->filePath(QStringLiteral("elsewhere")), m_folder->filePath(QStringLiteral("linked"))));
+    QVERIFY(
+        QFile::link(m_folder->filePath(QStringLiteral("photo.jpg")), m_folder->filePath(QStringLiteral("link.jpg"))));
+
+    QCOMPARE(foundImages(true), QStringList({QStringLiteral("elsewhere/far.jpg"), QStringLiteral("photo.jpg")}));
+}
+
+void TestFolderScanner::findsNothingInAMissingFolder()
+{
+    QVERIFY(findImages(m_folder->filePath(QStringLiteral("missing")), true).isEmpty());
 }
 
 void TestFolderScanner::createFiles(const QStringList& relativePaths)

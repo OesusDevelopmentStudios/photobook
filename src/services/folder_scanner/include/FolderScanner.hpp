@@ -38,4 +38,10 @@ public:
     virtual QStringList listImages(const QString& folderPath, const Sorting& sorting) const = 0;
 };
 
+// The images in a folder to upload: those directly in it, and with includeSubfolders also those in every folder
+// below it. Recognized as listImages() does; hidden files and folders are skipped, and links are not followed
+// (as the server's folder import). In the natural order of their paths. Empty if the folder does not exist.
+// Reads only the file system: thread-safe.
+QStringList findImages(const QString& folderPath, bool includeSubfolders);
+
 }  // namespace pictorio::folder_scanner

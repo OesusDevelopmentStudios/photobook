@@ -7,11 +7,13 @@ add_library(pictorio_folder_scanner STATIC
     include/FolderScannerFactory.hpp
     impl/QtFolderScanner.hpp
     impl/QtFolderScanner.cpp
+    hlp/ImageFiles.hpp
+    hlp/ImageFiles.cpp
     FolderScanner.cpp
     FolderScannerFactory.cpp
 )
 
-# Users of the service see only include/; impl/ stays private to the service.
+# Users of the service see only include/; impl/ and hlp/ stay private to the service.
 target_include_directories(pictorio_folder_scanner
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
