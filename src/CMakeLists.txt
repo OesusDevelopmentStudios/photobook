@@ -67,6 +67,7 @@ ecm_target_qml_sources(pictorio SOURCES
     qml/AccountPage.qml
     qml/LibraryPage.qml
     qml/LibrarySidebar.qml
+    qml/LibraryTile.qml
 )
 
 target_link_libraries(pictorio PRIVATE

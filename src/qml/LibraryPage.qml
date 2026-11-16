@@ -128,7 +128,12 @@ Kirigami.Page {
                 // As many columns of about 8 grid units as fit; at least two.
                 readonly property int columns: Math.max(2, Math.floor(width / (Kirigami.Units.gridUnit * 8)))
 
+                // Room at the edges as between the tiles; at the top and bottom it scrolls with them.
                 anchors.fill: parent
+                anchors.leftMargin: Kirigami.Units.smallSpacing
+                anchors.rightMargin: Kirigami.Units.smallSpacing
+                topMargin: Kirigami.Units.smallSpacing
+                bottomMargin: Kirigami.Units.smallSpacing
                 model: page.loggedIn ? page.library : null
                 clip: true
                 cellWidth: width / columns
@@ -149,27 +154,9 @@ Kirigami.Page {
                 onCountChanged: loadMoreIfNearTheEnd()  // a short page may not fill the window
                 onHeightChanged: loadMoreIfNearTheEnd()
 
-                // Kept light, as many are made while scrolling: no clip (the crop stays inside the tile by itself)
-                // and no tooltip.
-                delegate: Rectangle {
-                    id: tile
-
-                    required property url thumbnailUrl
-
+                delegate: LibraryTile {
                     width: grid.cellWidth
                     height: grid.cellHeight
-                    color: Kirigami.Theme.alternateBackgroundColor
-                    border.color: Kirigami.Theme.backgroundColor
-                    border.width: 1
-
-                    Image {
-                        anchors.fill: parent
-                        anchors.margins: 1
-                        source: tile.thumbnailUrl
-                        fillMode: Image.PreserveAspectCrop  // square tiles, the image cropped to fill them
-                        asynchronous: true
-                        smooth: true
-                    }
                 }
 
                 footer: Item {
