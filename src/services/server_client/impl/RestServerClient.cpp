@@ -101,6 +101,11 @@ QString jobStatusName(JobStatus status)
     return QStringLiteral("queued");
 }
 
+QString booleanValue(bool value)
+{
+    return value ? QStringLiteral("true") : QStringLiteral("false");
+}
+
 QString imageFilePath(int imageId)
 {
     return QStringLiteral("/images/%1/file").arg(imageId);
@@ -238,11 +243,19 @@ QFuture<Result<ImagePage>> RestServerClient::searchImages(const ImageQuery& quer
         parameters.addQueryItem(QStringLiteral("cursor"), queryValue(query.cursor));
     }
 
-    parameters.addQueryItem(QStringLiteral("apply_hidden_filters"),
-                            query.applyHiddenFilters ? QStringLiteral("true") : QStringLiteral("false"));
+    parameters.addQueryItem(QStringLiteral("apply_hidden_filters"), booleanValue(query.applyHiddenFilters));
     return send("GET", QStringLiteral("/images"), std::nullopt, parameters).then([](const HttpResponse& response) {
         return jsonAnswer(response, statusOk, imagePageFrom);
     });
+}
+
+QFuture<Result<ImageCount>> RestServerClient::countImages(const ImageQuery& query)
+{
+    QUrlQuery parameters;
+    parameters.addQueryItem(QStringLiteral("q"), queryValue(query.text));
+    parameters.addQueryItem(QStringLiteral("apply_hidden_filters"), booleanValue(query.applyHiddenFilters));
+    return send("GET", QStringLiteral("/images/count"), std::nullopt, parameters)
+        .then([](const HttpResponse& response) { return jsonAnswer(response, statusOk, imageCountFrom); });
 }
 
 QFuture<Result<Image>> RestServerClient::image(int imageId)

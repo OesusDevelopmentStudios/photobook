@@ -29,6 +29,7 @@ class Library : public QAbstractListModel
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged)
     Q_PROPERTY(QString effectiveQuery READ effectiveQuery NOTIFY effectiveQueryChanged)
     Q_PROPERTY(int count READ count NOTIFY countChanged)
+    Q_PROPERTY(int totalCount READ totalCount NOTIFY totalCountChanged)
 
 public:
     enum class Order
@@ -69,7 +70,8 @@ public:
     bool isLoading() const;
     QString errorMessage() const;
     QString effectiveQuery() const;  // the search with the user's hidden-by-default filters added
-    int count() const;
+    int count() const;               // loaded so far
+    int totalCount() const;          // over all pages; -1 until the server has said, or if it could not
     std::optional<server_client::Image> imageAt(int row) const;  // nothing for a row that is not there
 
     int rowCount(const QModelIndex& parent = {}) const override;
@@ -84,10 +86,13 @@ Q_SIGNALS:
     void errorMessageChanged();
     void effectiveQueryChanged();
     void countChanged();
+    void totalCountChanged();
 
 private:
     bool isLoggedIn() const;
     void loadPage(const QString& cursor);
+    void loadTotalCount();
+    void setTotalCount(int totalCount);
     void addPage(const server_client::ImagePage& page);
     void clearImages();
     void setLoading(bool loading);
@@ -105,6 +110,7 @@ private:
     int m_searchNumber = 0;  // answers to an older search are ignored
     QString m_errorMessage;
     QString m_effectiveQuery;
+    int m_totalCount = -1;
 };
 
 }  // namespace pictorio::library

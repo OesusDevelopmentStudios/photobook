@@ -21,6 +21,7 @@ Result<CurrentUser> currentUserFrom(const QJsonValue& json);
 Result<QList<DeviceToken>> devicesFrom(const QJsonValue& json);
 Result<Image> imageFrom(const QJsonValue& json);
 Result<ImagePage> imagePageFrom(const QJsonValue& json);
+Result<ImageCount> imageCountFrom(const QJsonValue& json);
 Result<int> updatedCountFrom(const QJsonValue& json);  // of a bulk tag change
 Result<QList<TagCount>> tagCountsFrom(const QJsonValue& json);
 Result<QList<Namespace>> namespacesFrom(const QJsonValue& json);

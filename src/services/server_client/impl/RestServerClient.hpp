@@ -34,6 +34,7 @@ public:
     QFuture<Result<void>> revokeDevice(int tokenId) override;
 
     QFuture<Result<ImagePage>> searchImages(const ImageQuery& query) override;
+    QFuture<Result<ImageCount>> countImages(const ImageQuery& query) override;
     QFuture<Result<Image>> image(int imageId) override;
     QFuture<Result<Image>> uploadImage(const ImageUpload& upload) override;
     QFuture<Result<Image>> changeImageTags(int imageId, const TagChanges& changes) override;

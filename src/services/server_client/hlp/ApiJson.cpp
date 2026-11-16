@@ -267,6 +267,15 @@ Result<ImagePage> imagePageFrom(const QJsonValue& json)
     return checked(reader, page);
 }
 
+Result<ImageCount> imageCountFrom(const QJsonValue& json)
+{
+    JsonReader reader(json.toObject());
+    ImageCount found;
+    found.count = reader.integer(QStringLiteral("count"));
+    found.effectiveQuery = reader.string(QStringLiteral("effective_query"));
+    return checked(reader, found);
+}
+
 Result<int> updatedCountFrom(const QJsonValue& json)
 {
     JsonReader reader(json.toObject());

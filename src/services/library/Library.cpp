@@ -60,6 +60,7 @@ void Library::reload()
 {
     ++m_searchNumber;
     clearImages();
+    setTotalCount(-1);
     setErrorMessage({});
     setLoading(false);
     if (!isLoggedIn())
@@ -74,6 +75,7 @@ void Library::reload()
     }
 
     loadPage({});
+    loadTotalCount();
 }
 
 void Library::loadMore()
@@ -129,6 +131,11 @@ std::optional<server_client::Image> Library::imageAt(int row) const
     }
 
     return m_images.at(row);
+}
+
+int Library::totalCount() const
+{
+    return m_totalCount;
 }
 
 int Library::rowCount(const QModelIndex& parent) const
@@ -219,6 +226,27 @@ void Library::loadPage(const QString& cursor)
 
             addPage(*page);
         });
+}
+
+// Without the total the grid works as well, so a failure is not shown; the page's own error says enough.
+void Library::loadTotalCount()
+{
+    const int searchNumber = m_searchNumber;
+    m_connection->client()->countImages(queryFor({})).then(this, [this, searchNumber](const Result<ImageCount>& found) {
+        if (searchNumber == m_searchNumber && found.has_value())
+        {
+            setTotalCount(found->count);
+        }
+    });
+}
+
+void Library::setTotalCount(int totalCount)
+{
+    if (totalCount != m_totalCount)
+    {
+        m_totalCount = totalCount;
+        Q_EMIT totalCountChanged();
+    }
 }
 
 // The next page's cursor is kept before anyone hears of the new images: the grid asks for more as soon as

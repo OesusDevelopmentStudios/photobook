@@ -150,6 +150,7 @@ private Q_SLOTS:
     void searchesWithEveryParameter();
     void readsAPageOfImages();
     void hasNoCursorOnTheLastPage();
+    void countsTheImagesASearchFinds();
     void readsOneImage();
     void uploadsAFileWithItsMetadata();
     void refusesToUploadAFileItCannotRead();
@@ -466,6 +467,27 @@ void TestServerClient::hasNoCursorOnTheLastPage()
     QVERIFY(page->nextCursor.isEmpty());
     QCOMPARE(serverSideValue(m_transport->lastRequest().url, "apply_hidden_filters"), QStringLiteral("true"));
     QVERIFY(!m_transport->lastRequest().url.query().contains(QStringLiteral("cursor")));
+}
+
+void TestServerClient::countsTheImagesASearchFinds()
+{
+    m_transport->nextResponse = answer(200, R"({"count":11230,"effective_query":"summer -rating:nsfw"})");
+    ImageQuery query;
+    query.text = QStringLiteral("summer");
+    query.sortBy = SortBy::Random;  // not part of a count
+    query.cursor = QStringLiteral("eyJ0IjoiMjAyNSJ9");
+    query.applyHiddenFilters = false;
+
+    const Result<ImageCount> found = valueOf(m_client->countImages(query));
+
+    const QUrl url = m_transport->lastRequest().url;
+    QCOMPARE(url.path(), QStringLiteral("/api/v1/images/count"));
+    QCOMPARE(serverSideValue(url, "q"), QStringLiteral("summer"));
+    QCOMPARE(serverSideValue(url, "apply_hidden_filters"), QStringLiteral("false"));
+    QVERIFY(!url.query().contains(QStringLiteral("sort")));
+    QVERIFY(!url.query().contains(QStringLiteral("cursor")));
+    QCOMPARE(found->count, 11230);
+    QCOMPARE(found->effectiveQuery, QStringLiteral("summer -rating:nsfw"));
 }
 
 void TestServerClient::readsOneImage()

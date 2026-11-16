@@ -144,6 +144,12 @@ struct ImagePage
     QString effectiveQuery;  // the query with the hidden filters that were added
 };
 
+struct ImageCount
+{
+    int count = 0;           // over all pages of the search
+    QString effectiveQuery;  // the query with the hidden filters that were added
+};
+
 struct TagChanges
 {
     QStringList addTags;  // created when unknown; in a one-tag-per-image namespace a new tag replaces the old

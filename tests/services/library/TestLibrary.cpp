@@ -9,6 +9,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QSet>
+#include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
 #include <QUrlQuery>
@@ -33,6 +34,7 @@ using server_client::HttpResponse;
 
 const QString serverUrl = QStringLiteral("https://photos.example.org");
 const QString imagesUrl = serverUrl + QStringLiteral("/api/v1/images");
+const QString countUrl = serverUrl + QStringLiteral("/api/v1/images/count");
 
 QJsonObject imageJson(int imageId)
 {
@@ -108,6 +110,9 @@ private Q_SLOTS:
     void showsWhyASearchFailed();
     void emptiesWhenLoggedOut();
     void givesTheGridWhatItShows();
+    void knowsTheTotalOfTheSearch();
+    void ignoresTheTotalOfAnOlderSearch();
+    void hasNoTotalIfTheServerCannotCount();
 
 private:
     void logIn();
@@ -146,6 +151,12 @@ void TestLibrary::init()
         }
 
         return page({1, 2}, nextPage);
+    });
+    m_server->answerWith("GET", countUrl, [](const HttpRequest& request) {
+        const bool photos = parameter(request, QStringLiteral("q")) == QLatin1String("category:photo");
+        return jsonResponse(200,
+                            {{QStringLiteral("count"), photos ? 1 : 3},
+                             {QStringLiteral("effective_query"), QStringLiteral("-rating:nsfw")}});
     });
 
     auto keyring = std::make_shared<fakes::Keyring>();
@@ -233,7 +244,7 @@ void TestLibrary::ignoresTheAnswerToAnOlderSearch()
 
     m_library->search(QStringLiteral("summer"));          // all images: 1 and 2
     m_library->search(QStringLiteral("category:photo"));  // image 7
-    m_server->releaseAnswer(1);                           // the newer search is answered first…
+    m_server->releaseAnswer(2);                           // the newer search's page is answered first…
     m_server->releaseAnswers();                           // …and the older one after it
 
     QTRY_COMPARE(m_library->count(), 1);
@@ -320,6 +331,52 @@ void TestLibrary::givesTheGridWhatItShows()
     QCOMPARE(m_library->imageAt(1)->id, 2);  // all of an image, for the viewer
     QCOMPARE(m_library->imageAt(2), std::nullopt);
     QCOMPARE(m_library->imageAt(-1), std::nullopt);
+}
+
+void TestLibrary::knowsTheTotalOfTheSearch()
+{
+    QCOMPARE(m_library->totalCount(), -1);  // not logged in yet
+    logIn();
+    QTRY_COMPARE(m_library->totalCount(), 3);
+    QCOMPARE(m_library->count(), 2);  // more than the first page holds
+
+    QSignalSpy totalCountChanged(m_library.get(), &Library::totalCountChanged);
+    m_library->search(QStringLiteral("category:photo"));
+
+    QTRY_COMPARE(m_library->totalCount(), 1);
+    QCOMPARE(totalCountChanged.count(), 2);  // unknown while the new search runs, then its total
+    const HttpRequest countRequest = m_server->requestsTo("GET", countUrl).last();
+    QCOMPARE(parameter(countRequest, QStringLiteral("q")), QStringLiteral("category:photo"));
+    QCOMPARE(parameter(countRequest, QStringLiteral("apply_hidden_filters")), QStringLiteral("true"));
+}
+
+void TestLibrary::ignoresTheTotalOfAnOlderSearch()
+{
+    logIn();
+    QTRY_COMPARE(m_library->totalCount(), 3);
+    m_server->holdAnswers = true;
+
+    m_library->search(QStringLiteral("summer"));          // a total of 3
+    m_library->search(QStringLiteral("category:photo"));  // a total of 1
+    m_server->releaseAnswer(3);                           // the newer search's total arrives first…
+    m_server->releaseAnswers();                           // …and the older one after it
+
+    QTRY_COMPARE(m_library->totalCount(), 1);
+    QTest::qWait(50);
+    QCOMPARE(m_library->totalCount(), 1);
+}
+
+void TestLibrary::hasNoTotalIfTheServerCannotCount()
+{
+    m_server->answerWith("GET", countUrl, [](const HttpRequest&) {
+        return jsonResponse(500, {{QStringLiteral("code"), QStringLiteral("internal")}});
+    });
+
+    logIn();
+    QTRY_COMPARE(m_library->count(), 2);
+
+    QCOMPARE(m_library->totalCount(), -1);
+    QVERIFY(m_library->errorMessage().isEmpty());  // the grid still works
 }
 
 }  // namespace pictorio::library

@@ -52,6 +52,10 @@ public:
     // GET /images: one page of the images the user may see
     virtual QFuture<Result<ImagePage>> searchImages(const ImageQuery& query) = 0;
 
+    // GET /images/count: how many images the search finds. Only the query's text and hidden-filter switch
+    // count; its sort and paging are ignored.
+    virtual QFuture<Result<ImageCount>> countImages(const ImageQuery& query) = 0;
+
     // GET /images/{id}
     virtual QFuture<Result<Image>> image(int imageId) = 0;
 
