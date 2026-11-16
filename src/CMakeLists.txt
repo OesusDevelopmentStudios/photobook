@@ -5,6 +5,7 @@
 add_library(pictorio_utils STATIC
     utils/AppIdentity.cpp
     utils/CommandLine.cpp
+    utils/FileHash.cpp
 )
 
 # Lets every target that links pictorio_utils write #include "utils/AppIdentity.hpp".
