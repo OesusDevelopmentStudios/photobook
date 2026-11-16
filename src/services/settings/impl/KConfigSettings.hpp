@@ -32,12 +32,16 @@ public:
 
     std::optional<bool> librarySidebarVisible() const override;
     void setLibrarySidebarVisible(bool visible) override;
+    std::optional<int> libraryTileSize() const override;
+    void setLibraryTileSize(int gridUnits) override;
 
 private:
     KConfigGroup slideshowGroup() const;
     void writeSlideshowEntry(const char* key, const QVariant& value);
     std::optional<QString> readServerEntry(const char* key) const;
     void writeServerEntry(const char* key, const QString& value);
+    KConfigGroup libraryGroup() const;
+    void writeLibraryEntry(const char* key, const QVariant& value);
 
     KSharedConfigPtr m_config;
 };

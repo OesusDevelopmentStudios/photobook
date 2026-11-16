@@ -12,6 +12,10 @@ Rectangle {
     id: sidebar
 
     required property Library library
+    required property LibraryView libraryView
+
+    // The page resizes the tiles, keeping its place in the grid.
+    signal tileSizeRequested(int gridUnits)
 
     function focusSearch() {
         searchField.forceActiveFocus();
@@ -111,6 +115,22 @@ Rectangle {
                 Controls.ToolTip.visible: hovered
                 Controls.ToolTip.delay: Kirigami.Units.toolTipDelay
             }
+        }
+
+        Kirigami.Heading {
+            Layout.topMargin: Kirigami.Units.largeSpacing
+            level: 4
+            text: KI18n.i18nc("@title:group", "Tile Size")
+        }
+
+        Controls.Slider {
+            Layout.fillWidth: true
+            from: sidebar.libraryView.minimumTileSize
+            to: sidebar.libraryView.maximumTileSize
+            stepSize: 1
+            snapMode: Controls.Slider.SnapAlways
+            value: sidebar.libraryView.tileSize
+            onMoved: sidebar.tileSizeRequested(value)
         }
 
         Item {

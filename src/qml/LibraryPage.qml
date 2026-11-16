@@ -29,6 +29,16 @@ Kirigami.Page {
     title: KI18n.i18nc("@title", "Library")
     padding: 0
 
+    // A new tile size reflows the grid; the image at the top stays in view instead of jumping away.
+    function resizeTiles(resize) {
+        const topIndex = grid.indexAt(grid.cellWidth / 2, grid.contentY + grid.cellHeight / 2);
+        resize();
+        grid.forceLayout();
+        if (topIndex > 0) {
+            grid.positionViewAtIndex(topIndex, GridView.Beginning);
+        }
+    }
+
     // The sidebar's toggle sits at the left, next to the sidebar it shows.
     titleDelegate: RowLayout {
         spacing: Kirigami.Units.smallSpacing
@@ -75,6 +85,24 @@ Kirigami.Page {
 
     actions: [
         Kirigami.Action {
+            icon.name: "zoom-in"
+            text: KI18n.i18nc("@action:inmenu", "Larger Tiles")
+            shortcut: StandardKey.ZoomIn
+            displayHint: Kirigami.DisplayHint.AlwaysHide
+            visible: page.loggedIn
+            enabled: page.isCurrentPage && page.libraryView.tileSize < page.libraryView.maximumTileSize
+            onTriggered: page.resizeTiles(() => page.libraryView.resizeTilesBySteps(1))
+        },
+        Kirigami.Action {
+            icon.name: "zoom-out"
+            text: KI18n.i18nc("@action:inmenu", "Smaller Tiles")
+            shortcut: StandardKey.ZoomOut
+            displayHint: Kirigami.DisplayHint.AlwaysHide
+            visible: page.loggedIn
+            enabled: page.isCurrentPage && page.libraryView.tileSize > page.libraryView.minimumTileSize
+            onTriggered: page.resizeTiles(() => page.libraryView.resizeTilesBySteps(-1))
+        },
+        Kirigami.Action {
             icon.name: "document-open"
             text: KI18n.i18nc("@action:inmenu", "Open Image…")
             displayHint: Kirigami.DisplayHint.AlwaysHide
@@ -107,6 +135,8 @@ Kirigami.Page {
             Layout.preferredWidth: Kirigami.Units.gridUnit * 14
             visible: page.libraryView.sidebarVisible
             library: page.library
+            libraryView: page.libraryView
+            onTileSizeRequested: gridUnits => page.resizeTiles(() => page.libraryView.tileSize = gridUnits)
         }
 
         Kirigami.Separator {
@@ -125,8 +155,12 @@ Kirigami.Page {
             GridView {
                 id: grid
 
-                // As many columns of about 8 grid units as fit; at least two.
-                readonly property int columns: Math.max(2, Math.floor(width / (Kirigami.Units.gridUnit * 8)))
+                // As many tiles of the chosen size as fit; they stretch a little to fill the row.
+                readonly property real tileWidth: page.libraryView.tileSize * Kirigami.Units.gridUnit
+                readonly property int columns: Math.max(1, Math.floor(width / tileWidth))
+                readonly property real thumbnailSize: tileWidth - Kirigami.Units.smallSpacing * 2  // the tile's padding
+                readonly property bool largeThumbnails:
+                    page.libraryView.needsLargeThumbnail(thumbnailSize * Screen.devicePixelRatio)
 
                 // Room at the edges as between the tiles; at the top and bottom it scrolls with them.
                 anchors.fill: parent
@@ -154,9 +188,21 @@ Kirigami.Page {
                 onCountChanged: loadMoreIfNearTheEnd()  // a short page may not fill the window
                 onHeightChanged: loadMoreIfNearTheEnd()
 
+                // Ctrl + wheel resizes the tiles, as zooming in Dolphin. A mouse wheel may arrive from a device
+                // reported as a touchpad.
+                WheelHandler {
+                    target: null
+                    acceptedModifiers: Qt.ControlModifier
+                    acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                    onWheel: event => page.resizeTiles(
+                        () => page.libraryView.resizeTilesBySteps(event.angleDelta.y / 120))  // 120: one notch
+                }
+
                 delegate: LibraryTile {
                     width: grid.cellWidth
                     height: grid.cellHeight
+                    thumbnailSize: grid.thumbnailSize
+                    useLargeThumbnail: grid.largeThumbnails
                 }
 
                 footer: Item {

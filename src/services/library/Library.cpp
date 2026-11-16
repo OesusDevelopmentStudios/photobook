@@ -143,6 +143,8 @@ QVariant Library::data(const QModelIndex& index, int role) const
         return image.originalFilename;
     case ThumbnailUrlRole:
         return isLoggedIn() ? m_connection->client()->thumbnailUrl(image.id, ThumbnailSize::Small) : QUrl();
+    case LargeThumbnailUrlRole:
+        return isLoggedIn() ? m_connection->client()->thumbnailUrl(image.id, ThumbnailSize::Large) : QUrl();
     case TakenAtRole:
         return image.takenAt;
     case WidthRole:
@@ -160,6 +162,7 @@ QHash<int, QByteArray> Library::roleNames() const
         {ImageIdRole, "imageId"},
         {FileNameRole, "fileName"},
         {ThumbnailUrlRole, "thumbnailUrl"},
+        {LargeThumbnailUrlRole, "largeThumbnailUrl"},
         {TakenAtRole, "takenAt"},
         {WidthRole, "imageWidth"},
         {HeightRole, "imageHeight"},

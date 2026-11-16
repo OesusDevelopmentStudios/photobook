@@ -42,7 +42,8 @@ public:
     {
         ImageIdRole = Qt::UserRole + 1,
         FileNameRole,
-        ThumbnailUrlRole,  // the small thumbnail; loading it needs the login token
+        ThumbnailUrlRole,       // the small thumbnail; loading it needs the login token
+        LargeThumbnailUrlRole,  // for large tiles, where the small one would look blurry
         TakenAtRole,
         WidthRole,
         HeightRole,

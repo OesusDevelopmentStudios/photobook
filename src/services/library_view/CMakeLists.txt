@@ -13,9 +13,12 @@ target_include_directories(pictorio_library_view PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
-target_link_libraries(pictorio_library_view PUBLIC
-    pictorio_settings
-    Qt6::Core
+target_link_libraries(pictorio_library_view
+    PUBLIC
+        pictorio_settings
+        Qt6::Core
+    PRIVATE
+        pictorio_server_client  # the thumbnail sizes
 )
 
 # LibraryView is exposed to QML (app_manager/QmlForeignTypes.hpp); QML tools read its properties from these metatypes.

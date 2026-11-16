@@ -36,6 +36,9 @@ public:
 
     virtual std::optional<bool> librarySidebarVisible() const = 0;
     virtual void setLibrarySidebarVisible(bool visible) = 0;
+    // In Kirigami grid units, so tiles scale with the system font
+    virtual std::optional<int> libraryTileSize() const = 0;
+    virtual void setLibraryTileSize(int gridUnits) = 0;
 };
 
 }  // namespace pictorio::settings

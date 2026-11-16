@@ -86,6 +86,13 @@ public:
 
     void setLibrarySidebarVisible(bool) override {}
 
+    std::optional<int> libraryTileSize() const override
+    {
+        return std::nullopt;
+    }
+
+    void setLibraryTileSize(int) override {}
+
     std::optional<int> intervalSeconds;
     std::optional<QString> order;
 };

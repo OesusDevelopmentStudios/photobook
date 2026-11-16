@@ -17,6 +17,7 @@ constexpr const char* urlKey = "Url";
 constexpr const char* usernameKey = "Username";
 const QString libraryGroupName = QStringLiteral("Library");
 constexpr const char* sidebarVisibleKey = "SidebarVisible";
+constexpr const char* tileSizeKey = "TileSize";
 
 }  // namespace
 
@@ -87,7 +88,7 @@ void KConfigSettings::setServerUsername(const QString& username)
 
 std::optional<bool> KConfigSettings::librarySidebarVisible() const
 {
-    const KConfigGroup group = m_config->group(libraryGroupName);
+    const KConfigGroup group = libraryGroup();
     if (!group.hasKey(sidebarVisibleKey))
     {
         return std::nullopt;
@@ -98,9 +99,23 @@ std::optional<bool> KConfigSettings::librarySidebarVisible() const
 
 void KConfigSettings::setLibrarySidebarVisible(bool visible)
 {
-    KConfigGroup group = m_config->group(libraryGroupName);
-    group.writeEntry(sidebarVisibleKey, visible);
-    m_config->sync();
+    writeLibraryEntry(sidebarVisibleKey, visible);
+}
+
+std::optional<int> KConfigSettings::libraryTileSize() const
+{
+    const KConfigGroup group = libraryGroup();
+    if (!group.hasKey(tileSizeKey))
+    {
+        return std::nullopt;
+    }
+
+    return group.readEntry(tileSizeKey, 0);
+}
+
+void KConfigSettings::setLibraryTileSize(int gridUnits)
+{
+    writeLibraryEntry(tileSizeKey, gridUnits);
 }
 
 KConfigGroup KConfigSettings::slideshowGroup() const
@@ -129,6 +144,18 @@ std::optional<QString> KConfigSettings::readServerEntry(const char* key) const
 void KConfigSettings::writeServerEntry(const char* key, const QString& value)
 {
     KConfigGroup group = m_config->group(serverGroupName);
+    group.writeEntry(key, value);
+    m_config->sync();
+}
+
+KConfigGroup KConfigSettings::libraryGroup() const
+{
+    return m_config->group(libraryGroupName);
+}
+
+void KConfigSettings::writeLibraryEntry(const char* key, const QVariant& value)
+{
+    KConfigGroup group = libraryGroup();
     group.writeEntry(key, value);
     m_config->sync();
 }

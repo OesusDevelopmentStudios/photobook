@@ -16,12 +16,19 @@ Item {
     id: tile
 
     required property url thumbnailUrl
+    required property url largeThumbnailUrl
     required property string fileName
     required property date takenAt
     required property int imageWidth
     required property int imageHeight
 
-    // Room around the thumbnail: the gap to the next tile, and where the hover highlight shows.
+    // The size the grid's tiles were chosen at. The tile may stretch a little to fill its row, but the
+    // thumbnail is decoded at this size, so stretching the window does not load every thumbnail again.
+    property real thumbnailSize: 0
+    property bool useLargeThumbnail: false  // the small one would look blurry
+
+    // Room around the thumbnail: the gap to the next tile, and where the hover highlight shows. The grid
+    // counts on it being smallSpacing.
     readonly property real padding: Kirigami.Units.smallSpacing
 
     HoverHandler {
@@ -49,7 +56,8 @@ Item {
         // No clip needed: a cropped image stays inside its own bounds.
         Image {
             anchors.fill: parent
-            source: tile.thumbnailUrl
+            source: tile.useLargeThumbnail ? tile.largeThumbnailUrl : tile.thumbnailUrl
+            sourceSize: Qt.size(tile.thumbnailSize, tile.thumbnailSize)  // keeps memory low with large thumbnails
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
             smooth: true

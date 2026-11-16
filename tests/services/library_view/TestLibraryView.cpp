@@ -28,6 +28,15 @@ private Q_SLOTS:
     void remembersHiddenSidebar();
     void announcesOnlyChanges();
 
+    void startsAtTheDefaultTileSize();
+    void limitsTileSize();
+    void remembersTileSize();
+    void limitsRememberedTileSize();
+    void resizesTilesByWholeSteps();
+    void addsUpPartialSteps();
+    void respondsAtOnceAfterALimit();
+    void usesTheLargeThumbnailAboveTheSmallOnesSize();
+
 private:
     // A new library view reads the settings, like one created when the application starts.
     void recreateLibraryView();
@@ -73,6 +82,77 @@ void TestLibraryView::announcesOnlyChanges()
 
     m_libraryView->setSidebarVisible(false);
     QCOMPARE(sidebarVisibleChanged.count(), 1);
+}
+
+void TestLibraryView::startsAtTheDefaultTileSize()
+{
+    QCOMPARE(m_libraryView->tileSize(), LibraryView::defaultTileSize);
+}
+
+void TestLibraryView::limitsTileSize()
+{
+    m_libraryView->setTileSize(0);
+    QCOMPARE(m_libraryView->tileSize(), LibraryView::minimumTileSize);
+
+    m_libraryView->setTileSize(1000);
+    QCOMPARE(m_libraryView->tileSize(), LibraryView::maximumTileSize);
+}
+
+void TestLibraryView::remembersTileSize()
+{
+    m_libraryView->setTileSize(14);
+    recreateLibraryView();
+
+    QCOMPARE(m_libraryView->tileSize(), 14);
+}
+
+// E.g. a config file edited by hand
+void TestLibraryView::limitsRememberedTileSize()
+{
+    m_settings->setLibraryTileSize(1000);
+    recreateLibraryView();
+
+    QCOMPARE(m_libraryView->tileSize(), LibraryView::maximumTileSize);
+}
+
+void TestLibraryView::resizesTilesByWholeSteps()
+{
+    QSignalSpy tileSizeChanged(m_libraryView.get(), &LibraryView::tileSizeChanged);
+
+    m_libraryView->resizeTilesBySteps(1);
+    QCOMPARE(m_libraryView->tileSize(), LibraryView::defaultTileSize + 1);
+
+    m_libraryView->resizeTilesBySteps(-3);
+    QCOMPARE(m_libraryView->tileSize(), LibraryView::defaultTileSize - 2);
+    QCOMPARE(tileSizeChanged.count(), 2);
+}
+
+// A touchpad sends many small parts of a step.
+void TestLibraryView::addsUpPartialSteps()
+{
+    m_libraryView->resizeTilesBySteps(0.4);
+    m_libraryView->resizeTilesBySteps(0.4);
+    QCOMPARE(m_libraryView->tileSize(), LibraryView::defaultTileSize);
+
+    m_libraryView->resizeTilesBySteps(0.4);
+    QCOMPARE(m_libraryView->tileSize(), LibraryView::defaultTileSize + 1);
+}
+
+// Scrolling on past the limit must not have to be scrolled back before the tiles shrink again.
+void TestLibraryView::respondsAtOnceAfterALimit()
+{
+    m_libraryView->setTileSize(LibraryView::maximumTileSize);
+
+    m_libraryView->resizeTilesBySteps(5.5);
+    m_libraryView->resizeTilesBySteps(-1);
+
+    QCOMPARE(m_libraryView->tileSize(), LibraryView::maximumTileSize - 1);
+}
+
+void TestLibraryView::usesTheLargeThumbnailAboveTheSmallOnesSize()
+{
+    QVERIFY(!m_libraryView->needsLargeThumbnail(256));
+    QVERIFY(m_libraryView->needsLargeThumbnail(256.5));
 }
 
 }  // namespace pictorio::library_view
