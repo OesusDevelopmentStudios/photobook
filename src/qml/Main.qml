@@ -120,6 +120,7 @@ Kirigami.ApplicationWindow {
         LibraryPage {
             library: root.appManager.library
             libraryView: root.appManager.libraryView
+            navigator: root.appManager.navigator
             connection: root.appManager.connection
             onOpenImageRequested: openImageDialog.open()
             onOpenFolderRequested: openFolderDialog.open()

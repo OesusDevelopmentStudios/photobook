@@ -17,6 +17,7 @@ Kirigami.Page {
 
     required property Library library
     required property LibraryView libraryView
+    required property Navigator navigator
     required property Connection connection
 
     signal openImageRequested()
@@ -52,6 +53,13 @@ Kirigami.Page {
             NumberAnimation {
                 duration: Kirigami.Units.shortDuration
             }
+        }
+    }
+
+    // Back from the viewer, the last image viewed there is in view, also if the viewer stepped far on.
+    onIsCurrentPageChanged: {
+        if (isCurrentPage && navigator.browsingLibrary && navigator.currentIndex >= 0) {
+            grid.positionViewAtIndex(navigator.currentIndex, GridView.Contain);
         }
     }
 
