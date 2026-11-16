@@ -25,12 +25,14 @@ class TagSuggestions : public QAbstractListModel
     Q_OBJECT
 
     Q_PROPERTY(QString typedText READ typedText WRITE setTypedText NOTIFY typedTextChanged)
+    Q_PROPERTY(QString namespaceName READ namespaceName WRITE setNamespaceName NOTIFY namespaceNameChanged)
     Q_PROPERTY(int count READ count NOTIFY countChanged)
 
 public:
     enum Role
     {
         TagRole = Qt::UserRole + 1,  // e.g. "author:sample_artist"
+        NameRole,                    // without the namespace, e.g. "sample_artist"
         ImageCountRole,
     };
 
@@ -43,17 +45,22 @@ public:
     QString typedText() const;
     void setTypedText(const QString& text);  // empty: no suggestions, at once
 
+    // Only tags in this namespace, e.g. for the field of the namespace's row; empty: tags in any namespace
+    QString namespaceName() const;
+    void setNamespaceName(const QString& namespaceName);
+
     // Tags not to suggest, e.g. those the image already has ("general:summer")
     void setExcludedTags(const QStringList& tags);
 
     int count() const;
-    Q_INVOKABLE QString tagAt(int row) const;  // empty for a row that is not there
+    Q_INVOKABLE QString nameAt(int row) const;  // without the namespace; empty for a row that is not there
     int rowCount(const QModelIndex& parent = {}) const override;
     QVariant data(const QModelIndex& index, int role) const override;
     QHash<int, QByteArray> roleNames() const override;
 
 Q_SIGNALS:
     void typedTextChanged();
+    void namespaceNameChanged();
     void countChanged();
 
 private:
@@ -63,6 +70,7 @@ private:
     connection::Connection* m_connection;
     QTimer m_typingPause;
     QString m_typedText;
+    QString m_namespaceName;
     QStringList m_excludedTags;
     QList<server_client::TagCount> m_suggestions;
     int m_askNumber = 0;  // answers to older typing are ignored

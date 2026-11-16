@@ -162,6 +162,16 @@ QStringList JsonReader::stringList(const QString& key)
     return strings;
 }
 
+std::optional<QStringList> JsonReader::optionalStringList(const QString& key)
+{
+    if (isNull(key))
+    {
+        return std::nullopt;
+    }
+
+    return stringList(key);
+}
+
 QJsonObject JsonReader::object(const QString& key)
 {
     return field(key, QJsonValue::Object).toObject();

@@ -52,6 +52,7 @@ private Q_SLOTS:
     void refusesInvalidNames_data();
     void refusesInvalidNames();
     void countsCharactersNotBytes();
+    void tidiesANameTypedForANamespace();
     void readsTagsAsTheServerWritesThem();
     void worksOutTheTagsAfterAChange();
     void replacesTheTagOfASingleValueNamespace();
@@ -138,6 +139,16 @@ void TestTagRules::countsCharactersNotBytes()
     QVERIFY(tagFromTypedText(QString(100, QLatin1Char('a')), namespaces).has_value());
     QVERIFY(tagFromTypedText(longest, namespaces).has_value());
     QVERIFY(!tagFromTypedText(longest + QStringLiteral("😀"), namespaces).has_value());
+}
+
+// In a namespace's own row: the namespace is the row's, and a ':' is part of the name.
+void TestTagRules::tidiesANameTypedForANamespace()
+{
+    QCOMPARE(tagFromTypedName(QStringLiteral("author"), QStringLiteral(" Sample Artist "))->text(),
+             QStringLiteral("author:sample_artist"));
+    QCOMPARE(tagFromTypedName(QStringLiteral("general"), QStringLiteral("artist:example"))->text(),
+             QStringLiteral("general:artist:example"));
+    QVERIFY(!tagFromTypedName(QStringLiteral("author"), QStringLiteral("a,b")).has_value());
 }
 
 void TestTagRules::readsTagsAsTheServerWritesThem()

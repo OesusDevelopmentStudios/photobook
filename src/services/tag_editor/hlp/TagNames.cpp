@@ -79,26 +79,30 @@ QString TagName::text() const
 std::expected<TagName, QString> tagFromTypedText(const QString& typedText, const QSet<QString>& namespaceNames)
 {
     // Split at the first ':' only if the part before it is a namespace, so "re:zero" stays one general tag.
-    TagName tag{generalNamespace, typedText};
     const qsizetype colon = typedText.indexOf(QLatin1Char(':'));
     if (colon >= 0)
     {
         const QString prefix = typedText.left(colon).trimmed().toLower();
         if (namespaceNames.contains(prefix))
         {
-            tag = TagName{prefix, typedText.mid(colon + 1)};
+            return tagFromTypedName(prefix, typedText.mid(colon + 1));
         }
     }
 
+    return tagFromTypedName(generalNamespace, typedText);
+}
+
+std::expected<TagName, QString> tagFromTypedName(const QString& namespaceName, const QString& typedName)
+{
     static const QRegularExpression spaces(QStringLiteral(" +"));
-    tag.name =
-        tag.name.normalized(QString::NormalizationForm_C).trimmed().toLower().replace(spaces, QStringLiteral("_"));
-    if (const std::optional<QString> problem = problemWith(tag.name))
+    const QString name =
+        typedName.normalized(QString::NormalizationForm_C).trimmed().toLower().replace(spaces, QStringLiteral("_"));
+    if (const std::optional<QString> problem = problemWith(name))
     {
         return std::unexpected(*problem);
     }
 
-    return tag;
+    return TagName{namespaceName, name};
 }
 
 TagName tagFromServer(const QString& text)

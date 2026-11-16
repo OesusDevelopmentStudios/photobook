@@ -35,6 +35,7 @@ public:
     QString optionalString(const QString& key);      // null: empty
     QJsonObject optionalObject(const QString& key);  // null: empty
     QStringList stringList(const QString& key);
+    std::optional<QStringList> optionalStringList(const QString& key);  // null: nothing
     QJsonObject object(const QString& key);
 
     void reject(const QString& key, const QString& reason);  // for checks the getters cannot make

@@ -52,6 +52,30 @@ void TagSuggestions::setTypedText(const QString& text)
     Q_EMIT typedTextChanged();
 }
 
+QString TagSuggestions::namespaceName() const
+{
+    return m_namespaceName;
+}
+
+// The old suggestions are for another namespace: gone at once, and the typed text is asked for again.
+void TagSuggestions::setNamespaceName(const QString& namespaceName)
+{
+    if (namespaceName == m_namespaceName)
+    {
+        return;
+    }
+
+    m_namespaceName = namespaceName;
+    ++m_askNumber;
+    setSuggestions({});
+    if (!m_typedText.trimmed().isEmpty())
+    {
+        m_typingPause.start();
+    }
+
+    Q_EMIT namespaceNameChanged();
+}
+
 void TagSuggestions::setExcludedTags(const QStringList& tags)
 {
     m_excludedTags = tags;
@@ -62,9 +86,9 @@ int TagSuggestions::count() const
     return static_cast<int>(m_suggestions.size());
 }
 
-QString TagSuggestions::tagAt(int row) const
+QString TagSuggestions::nameAt(int row) const
 {
-    return row >= 0 && row < count() ? m_suggestions.at(row).tag : QString();
+    return row >= 0 && row < count() ? data(index(row), NameRole).toString() : QString();
 }
 
 int TagSuggestions::rowCount(const QModelIndex& parent) const
@@ -85,6 +109,8 @@ QVariant TagSuggestions::data(const QModelIndex& index, int role) const
     case TagRole:
     case Qt::DisplayRole:
         return suggestion.tag;
+    case NameRole:
+        return suggestion.tag.mid(suggestion.tag.indexOf(QLatin1Char(':')) + 1);
     case ImageCountRole:
         return suggestion.imageCount;
     default:
@@ -94,7 +120,7 @@ QVariant TagSuggestions::data(const QModelIndex& index, int role) const
 
 QHash<int, QByteArray> TagSuggestions::roleNames() const
 {
-    return {{TagRole, "tag"}, {ImageCountRole, "imageCount"}};
+    return {{TagRole, "tag"}, {NameRole, "name"}, {ImageCountRole, "imageCount"}};
 }
 
 // Without an answer there are no suggestions; typing on works as before.
@@ -107,7 +133,7 @@ void TagSuggestions::askServer()
     }
 
     const int askNumber = m_askNumber;
-    client->tags(m_typedText, {}, askedCount)
+    client->tags(m_typedText, m_namespaceName, askedCount)
         .then(this, [this, askNumber](const server_client::Result<QList<server_client::TagCount>>& answer) {
             if (askNumber == m_askNumber)
             {

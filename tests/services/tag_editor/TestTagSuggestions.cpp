@@ -84,6 +84,7 @@ private Q_SLOTS:
     void showsAtMostTen();
     void ignoresTheAnswerToOlderTyping();
     void showsNothingWhenTheServerFails();
+    void asksForOneNamespace();
 
 private:
     QStringList shownTags() const;
@@ -156,8 +157,10 @@ void TestTagSuggestions::givesTheTagsMostUsedFirst()
     QTRY_COMPARE(shownTags(), QStringList({QStringLiteral("general:summer"), QStringLiteral("album:summer_2025")}));
     QCOMPARE(m_suggestions->data(m_suggestions->index(0), TagSuggestions::ImageCountRole).toInt(), 100);
     QCOMPARE(m_suggestions->roleNames().value(TagSuggestions::TagRole), QByteArray("tag"));
-    QCOMPARE(m_suggestions->tagAt(1), QStringLiteral("album:summer_2025"));
-    QVERIFY(m_suggestions->tagAt(2).isEmpty());
+    QCOMPARE(m_suggestions->nameAt(1), QStringLiteral("summer_2025"));
+    QCOMPARE(m_suggestions->data(m_suggestions->index(1), TagSuggestions::NameRole).toString(),
+             QStringLiteral("summer_2025"));
+    QVERIFY(m_suggestions->nameAt(2).isEmpty());
 }
 
 void TestTagSuggestions::clearsAtOnceWhenTheFieldIsEmptied()
@@ -215,6 +218,21 @@ void TestTagSuggestions::showsNothingWhenTheServerFails()
     m_suggestions->setTypedText(QStringLiteral("summ"));
 
     QTRY_COMPARE(m_suggestions->count(), 0);
+}
+
+// For a namespace's own field: the old suggestions go at once, and the server is asked again.
+void TestTagSuggestions::asksForOneNamespace()
+{
+    m_suggestions->setTypedText(QStringLiteral("sum"));
+    QTRY_COMPARE(m_suggestions->count(), 2);
+
+    m_suggestions->setNamespaceName(QStringLiteral("album"));
+
+    QCOMPARE(m_suggestions->count(), 0);
+    QTRY_COMPARE(m_server->requestsTo("GET", tagsUrl).size(), 2);
+    const QString namespaceAsked =
+        QUrlQuery(m_server->requestsTo("GET", tagsUrl).last().url).queryItemValue(QStringLiteral("namespace"));
+    QCOMPARE(namespaceAsked, QStringLiteral("album"));
 }
 
 }  // namespace pictorio::tag_editor

@@ -637,18 +637,22 @@ void TestServerClient::suggestsTags()
 void TestServerClient::readsTheNamespaces()
 {
     m_transport->nextResponse = answer(200, R"({"items":[
-        {"name":"category","single_value":true,"is_builtin":true,"in_path_template":true},
-        {"name":"weather","single_value":false,"is_builtin":false,"in_path_template":false}]})");
+        {"name":"category","single_value":true,"is_builtin":true,"in_path_template":true,"allowed_values":null},
+        {"name":"rating","single_value":true,"is_builtin":true,"in_path_template":false,
+         "allowed_values":["sfw","nsfw"]},
+        {"name":"weather","single_value":false,"is_builtin":false,"in_path_template":false,"allowed_values":null}]})");
 
     const Result<QList<Namespace>> namespaces = valueOf(m_client->namespaces());
 
     QCOMPARE(m_transport->lastRequest().url.path(), QStringLiteral("/api/v1/namespaces"));
     QVERIFY(namespaces.has_value());
-    QCOMPARE(namespaces->size(), 2);
+    QCOMPARE(namespaces->size(), 3);
     const Namespace category = namespaces->at(0);
     QCOMPARE(category.name, QStringLiteral("category"));
     QVERIFY(category.singleValue && category.isBuiltin && category.inPathTemplate);
-    QVERIFY(!namespaces->at(1).singleValue);
+    QCOMPARE(category.allowedValues, std::nullopt);  // any name
+    QCOMPARE(namespaces->at(1).allowedValues, QStringList({QStringLiteral("sfw"), QStringLiteral("nsfw")}));
+    QVERIFY(!namespaces->at(2).singleValue);
 }
 
 void TestServerClient::readsAndReplacesThePreferences()

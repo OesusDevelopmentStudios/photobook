@@ -31,6 +31,10 @@ struct TagName
 // server's, so the user hears of a mistake before anything is sent.
 std::expected<TagName, QString> tagFromTypedText(const QString& typedText, const QSet<QString>& namespaceNames);
 
+// A name typed for a given namespace, e.g. in that namespace's row: "Sample Artist" in "author" is
+// author:sample_artist. A ':' is part of the name. Or why the server would refuse it.
+std::expected<TagName, QString> tagFromTypedName(const QString& namespaceName, const QString& typedName);
+
 // A tag as the server writes it, always with its namespace, e.g. "category:photo"
 TagName tagFromServer(const QString& text);
 

@@ -352,7 +352,7 @@ Kirigami.Page {
             viewer: page.viewer
             tagEditor: page.tagEditor
             shown: detailsZoneHover.hovered || expanded  // expanded, it stays until collapsed
-            maximumDetailsHeight: page.height * 0.4
+            availableHeight: page.height  // up to the toolbar
         }
     }
 

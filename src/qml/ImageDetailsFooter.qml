@@ -19,7 +19,12 @@ Rectangle {
     required property TagEditor tagEditor
     property bool shown: false
     property bool expanded: false
-    property real maximumDetailsHeight: Kirigami.Units.gridUnit * 10  // more scrolls
+    // The height the footer may take, e.g. the viewer's. The details take up to 40 % of it; while editing,
+    // all of it up to the toolbar. More scrolls.
+    property real availableHeight: Kirigami.Units.gridUnit * 25
+    readonly property real maximumDetailsHeight: tagEditor.editing
+        ? availableHeight - headerRow.implicitHeight - Kirigami.Units.smallSpacing * 3
+        : availableHeight * 0.4
 
     // The details after the name, e.g. "14/07/2025 · 4032 × 3024 · 3.1 MB"; what is not known is left out.
     readonly property string summary: {
@@ -99,6 +104,8 @@ Rectangle {
         spacing: Kirigami.Units.smallSpacing
 
         RowLayout {
+            id: headerRow
+
             Layout.fillWidth: true
             spacing: Kirigami.Units.largeSpacing
 
@@ -173,7 +180,7 @@ Rectangle {
         property string label
         // The height of the value's first line, e.g. of a tag chip, so the name lines up with it
         property real firstLineHeight: 0
-        default property alias value: valueArea.data
+        default property alias content: valueArea.data
 
         spacing: Kirigami.Units.largeSpacing
 
@@ -224,50 +231,46 @@ Rectangle {
         Controls.ToolTip.delay: Kirigami.Units.toolTipDelay
     }
 
-    // Where a tag is typed, with the server's suggestions above it. Enter adds the highlighted suggestion,
-    // or what was typed; up and down move through the suggestions.
+    // A namespace's add field, with the server's suggestions for that namespace above it. Enter adds the
+    // highlighted suggestion, or what was typed; up and down move through the suggestions. What is typed counts
+    // as a change until it is added.
     component TagField: Controls.TextField {
         id: field
 
         required property TagEditor tagEditor
+        required property string namespaceName
         readonly property TagSuggestions suggestions: tagEditor.suggestions
 
-        function add(text: string) {
-            if (tagEditor.addTag(text)) {
-                field.clear();
-            }
-        }
-
-        placeholderText: KI18n.i18nc("@info:placeholder", "A tag, e.g. author:sample_artist")
+        placeholderText: KI18n.i18nc("@info:placeholder", "Add a tag…")
         enabled: !tagEditor.saving
-        onTextChanged: suggestions.typedText = text
-
-        // The editor may clear the text itself: on Cancel, or when Save has added it.
-        Connections {
-            target: field.suggestions
-
-            function onTypedTextChanged() {
-                if (field.text !== field.suggestions.typedText) {
-                    field.text = field.suggestions.typedText;
-                }
-            }
-        }
-        onAccepted: add(suggestionList.currentIndex >= 0 ? suggestions.tagAt(suggestionList.currentIndex) : text)
-        onVisibleChanged: {
-            if (visible) {
-                forceActiveFocus();
-            }
+        onTextChanged: tagEditor.setTypedName(namespaceName, text)
+        onAccepted: {
+            const chosen = suggestionList.currentIndex >= 0 ? suggestions.nameAt(suggestionList.currentIndex) : text;
+            tagEditor.addTag(namespaceName, chosen);  // once added, the editor empties the field
         }
 
         Keys.onDownPressed: suggestionList.currentIndex = Math.min(suggestionList.currentIndex + 1,
                                                                    suggestionList.count - 1)
         Keys.onUpPressed: suggestionList.currentIndex = Math.max(suggestionList.currentIndex - 1, -1)
 
+        // The editor may change the text itself: emptied once added, or on Cancel.
+        Connections {
+            target: field.tagEditor
+
+            function onTypedNamesChanged() {
+                const typed = field.tagEditor.typedName(field.namespaceName);
+                if (field.text !== typed) {
+                    field.text = typed;
+                }
+            }
+        }
+
         Controls.Popup {
             y: -height  // above: the footer is at the bottom of the window
             width: field.width
             padding: 0
-            visible: field.activeFocus && field.suggestions.count > 0
+            visible: field.activeFocus && field.suggestions.namespaceName === field.namespaceName
+                     && field.suggestions.count > 0
             closePolicy: Controls.Popup.NoAutoClose  // shown while there are suggestions
 
             contentItem: ListView {
@@ -281,19 +284,19 @@ Rectangle {
                 delegate: Controls.ItemDelegate {
                     id: suggestion
 
-                    required property string tag
+                    required property string name
                     required property int imageCount
 
                     width: ListView.view.width
                     highlighted: ListView.isCurrentItem
-                    onClicked: field.add(tag)
+                    onClicked: field.tagEditor.addTag(field.namespaceName, name)
 
                     contentItem: RowLayout {
                         spacing: Kirigami.Units.largeSpacing
 
                         Controls.Label {
                             Layout.fillWidth: true
-                            text: suggestion.tag
+                            text: suggestion.name
                             elide: Text.ElideRight
                         }
 
@@ -305,6 +308,50 @@ Rectangle {
                 }
             }
         }
+    }
+
+    // A built-in one-tag namespace's dropdown: "–" for none, then the values. The ratings are fixed (an admin
+    // sets them on the server); category also takes a new value typed in, confirmed with Enter. A value typed
+    // but not confirmed counts as a change, which Save adds. A changed value is bold.
+    component ValueBox: Controls.ComboBox {
+        id: box
+
+        required property TagEditor tagEditor
+        required property string namespaceName
+        required property var options
+        required property string value
+        required property bool changed
+        required property bool fixedValues
+        readonly property string noValue: "–"
+
+        // The editor's value, also after it refused a choice
+        function showValue() {
+            currentIndex = value.length === 0 ? 0 : options.indexOf(value) + 1;
+        }
+
+        function choose(name: string) {
+            tagEditor.setSingleValue(namespaceName, name === noValue ? "" : name);
+            showValue();
+        }
+
+        model: [noValue].concat(options)
+        editable: !fixedValues
+        enabled: !tagEditor.saving
+        font.bold: changed
+        onActivated: index => choose(index === 0 ? "" : options[index - 1])
+        onAccepted: choose(editText.trim())
+        onEditTextChanged: {
+            if (editable) {
+                tagEditor.setTypedName(namespaceName, editText === currentText ? "" : editText);
+            }
+        }
+
+        Controls.ToolTip.text: KI18n.i18nc("@info:tooltip", "Pick one, or type a new one and press Enter")
+        Controls.ToolTip.visible: editable && hovered
+        Controls.ToolTip.delay: Kirigami.Units.toolTipDelay
+        onValueChanged: showValue()
+        onOptionsChanged: Qt.callLater(showValue)  // after the new model is in
+        Component.onCompleted: showValue()
     }
 
     Component {
@@ -354,43 +401,63 @@ Rectangle {
                     }
                 }
 
-                // While editing: what Save will do to each tag
+                // While editing: a row per namespace, like the server's folder-import form
                 Repeater {
-                    model: footer.tagEditor.editing ? footer.tagEditor.tagGroups : []
+                    model: footer.tagEditor.editing ? footer.tagEditor.namespaceRows : null
 
                     delegate: DetailRow {
-                        id: editedGroup
+                        id: namespaceRow
 
-                        required property var modelData
+                        required property string namespaceName
+                        required property bool dropdown
+                        required property bool fixedValues
+                        required property var options
+                        required property string value
+                        required property bool changed
+                        required property var tags
 
                         Layout.fillWidth: true
-                        label: modelData.namespace + ":"
-                        firstLineHeight: chipHeight.implicitHeight
+                        label: namespaceName + ":"
+                        firstLineHeight: dropdown ? valueBox.implicitHeight
+                                                     : tags.length > 0 ? chipHeight.implicitHeight
+                                                                       : addField.implicitHeight
 
+                        ValueBox {
+                            id: valueBox
+
+                            Layout.preferredWidth: Kirigami.Units.gridUnit * 12
+                            visible: namespaceRow.dropdown
+                            tagEditor: footer.tagEditor
+                            namespaceName: namespaceRow.namespaceName
+                            options: namespaceRow.options
+                            value: namespaceRow.value
+                            changed: namespaceRow.changed
+                            fixedValues: namespaceRow.fixedValues
+                        }
+
+                        // What Save will do to each tag
                         Flow {
                             Layout.fillWidth: true
+                            visible: !namespaceRow.dropdown && namespaceRow.tags.length > 0
                             spacing: Kirigami.Units.smallSpacing
 
                             Repeater {
-                                model: editedGroup.modelData.tags
+                                model: namespaceRow.dropdown ? [] : namespaceRow.tags
 
                                 delegate: EditedTagChip {
                                     tagEditor: footer.tagEditor
                                 }
                             }
                         }
-                    }
-                }
 
-                DetailRow {
-                    Layout.fillWidth: true
-                    visible: footer.tagEditor.editing
-                    label: KI18n.i18nc("@label Add a tag", "Add:")
+                        TagField {
+                            id: addField
 
-                    TagField {
-                        Layout.fillWidth: true
-                        visible: footer.tagEditor.editing
-                        tagEditor: footer.tagEditor
+                            Layout.fillWidth: true
+                            visible: !namespaceRow.dropdown
+                            tagEditor: footer.tagEditor
+                            namespaceName: namespaceRow.namespaceName
+                        }
                     }
                 }
 

@@ -108,6 +108,7 @@ Namespace namespaceFrom(JsonReader& reader)
     info.singleValue = reader.boolean(QStringLiteral("single_value"));
     info.isBuiltin = reader.boolean(QStringLiteral("is_builtin"));
     info.inPathTemplate = reader.boolean(QStringLiteral("in_path_template"));
+    info.allowedValues = reader.optionalStringList(QStringLiteral("allowed_values"));
     return info;
 }
 

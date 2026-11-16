@@ -11,6 +11,8 @@ add_library(pictorio_tag_editor STATIC
     hlp/TagNames.cpp
     hlp/SearchTerm.hpp
     hlp/SearchTerm.cpp
+    impl/NamespaceRows.hpp
+    impl/NamespaceRows.cpp
     TagEditor.cpp
     TagSuggestions.cpp
     TagEditorFactory.cpp

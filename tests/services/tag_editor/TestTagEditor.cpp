@@ -9,6 +9,7 @@
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
+#include <QUrlQuery>
 
 #include "Connection.hpp"
 #include "ServerClientFactory.hpp"
@@ -32,13 +33,14 @@ using server_client::HttpRequest;
 const QString serverUrl = QStringLiteral("https://photos.example.org");
 const QString imageUrl = serverUrl + QStringLiteral("/api/v1/images/5");
 
-QJsonObject namespaceJson(const QString& name, bool singleValue)
+QJsonObject namespaceJson(const QString& name, bool singleValue, const QJsonValue& allowedValues = QJsonValue::Null)
 {
     return {
         {QStringLiteral("name"), name},
         {QStringLiteral("single_value"), singleValue},
         {QStringLiteral("is_builtin"), name != QLatin1String("weather")},
         {QStringLiteral("in_path_template"), name == QLatin1String("category")},
+        {QStringLiteral("allowed_values"), allowedValues},
     };
 }
 
@@ -53,13 +55,40 @@ server_client::Image beachPhoto()
     return image;
 }
 
-// What a tag looks like while editing: {tag: change}, e.g. {"general:beach": Added}
+// A namespace's row in the edit view, by role name, e.g. row["value"]
+QVariantMap rowOf(const TagEditor& editor, const QString& namespaceName)
+{
+    const QAbstractListModel* rows = editor.namespaceRows();
+    const QHash<int, QByteArray> roles = rows->roleNames();
+    for (int row = 0; row < rows->rowCount(); ++row)
+    {
+        const QModelIndex index = rows->index(row);
+        if (index.data(roles.key("namespaceName")).toString() != namespaceName)
+        {
+            continue;
+        }
+
+        QVariantMap values;
+        for (auto role = roles.cbegin(); role != roles.cend(); ++role)
+        {
+            values.insert(QString::fromLatin1(role.value()), index.data(role.key()));
+        }
+
+        return values;
+    }
+
+    return {};
+}
+
+// What the edit view shows of each tag: {tag: change}, e.g. {"general:beach": Added}
 QHash<QString, TagEditor::Change> changesShown(const TagEditor& editor)
 {
     QHash<QString, TagEditor::Change> changes;
-    for (const QVariant& group : editor.tagGroups())
+    const QAbstractListModel* rows = editor.namespaceRows();
+    const int tagsRole = rows->roleNames().key("tags");
+    for (int row = 0; row < rows->rowCount(); ++row)
     {
-        for (const QVariant& entry : group.toMap().value(QStringLiteral("tags")).toList())
+        for (const QVariant& entry : rows->index(row).data(tagsRole).toList())
         {
             const QVariantMap tag = entry.toMap();
             changes.insert(tag.value(QStringLiteral("tag")).toString(),
@@ -72,7 +101,8 @@ QHash<QString, TagEditor::Change> changesShown(const TagEditor& editor)
 
 }  // namespace
 
-// The user "kid" is restricted from rating:nsfw, and from images that are both nude and a photo.
+// The user "kid" is restricted from rating:nsfw, and from images that are both nude and a photo. The server
+// has a custom one-tag namespace "weather", and the ratings sfw and nsfw.
 class TestTagEditor : public QObject
 {
     Q_OBJECT
@@ -82,22 +112,31 @@ private Q_SLOTS:
     void init();
 
     void needsALibraryImage();
+    void showsARowPerNamespace();
     void collectsChangesUntilSaved();
     void savesAllChangesInOnePatch();
     void cancelDropsTheChanges();
-    void tidiesTypedTags();
-    void usesTheServersNamespaces();
-    void refusesAnInvalidTag();
+    void tidiesTypedNames();
+    void refusesAnInvalidName();
     void refusesARestrictedTag();
     void refusesARestrictedCombination();
-    void replacesTheTagOfASingleValueNamespace();
     void dropsAnAddedTagWhenRemoved();
+
+    void setsTheValueOfAOneTagNamespace();
+    void setsNoValue();
+    void offersTheAllowedRatings();
+    void refusesAValueThatIsNotAllowed();
+    void offersTheKnownValuesOfAOneTagNamespace();
+    void givesACustomNamespaceNoDropdown();
+
+    void countsATypedNameAsAChange();
+    void savesTheTypedNamesToo();
+    void doesNotSaveARefusedTypedName();
+    void cancelClearsTheTypedNames();
+    void keepsTheRowsWhileTagsChange();
+
     void keepsTheChangesWhenTheServerRefuses();
     void anotherImageEndsEditing();
-    void countsTypedTextAsAChange();
-    void savesTheTypedTagToo();
-    void doesNotSaveARefusedTypedTag();
-    void cancelClearsTheTypedText();
 
 private:
     void startEditingTheBeachPhoto();
@@ -131,14 +170,31 @@ void TestTagEditor::init()
                              {QStringLiteral("role"), QStringLiteral("user")},
                              {QStringLiteral("restricted_tags"),
                               QJsonArray{QStringLiteral("rating:nsfw"), QStringLiteral("general:nude,photo")}}}));
-    m_server->answer("GET",
-                     serverUrl + QStringLiteral("/api/v1/namespaces"),
-                     fakes::jsonResponse(200,
-                                         {{QStringLiteral("items"),
-                                           QJsonArray{namespaceJson(QStringLiteral("category"), true),
-                                                      namespaceJson(QStringLiteral("rating"), true),
-                                                      namespaceJson(QStringLiteral("general"), false),
-                                                      namespaceJson(QStringLiteral("weather"), true)}}}));
+    m_server->answer(
+        "GET",
+        serverUrl + QStringLiteral("/api/v1/namespaces"),
+        fakes::jsonResponse(
+            200,
+            {{QStringLiteral("items"),
+              QJsonArray{namespaceJson(QStringLiteral("category"), true),
+                         namespaceJson(QStringLiteral("author"), false),
+                         namespaceJson(
+                             QStringLiteral("rating"), true, QJsonArray{QStringLiteral("sfw"), QStringLiteral("nsfw")}),
+                         namespaceJson(QStringLiteral("general"), false),
+                         namespaceJson(QStringLiteral("weather"), true)}}}));
+    // The categories in use, most used first
+    m_server->answerWith("GET", serverUrl + QStringLiteral("/api/v1/tags"), [](const HttpRequest& request) {
+        QJsonArray items;
+        if (QUrlQuery(request.url).queryItemValue(QStringLiteral("namespace")) == QLatin1String("category"))
+        {
+            items = {QJsonObject{{QStringLiteral("tag"), QStringLiteral("category:photo")},
+                                 {QStringLiteral("image_count"), 9}},
+                     QJsonObject{{QStringLiteral("tag"), QStringLiteral("category:artwork")},
+                                 {QStringLiteral("image_count"), 4}}};
+        }
+
+        return fakes::jsonResponse(200, {{QStringLiteral("items"), items}});
+    });
     m_server->answerWith("PATCH", imageUrl, [](const HttpRequest&) {
         QJsonObject image = fakes::imageJson(5);
         image[QStringLiteral("tags")] = QJsonArray{QStringLiteral("category:photo"), QStringLiteral("general:sunset")};
@@ -157,11 +213,13 @@ void TestTagEditor::init()
     m_editor = createTagEditor(m_connection.get());
 }
 
+// The fake server answers at once, so the namespaces and known values are in when this returns.
 void TestTagEditor::startEditingTheBeachPhoto()
 {
     m_editor->setImage(beachPhoto());
     m_editor->startEditing();
     QVERIFY(m_editor->isEditing());
+    QTRY_VERIFY(!rowOf(*m_editor, QStringLiteral("weather")).isEmpty());
 }
 
 void TestTagEditor::needsALibraryImage()
@@ -172,13 +230,37 @@ void TestTagEditor::needsALibraryImage()
 
     QVERIFY(!m_editor->canEdit());
     QVERIFY(!m_editor->isEditing());
+    QCOMPARE(m_editor->namespaceRows()->rowCount(), 0);
+}
+
+// Also namespaces the image has no tag in, in the server's order
+void TestTagEditor::showsARowPerNamespace()
+{
+    startEditingTheBeachPhoto();
+
+    const QAbstractListModel* rows = m_editor->namespaceRows();
+    QStringList namespaces;
+    for (int row = 0; row < rows->rowCount(); ++row)
+    {
+        namespaces.append(rows->index(row).data(rows->roleNames().key("namespaceName")).toString());
+    }
+
+    QCOMPARE(namespaces,
+             QStringList({QStringLiteral("category"),
+                          QStringLiteral("author"),
+                          QStringLiteral("rating"),
+                          QStringLiteral("general"),
+                          QStringLiteral("weather")}));
+    QCOMPARE(rowOf(*m_editor, QStringLiteral("category")).value(QStringLiteral("value")).toString(),
+             QStringLiteral("photo"));
+    QVERIFY(rowOf(*m_editor, QStringLiteral("author")).value(QStringLiteral("tags")).toList().isEmpty());
 }
 
 void TestTagEditor::collectsChangesUntilSaved()
 {
     startEditingTheBeachPhoto();
 
-    QVERIFY(m_editor->addTag(QStringLiteral("beach")));
+    QVERIFY(m_editor->addTag(QStringLiteral("general"), QStringLiteral("beach")));
     QVERIFY(m_editor->removeTag(QStringLiteral("general:summer")));
 
     QVERIFY(m_editor->hasChanges());
@@ -192,7 +274,7 @@ void TestTagEditor::collectsChangesUntilSaved()
 void TestTagEditor::savesAllChangesInOnePatch()
 {
     startEditingTheBeachPhoto();
-    m_editor->addTag(QStringLiteral("sunset"));
+    m_editor->addTag(QStringLiteral("general"), QStringLiteral("sunset"));
     m_editor->removeTag(QStringLiteral("general:summer"));
     QSignalSpy saved(m_editor.get(), &TagEditor::saved);
 
@@ -213,7 +295,7 @@ void TestTagEditor::savesAllChangesInOnePatch()
 void TestTagEditor::cancelDropsTheChanges()
 {
     startEditingTheBeachPhoto();
-    m_editor->addTag(QStringLiteral("beach"));
+    m_editor->addTag(QStringLiteral("general"), QStringLiteral("beach"));
 
     m_editor->cancel();
 
@@ -222,31 +304,24 @@ void TestTagEditor::cancelDropsTheChanges()
     QVERIFY(m_server->requestsTo("PATCH", imageUrl).isEmpty());
 }
 
-void TestTagEditor::tidiesTypedTags()
+// The namespace is the row's: no prefix needed, and a ':' is part of the name.
+void TestTagEditor::tidiesTypedNames()
 {
     startEditingTheBeachPhoto();
 
-    m_editor->addTag(QStringLiteral("  On the   Beach "));
+    m_editor->addTag(QStringLiteral("author"), QStringLiteral(" Sample Artist "));
+    m_editor->addTag(QStringLiteral("general"), QStringLiteral("artist:example"));
 
-    QCOMPARE(changesShown(*m_editor).value(QStringLiteral("general:on_the_beach")), TagEditor::Change::Added);
+    const QHash<QString, TagEditor::Change> shown = changesShown(*m_editor);
+    QCOMPARE(shown.value(QStringLiteral("author:sample_artist")), TagEditor::Change::Added);
+    QCOMPARE(shown.value(QStringLiteral("general:artist:example")), TagEditor::Change::Added);
 }
 
-// A custom namespace is known once the server has listed it.
-void TestTagEditor::usesTheServersNamespaces()
-{
-    startEditingTheBeachPhoto();
-    QTRY_VERIFY(!m_server->requestsTo("GET", serverUrl + QStringLiteral("/api/v1/namespaces")).isEmpty());
-
-    m_editor->addTag(QStringLiteral("Weather: Rain"));
-
-    QCOMPARE(changesShown(*m_editor).value(QStringLiteral("weather:rain")), TagEditor::Change::Added);
-}
-
-void TestTagEditor::refusesAnInvalidTag()
+void TestTagEditor::refusesAnInvalidName()
 {
     startEditingTheBeachPhoto();
 
-    QVERIFY(!m_editor->addTag(QStringLiteral("beach,sand")));
+    QVERIFY(!m_editor->addTag(QStringLiteral("general"), QStringLiteral("beach,sand")));
 
     QVERIFY(!m_editor->errorMessage().isEmpty());
     QVERIFY(!m_editor->hasChanges());
@@ -256,7 +331,7 @@ void TestTagEditor::refusesARestrictedTag()
 {
     startEditingTheBeachPhoto();
 
-    QVERIFY(!m_editor->addTag(QStringLiteral("rating:nsfw")));
+    QVERIFY(!m_editor->setSingleValue(QStringLiteral("rating"), QStringLiteral("nsfw")));
 
     QVERIFY(m_editor->errorMessage().contains(QStringLiteral("rating:nsfw")));
     QVERIFY(!m_editor->hasChanges());
@@ -268,35 +343,165 @@ void TestTagEditor::refusesARestrictedCombination()
 {
     startEditingTheBeachPhoto();
 
-    QVERIFY(m_editor->addTag(QStringLiteral("photo")));
-    QVERIFY(!m_editor->addTag(QStringLiteral("nude")));
+    QVERIFY(m_editor->addTag(QStringLiteral("general"), QStringLiteral("photo")));
+    QVERIFY(!m_editor->addTag(QStringLiteral("general"), QStringLiteral("nude")));
 
     QVERIFY(m_editor->errorMessage().contains(QStringLiteral("general:nude, general:photo")));
     QVERIFY(!changesShown(*m_editor).contains(QStringLiteral("general:nude")));
 }
 
-void TestTagEditor::replacesTheTagOfASingleValueNamespace()
-{
-    startEditingTheBeachPhoto();
-
-    m_editor->addTag(QStringLiteral("category:artwork"));
-    QCOMPARE(changesShown(*m_editor).value(QStringLiteral("category:photo")), TagEditor::Change::Removed);
-
-    m_editor->restoreTag(QStringLiteral("category:photo"));
-    QCOMPARE(changesShown(*m_editor).value(QStringLiteral("category:photo")), TagEditor::Change::Kept);
-    QVERIFY(!changesShown(*m_editor).contains(QStringLiteral("category:artwork")));
-    QVERIFY(!m_editor->hasChanges());
-}
-
 void TestTagEditor::dropsAnAddedTagWhenRemoved()
 {
     startEditingTheBeachPhoto();
-    m_editor->addTag(QStringLiteral("beach"));
+    m_editor->addTag(QStringLiteral("general"), QStringLiteral("beach"));
 
     m_editor->removeTag(QStringLiteral("general:beach"));
 
     QVERIFY(!changesShown(*m_editor).contains(QStringLiteral("general:beach")));
     QVERIFY(!m_editor->hasChanges());
+}
+
+void TestTagEditor::setsTheValueOfAOneTagNamespace()
+{
+    startEditingTheBeachPhoto();
+
+    QVERIFY(m_editor->setSingleValue(QStringLiteral("category"), QStringLiteral("artwork")));
+    QVariantMap category = rowOf(*m_editor, QStringLiteral("category"));
+    QCOMPARE(category.value(QStringLiteral("value")).toString(), QStringLiteral("artwork"));
+    QVERIFY(category.value(QStringLiteral("changed")).toBool());
+    QCOMPARE(changesShown(*m_editor).value(QStringLiteral("category:photo")), TagEditor::Change::Removed);
+
+    QVERIFY(m_editor->setSingleValue(QStringLiteral("category"), QStringLiteral("photo")));  // back to the image's
+    category = rowOf(*m_editor, QStringLiteral("category"));
+    QCOMPARE(category.value(QStringLiteral("value")).toString(), QStringLiteral("photo"));
+    QVERIFY(!category.value(QStringLiteral("changed")).toBool());
+    QVERIFY(!m_editor->hasChanges());
+}
+
+void TestTagEditor::setsNoValue()
+{
+    startEditingTheBeachPhoto();
+
+    QVERIFY(m_editor->setSingleValue(QStringLiteral("category"), QString()));
+
+    QVERIFY(rowOf(*m_editor, QStringLiteral("category")).value(QStringLiteral("value")).toString().isEmpty());
+    QCOMPARE(changesShown(*m_editor).value(QStringLiteral("category:photo")), TagEditor::Change::Removed);
+}
+
+void TestTagEditor::offersTheAllowedRatings()
+{
+    startEditingTheBeachPhoto();
+
+    const QVariantMap rating = rowOf(*m_editor, QStringLiteral("rating"));
+
+    QVERIFY(rating.value(QStringLiteral("fixedValues")).toBool());
+    QCOMPARE(rating.value(QStringLiteral("options")).toStringList(),
+             QStringList({QStringLiteral("sfw"), QStringLiteral("nsfw")}));
+}
+
+void TestTagEditor::refusesAValueThatIsNotAllowed()
+{
+    startEditingTheBeachPhoto();
+
+    QVERIFY(!m_editor->setSingleValue(QStringLiteral("rating"), QStringLiteral("maybe")));
+
+    QVERIFY(m_editor->errorMessage().contains(QStringLiteral("sfw, nsfw")));
+}
+
+// Pick one of those in use, or type a new one
+void TestTagEditor::offersTheKnownValuesOfAOneTagNamespace()
+{
+    startEditingTheBeachPhoto();
+
+    QTRY_COMPARE(rowOf(*m_editor, QStringLiteral("category")).value(QStringLiteral("options")).toStringList(),
+                 QStringList({QStringLiteral("photo"), QStringLiteral("artwork")}));
+    QVERIFY(!rowOf(*m_editor, QStringLiteral("category")).value(QStringLiteral("fixedValues")).toBool());
+    QVERIFY(m_editor->setSingleValue(QStringLiteral("category"), QStringLiteral("screenshot")));
+}
+
+// A custom namespace gets an add field even if it holds one tag; a new tag replaces the one there.
+void TestTagEditor::givesACustomNamespaceNoDropdown()
+{
+    startEditingTheBeachPhoto();
+
+    QVERIFY(!rowOf(*m_editor, QStringLiteral("weather")).value(QStringLiteral("dropdown")).toBool());
+    QVERIFY(rowOf(*m_editor, QStringLiteral("category")).value(QStringLiteral("dropdown")).toBool());
+    m_editor->addTag(QStringLiteral("weather"), QStringLiteral("rain"));
+    m_editor->addTag(QStringLiteral("weather"), QStringLiteral("sun"));
+
+    QVERIFY(!changesShown(*m_editor).contains(QStringLiteral("weather:rain")));
+    QCOMPARE(changesShown(*m_editor).value(QStringLiteral("weather:sun")), TagEditor::Change::Added);
+    for (const HttpRequest& request : m_server->requestsTo("GET", serverUrl + QStringLiteral("/api/v1/tags")))
+    {
+        QVERIFY(QUrlQuery(request.url).queryItemValue(QStringLiteral("namespace")) != QLatin1String("weather"));
+    }
+}
+
+// Typed, not added yet: going on would lose it as well.
+void TestTagEditor::countsATypedNameAsAChange()
+{
+    startEditingTheBeachPhoto();
+    QSignalSpy hasChangesChanged(m_editor.get(), &TagEditor::hasChangesChanged);
+
+    m_editor->setTypedName(QStringLiteral("author"), QStringLiteral("example"));
+
+    QVERIFY(m_editor->hasChanges());
+    QCOMPARE(hasChangesChanged.count(), 1);
+    QCOMPARE(m_editor->suggestions()->namespaceName(), QStringLiteral("author"));  // suggestions for that row
+}
+
+void TestTagEditor::savesTheTypedNamesToo()
+{
+    startEditingTheBeachPhoto();
+    m_editor->removeTag(QStringLiteral("general:summer"));
+    m_editor->setTypedName(QStringLiteral("general"), QStringLiteral("Sunset"));
+    QSignalSpy saved(m_editor.get(), &TagEditor::saved);
+
+    m_editor->save();
+
+    QTRY_COMPARE(saved.count(), 1);
+    const QJsonObject body = QJsonDocument::fromJson(m_server->requestsTo("PATCH", imageUrl).first().body).object();
+    QCOMPARE(body.value(QStringLiteral("add_tags")).toArray(), QJsonArray{QStringLiteral("general:sunset")});
+    QVERIFY(m_editor->typedName(QStringLiteral("general")).isEmpty());
+}
+
+void TestTagEditor::doesNotSaveARefusedTypedName()
+{
+    startEditingTheBeachPhoto();
+    m_editor->setTypedName(QStringLiteral("general"), QStringLiteral("beach,sand"));
+
+    m_editor->save();
+
+    QVERIFY(!m_editor->errorMessage().isEmpty());
+    QVERIFY(m_editor->isEditing());
+    QVERIFY(m_server->requestsTo("PATCH", imageUrl).isEmpty());
+    QCOMPARE(m_editor->typedName(QStringLiteral("general")), QStringLiteral("beach,sand"));  // to correct it
+}
+
+void TestTagEditor::cancelClearsTheTypedNames()
+{
+    startEditingTheBeachPhoto();
+    m_editor->setTypedName(QStringLiteral("general"), QStringLiteral("beach"));
+    QSignalSpy typedNamesChanged(m_editor.get(), &TagEditor::typedNamesChanged);
+
+    m_editor->cancel();
+
+    QVERIFY(m_editor->typedName(QStringLiteral("general")).isEmpty());
+    QCOMPARE(typedNamesChanged.count(), 1);  // so the field empties
+    QVERIFY(!m_editor->hasChanges());
+}
+
+// A field the user types in keeps its focus: its row stays, only its content changes.
+void TestTagEditor::keepsTheRowsWhileTagsChange()
+{
+    startEditingTheBeachPhoto();
+    QSignalSpy reset(m_editor->namespaceRows(), &QAbstractItemModel::modelReset);
+    QSignalSpy dataChanged(m_editor->namespaceRows(), &QAbstractItemModel::dataChanged);
+
+    m_editor->addTag(QStringLiteral("general"), QStringLiteral("beach"));
+
+    QCOMPARE(reset.count(), 0);
+    QCOMPARE(dataChanged.count(), 1);  // only the general row
 }
 
 // e.g. a restriction the app did not know of yet
@@ -311,7 +516,7 @@ void TestTagEditor::keepsTheChangesWhenTheServerRefuses()
                                     {QStringLiteral("tags"), QJsonArray{QStringLiteral("general:beach")}}});
     });
     startEditingTheBeachPhoto();
-    m_editor->addTag(QStringLiteral("beach"));
+    m_editor->addTag(QStringLiteral("general"), QStringLiteral("beach"));
 
     m_editor->save();
 
@@ -324,64 +529,13 @@ void TestTagEditor::keepsTheChangesWhenTheServerRefuses()
 void TestTagEditor::anotherImageEndsEditing()
 {
     startEditingTheBeachPhoto();
-    m_editor->addTag(QStringLiteral("beach"));
+    m_editor->addTag(QStringLiteral("general"), QStringLiteral("beach"));
     server_client::Image another = beachPhoto();
     another.id = 6;
 
     m_editor->setImage(another);
 
     QVERIFY(!m_editor->isEditing());
-    QVERIFY(!m_editor->hasChanges());
-}
-
-// Typed, not added yet: going on would lose it as well.
-void TestTagEditor::countsTypedTextAsAChange()
-{
-    startEditingTheBeachPhoto();
-    QSignalSpy changesChanged(m_editor.get(), &TagEditor::changesChanged);
-
-    m_editor->suggestions()->setTypedText(QStringLiteral("author:example"));
-
-    QVERIFY(m_editor->hasChanges());
-    QVERIFY(changesChanged.count() > 0);
-}
-
-void TestTagEditor::savesTheTypedTagToo()
-{
-    startEditingTheBeachPhoto();
-    m_editor->removeTag(QStringLiteral("general:summer"));
-    m_editor->suggestions()->setTypedText(QStringLiteral("Sunset"));
-    QSignalSpy saved(m_editor.get(), &TagEditor::saved);
-
-    m_editor->save();
-
-    QTRY_COMPARE(saved.count(), 1);
-    const QJsonObject body = QJsonDocument::fromJson(m_server->requestsTo("PATCH", imageUrl).first().body).object();
-    QCOMPARE(body.value(QStringLiteral("add_tags")).toArray(), QJsonArray{QStringLiteral("general:sunset")});
-    QVERIFY(m_editor->suggestions()->typedText().isEmpty());
-}
-
-void TestTagEditor::doesNotSaveARefusedTypedTag()
-{
-    startEditingTheBeachPhoto();
-    m_editor->suggestions()->setTypedText(QStringLiteral("rating:nsfw"));
-
-    m_editor->save();
-
-    QVERIFY(m_editor->errorMessage().contains(QStringLiteral("rating:nsfw")));
-    QVERIFY(m_editor->isEditing());
-    QVERIFY(m_server->requestsTo("PATCH", imageUrl).isEmpty());
-    QCOMPARE(m_editor->suggestions()->typedText(), QStringLiteral("rating:nsfw"));  // to correct it
-}
-
-void TestTagEditor::cancelClearsTheTypedText()
-{
-    startEditingTheBeachPhoto();
-    m_editor->suggestions()->setTypedText(QStringLiteral("beach"));
-
-    m_editor->cancel();
-
-    QVERIFY(m_editor->suggestions()->typedText().isEmpty());
     QVERIFY(!m_editor->hasChanges());
 }
 
