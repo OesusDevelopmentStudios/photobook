@@ -6,6 +6,7 @@
 #pragma once
 
 #include <QAbstractListModel>
+#include <QHash>
 #include <QObject>
 #include <QString>
 
@@ -50,20 +51,35 @@ public:
 
     // What is typed in a namespace's field and not added yet. It counts as a change, and is added when the
     // changes are sent. The suggestions follow the field typed in last.
-    Q_INVOKABLE virtual void setTypedName(const QString& namespaceName, const QString& text) = 0;
-    Q_INVOKABLE virtual QString typedName(const QString& namespaceName) const = 0;
+    Q_INVOKABLE void setTypedName(const QString& namespaceName, const QString& text);
+    Q_INVOKABLE QString typedName(const QString& namespaceName) const;
 
     virtual bool isBusy() const = 0;
     virtual bool hasChanges() const = 0;
     virtual QAbstractListModel* namespaceRows() const = 0;  // a row per namespace, see NamespaceRows
     virtual QString errorMessage() const = 0;
-    virtual TagSuggestions* suggestions() const = 0;
+    virtual TagSuggestions* suggestions() const = 0;  // may be none, e.g. in tests
 
 Q_SIGNALS:
     void busyChanged();
     void hasChangesChanged();
     void errorMessageChanged();
     void typedNamesChanged();  // e.g. cleared once added
+
+protected:
+    bool hasTypedNames() const;  // anything but spaces
+    // Adds what is typed in each field, with addTag(); stops at the first that is refused, which stays typed.
+    bool addTypedNames();
+    void forgetTypedName(const QString& namespaceName);  // it was added: its field empties
+    void clearTypedNames();
+    // Tells of hasChanges only when it changes; call after anything that may change it.
+    void announceHasChanges();
+
+private:
+    void clearSuggestions();
+
+    QHash<QString, QString> m_typedNames;  // by namespace
+    bool m_hadChanges = false;
 };
 
 }  // namespace pictorio::tag_editor

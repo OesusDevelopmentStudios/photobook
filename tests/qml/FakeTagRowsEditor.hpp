@@ -52,19 +52,6 @@ public:
         return true;
     }
 
-    void setTypedName(const QString& namespaceName, const QString& text) override
-    {
-        if (!text.isEmpty())
-        {
-            record(QStringLiteral("setTypedName %1 %2").arg(namespaceName, text));
-        }
-    }
-
-    QString typedName(const QString& /*namespaceName*/) const override
-    {
-        return {};
-    }
-
     bool isBusy() const override
     {
         return false;

@@ -57,8 +57,6 @@ public:
     void keepValue(const QString& namespaceName) override;  // "keep as is"
     bool removeTag(const QString& tag) override;            // from every image that has it
     bool restoreTag(const QString& tag) override;
-    void setTypedName(const QString& namespaceName, const QString& text) override;
-    QString typedName(const QString& namespaceName) const override;
 
     int imageCount() const;
     bool isApplying() const;
@@ -82,11 +80,9 @@ private:
     std::optional<QString> restrictionProblem(const QStringList& additions, const QStringList& removals) const;
     QStringList withoutNamespace(const QStringList& tags, const QString& namespaceName) const;
     int countWith(const QString& tag) const;  // selected images that have the tag
-    bool addTypedNames();
     void fetchAgain(const QList<int>& imageIds);
     void updateRows();
     void dropChanges();
-    void announceHasChanges();
     void setApplying(bool applying);
     void setErrorMessage(const QString& message);
 
@@ -96,10 +92,8 @@ private:
     std::unique_ptr<NamespaceRows> m_rows;
     QList<server_client::Image> m_images;
     bool m_applying = false;
-    bool m_hadChanges = false;  // to announce hasChanges only when it changes
-    QStringList m_additions;    // as the server writes tags, e.g. "general:beach"
+    QStringList m_additions;  // as the server writes tags, e.g. "general:beach"
     QStringList m_removals;
-    QHash<QString, QString> m_typedNames;  // by namespace
     QString m_errorMessage;
 };
 

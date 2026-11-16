@@ -122,11 +122,9 @@ bool TagEditor::addTag(const QString& namespaceName, const QString& typedName)
         added = applyIfAllowed(additions, m_removals);
     }
 
-    if (added && m_typedNames.remove(namespaceName) > 0)
+    if (added)
     {
-        m_suggestions->setTypedText({});
-        Q_EMIT typedNamesChanged();
-        announceHasChanges();
+        forgetTypedName(namespaceName);
     }
 
     return added;
@@ -274,24 +272,6 @@ void TagEditor::cancel()
     }
 }
 
-void TagEditor::setTypedName(const QString& namespaceName, const QString& text)
-{
-    if (!m_editing || m_typedNames.value(namespaceName) == text)
-    {
-        return;
-    }
-
-    m_typedNames.insert(namespaceName, text);
-    m_suggestions->setNamespaceName(namespaceName);
-    m_suggestions->setTypedText(text);
-    announceHasChanges();
-}
-
-QString TagEditor::typedName(const QString& namespaceName) const
-{
-    return m_typedNames.value(namespaceName);
-}
-
 bool TagEditor::canEdit() const
 {
     return m_image.has_value();
@@ -304,9 +284,7 @@ bool TagEditor::isEditing() const
 
 bool TagEditor::hasChanges() const
 {
-    const bool somethingTyped =
-        std::ranges::any_of(m_typedNames, [](const QString& text) { return !text.trimmed().isEmpty(); });
-    return !m_additions.isEmpty() || !m_removals.isEmpty() || somethingTyped;
+    return !m_additions.isEmpty() || !m_removals.isEmpty() || hasTypedNames();
 }
 
 bool TagEditor::isSaving() const
@@ -371,30 +349,6 @@ QStringList TagEditor::tagsAfter(const QStringList& additions, const QStringList
 {
     return textsOf(tagsAfterChange(
         tagNamesOf(m_image->tags), tagNamesOf(additions), tagNamesOf(removals), m_namespaces->singleValueNames()));
-}
-
-void TagEditor::announceHasChanges()
-{
-    const bool changes = hasChanges();
-    if (changes != m_hadChanges)
-    {
-        m_hadChanges = changes;
-        Q_EMIT hasChangesChanged();
-    }
-}
-
-bool TagEditor::addTypedNames()
-{
-    const QHash<QString, QString> typedNames = m_typedNames;
-    for (auto typed = typedNames.cbegin(); typed != typedNames.cend(); ++typed)
-    {
-        if (!typed.value().trimmed().isEmpty() && !addTag(typed.key(), typed.value()))
-        {
-            return false;
-        }
-    }
-
-    return true;
 }
 
 void TagEditor::updateRows()
@@ -466,22 +420,12 @@ void TagEditor::updateRows()
     m_rows->setRows(rows);
 }
 
-void TagEditor::clearTypedNames()
-{
-    if (!m_typedNames.isEmpty())
-    {
-        m_typedNames.clear();
-        Q_EMIT typedNamesChanged();
-    }
-}
-
 void TagEditor::endEditing()
 {
     m_editing = false;
     m_additions.clear();
     m_removals.clear();
     clearTypedNames();
-    m_suggestions->setTypedText({});
     m_suggestions->setNamespaceName({});
     setErrorMessage({});
     Q_EMIT editingChanged();

@@ -102,11 +102,9 @@ bool BulkTagEditor::addTag(const QString& namespaceName, const QString& typedNam
         added = applyIfAllowed(others + QStringList{text}, m_removals);
     }
 
-    if (added && m_typedNames.remove(namespaceName) > 0)
+    if (added)
     {
-        m_suggestions->setTypedText({});
-        Q_EMIT typedNamesChanged();
-        announceHasChanges();
+        forgetTypedName(namespaceName);
     }
 
     return added;
@@ -266,24 +264,6 @@ void BulkTagEditor::clear()
     }
 }
 
-void BulkTagEditor::setTypedName(const QString& namespaceName, const QString& text)
-{
-    if (m_typedNames.value(namespaceName) == text)
-    {
-        return;
-    }
-
-    m_typedNames.insert(namespaceName, text);
-    m_suggestions->setNamespaceName(namespaceName);
-    m_suggestions->setTypedText(text);
-    announceHasChanges();
-}
-
-QString BulkTagEditor::typedName(const QString& namespaceName) const
-{
-    return m_typedNames.value(namespaceName);
-}
-
 int BulkTagEditor::imageCount() const
 {
     return static_cast<int>(m_images.size());
@@ -291,9 +271,7 @@ int BulkTagEditor::imageCount() const
 
 bool BulkTagEditor::hasChanges() const
 {
-    const bool somethingTyped =
-        std::ranges::any_of(m_typedNames, [](const QString& text) { return !text.trimmed().isEmpty(); });
-    return !m_additions.isEmpty() || !m_removals.isEmpty() || somethingTyped;
+    return !m_additions.isEmpty() || !m_removals.isEmpty() || hasTypedNames();
 }
 
 bool BulkTagEditor::isApplying() const
@@ -377,20 +355,6 @@ int BulkTagEditor::countWith(const QString& tag) const
 {
     return static_cast<int>(
         std::ranges::count_if(m_images, [&](const server_client::Image& image) { return image.tags.contains(tag); }));
-}
-
-bool BulkTagEditor::addTypedNames()
-{
-    const QHash<QString, QString> typedNames = m_typedNames;
-    for (auto typed = typedNames.cbegin(); typed != typedNames.cend(); ++typed)
-    {
-        if (!typed.value().trimmed().isEmpty() && !addTag(typed.key(), typed.value()))
-        {
-            return false;
-        }
-    }
-
-    return true;
 }
 
 // The server answers a bulk change only with how many images changed: each one is asked for again. The rows
@@ -513,26 +477,10 @@ void BulkTagEditor::dropChanges()
 {
     m_additions.clear();
     m_removals.clear();
-    if (!m_typedNames.isEmpty())
-    {
-        m_typedNames.clear();
-        Q_EMIT typedNamesChanged();
-    }
-
-    m_suggestions->setTypedText({});
+    clearTypedNames();
     setErrorMessage({});
     updateRows();
     announceHasChanges();
-}
-
-void BulkTagEditor::announceHasChanges()
-{
-    const bool changes = hasChanges();
-    if (changes != m_hadChanges)
-    {
-        m_hadChanges = changes;
-        Q_EMIT hasChangesChanged();
-    }
 }
 
 void BulkTagEditor::setApplying(bool applying)

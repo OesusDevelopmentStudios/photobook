@@ -56,8 +56,6 @@ public:
     void keepValue(const QString& namespaceName) override;  // the image's own value again
     bool removeTag(const QString& tag) override;
     bool restoreTag(const QString& tag) override;
-    void setTypedName(const QString& namespaceName, const QString& text) override;
-    QString typedName(const QString& namespaceName) const override;
 
     bool canEdit() const;
     bool isEditing() const;
@@ -79,10 +77,7 @@ private:
     bool applyIfAllowed(const QStringList& additions, const QStringList& removals);
     std::optional<QString> restrictionProblem(const QStringList& additions, const QStringList& removals) const;
     QStringList tagsAfter(const QStringList& additions, const QStringList& removals) const;
-    void announceHasChanges();
-    bool addTypedNames();
     void updateRows();
-    void clearTypedNames();
     void endEditing();
     void setSaving(bool saving);
     void setErrorMessage(const QString& message);
@@ -94,10 +89,8 @@ private:
     std::optional<server_client::Image> m_image;
     bool m_editing = false;
     bool m_saving = false;
-    bool m_hadChanges = false;  // to announce hasChanges only when it changes
-    QStringList m_additions;    // as the server writes tags, e.g. "general:beach"
+    QStringList m_additions;  // as the server writes tags, e.g. "general:beach"
     QStringList m_removals;
-    QHash<QString, QString> m_typedNames;  // by namespace
     QString m_errorMessage;
 };
 
