@@ -38,6 +38,7 @@ add_subdirectory(services/connection)
 add_subdirectory(services/library)
 add_subdirectory(services/library_view)
 add_subdirectory(services/tag_editor)
+add_subdirectory(services/uploader)
 add_subdirectory(services/network_access)
 
 # The user interface: the QML files and the C++ types they use, the AppManager and through it the services. A
