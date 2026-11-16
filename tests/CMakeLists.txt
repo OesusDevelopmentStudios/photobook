@@ -96,6 +96,10 @@ ecm_add_test(services/tag_editor/TestBulkTagEditor.cpp
     LINK_LIBRARIES pictorio_tag_editor Qt6::Test KF6::I18n
 )
 
+ecm_add_test(services/tag_editor/TestUploadTagEditor.cpp
+    LINK_LIBRARIES pictorio_tag_editor Qt6::Test KF6::I18n
+)
+
 ecm_add_test(services/network_access/TestNetworkAccess.cpp
     LINK_LIBRARIES pictorio_network_access Qt6::Test
 )

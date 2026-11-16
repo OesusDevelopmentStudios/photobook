@@ -8,6 +8,7 @@ add_library(pictorio_tag_editor STATIC
     include/TagEditor.hpp
     include/TagRowsEditor.hpp
     include/TagSuggestions.hpp
+    include/UploadTagEditor.hpp
     include/TagEditorFactory.hpp
     hlp/TagNames.hpp
     hlp/TagNames.cpp
@@ -25,6 +26,7 @@ add_library(pictorio_tag_editor STATIC
     TagEditor.cpp
     TagRowsEditor.cpp
     TagSuggestions.cpp
+    UploadTagEditor.cpp
     TagEditorFactory.cpp
 )
 
