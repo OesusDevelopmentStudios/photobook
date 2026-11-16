@@ -28,16 +28,12 @@ Kirigami.Page {
     readonly property bool presenting: slideshow.running
     readonly property bool canStartSlideshow: viewer.hasImage && (navigator.canGoToNext || navigator.canGoToPrevious)
 
-    title: {
-        if (viewer.fileName.length === 0) {
-            return KI18n.i18nc("@title", "Viewer");
-        }
-        if (navigator.currentIndex < 0 || navigator.imageCount < 1) {  // e.g. the library's total not known yet
-            return viewer.fileName;
-        }
-        return KI18n.i18nc("@title %1 is a file name, %2 its position among the images, %3 the number of images",
-                           "%1 (%2 of %3)", viewer.fileName, navigator.currentIndex + 1, navigator.imageCount);
-    }
+    // Only the position, which keeps its width; a long file name would push the controls around. The name is
+    // in the details footer and the window title.
+    title: navigator.currentIndex < 0 || navigator.imageCount < 1
+           ? ""
+           : KI18n.i18nc("@title %1 is the image's position among the images, %2 their number", "%1 of %2",
+                         navigator.currentIndex + 1, navigator.imageCount)
     padding: 0
 
     background: Rectangle {
@@ -318,6 +314,32 @@ Kirigami.Page {
         icon.name: "data-error"
         text: KI18n.i18nc("@info:placeholder %1 is a file name", "Cannot open %1", page.viewer.fileName)
         explanation: page.viewer.errorMessage
+    }
+
+    // The pointer near the bottom edge brings in the details footer. The footer is inside the zone: as a
+    // sibling on top, it would take the hover from the zone, hide, give it back, and flicker.
+    Item {
+        id: detailsZone
+
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        height: detailsFooter.implicitHeight + Kirigami.Units.gridUnit * 2
+        visible: page.viewer.hasImage && !page.presenting
+
+        HoverHandler {
+            id: detailsZoneHover
+        }
+
+        ImageDetailsFooter {
+            id: detailsFooter
+
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            viewer: page.viewer
+            shown: detailsZoneHover.hovered
+        }
     }
 
     SlideshowControls {

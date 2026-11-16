@@ -68,6 +68,7 @@ ecm_target_qml_sources(pictorio SOURCES
     qml/LibraryPage.qml
     qml/LibrarySidebar.qml
     qml/LibraryTile.qml
+    qml/ImageDetailsFooter.qml
 )
 
 target_link_libraries(pictorio PRIVATE
