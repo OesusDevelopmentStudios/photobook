@@ -121,6 +121,16 @@ int Library::count() const
     return static_cast<int>(m_images.size());
 }
 
+std::optional<server_client::Image> Library::imageAt(int row) const
+{
+    if (row < 0 || row >= count())
+    {
+        return std::nullopt;
+    }
+
+    return m_images.at(row);
+}
+
 int Library::rowCount(const QModelIndex& parent) const
 {
     return parent.isValid() ? 0 : count();

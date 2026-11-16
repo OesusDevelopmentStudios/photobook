@@ -11,10 +11,12 @@ import org.kde.kirigami as Kirigami
 import org.kde.ki18n
 
 // One image in the library grid, its thumbnail cropped square. Hovered, it is highlighted and shows its
-// details. Kept light, as many are made while scrolling: the details exist only while the tile is hovered.
+// details; clicked, it opens. Kept light, as many are made while scrolling: the details exist only while the
+// tile is hovered.
 Item {
     id: tile
 
+    required property int index
     required property url thumbnailUrl
     required property url largeThumbnailUrl
     required property string fileName
@@ -31,8 +33,15 @@ Item {
     // counts on it being smallSpacing.
     readonly property real padding: Kirigami.Units.smallSpacing
 
+    signal openRequested(int row)
+
     HoverHandler {
         id: hover
+    }
+
+    // A tap, not the start of a scroll: the grid takes over a drag.
+    TapHandler {
+        onTapped: tile.openRequested(tile.index)
     }
 
     // As Breeze highlights a hovered item in a list

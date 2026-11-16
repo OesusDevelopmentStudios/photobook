@@ -103,4 +103,19 @@ void AppManager::openFolder(const QUrl& folderUrl)
     m_navigator->openFolder(folderUrl.toLocalFile());
 }
 
+void AppManager::openLibraryImage(int row)
+{
+    const std::optional<server_client::Image> image = m_library->imageAt(row);
+    if (!image.has_value() || m_connection->client() == nullptr)
+    {
+        return;
+    }
+
+    m_navigator->clear();  // previous and next would step through the last local folder
+    m_viewer->openServerImage(m_connection->client()->imageFileUrl(image->id),
+                              image->originalFilename,
+                              QSize(image->width, image->height),
+                              image->mimeType);
+}
+
 }  // namespace pictorio::app_manager

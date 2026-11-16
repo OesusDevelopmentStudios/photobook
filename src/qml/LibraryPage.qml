@@ -22,6 +22,7 @@ Kirigami.Page {
     signal openImageRequested()
     signal openFolderRequested()
     signal serverPageRequested()
+    signal imageOpenRequested(int row)
 
     readonly property int connectionState: connection.state
     readonly property bool loggedIn: connectionState === Connection.State.LoggedIn
@@ -230,6 +231,7 @@ Kirigami.Page {
                     height: grid.cellHeight
                     thumbnailSize: grid.thumbnailSize
                     useLargeThumbnail: grid.largeThumbnails
+                    onOpenRequested: row => page.imageOpenRequested(row)
                 }
 
                 footer: Item {

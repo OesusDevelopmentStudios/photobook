@@ -101,6 +101,11 @@ QString jobStatusName(JobStatus status)
     return QStringLiteral("queued");
 }
 
+QString imageFilePath(int imageId)
+{
+    return QStringLiteral("/images/%1/file").arg(imageId);
+}
+
 QString thumbnailPath(int imageId)
 {
     return QStringLiteral("/images/%1/thumbnail").arg(imageId);
@@ -292,9 +297,14 @@ QFuture<Result<int>> RestServerClient::changeTagsOfImages(const QList<int>& imag
 
 QFuture<Result<QByteArray>> RestServerClient::imageFile(int imageId)
 {
-    return send("GET", QStringLiteral("/images/%1/file").arg(imageId)).then([](const HttpResponse& response) {
+    return send("GET", imageFilePath(imageId)).then([](const HttpResponse& response) {
         return binaryAnswer(response, statusOk);
     });
+}
+
+QUrl RestServerClient::imageFileUrl(int imageId) const
+{
+    return endpointUrl(imageFilePath(imageId), {});
 }
 
 QFuture<Result<QByteArray>> RestServerClient::thumbnail(int imageId, ThumbnailSize size)

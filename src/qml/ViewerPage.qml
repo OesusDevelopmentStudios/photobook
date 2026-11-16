@@ -25,6 +25,8 @@ Kirigami.Page {
     signal libraryRequested()
 
     readonly property bool presenting: slideshow.running
+    // A slideshow steps through the image's folder; an image from the server has none.
+    readonly property bool canStartSlideshow: viewer.hasImage && navigator.imageCount > 1
 
     title: {
         if (viewer.fileName.length === 0) {
@@ -62,7 +64,7 @@ Kirigami.Page {
         Kirigami.Action {
             icon.name: "media-playback-start"
             text: KI18n.i18nc("@action:intoolbar", "Slideshow")
-            enabled: page.viewer.hasImage
+            enabled: page.canStartSlideshow
 
             // The order of the last slideshow is checked; F5 starts a slideshow in that order.
             Kirigami.Action {
@@ -175,7 +177,7 @@ Kirigami.Page {
 
     Shortcut {
         sequence: "F5"
-        enabled: page.viewer.hasImage && !page.presenting
+        enabled: page.canStartSlideshow && !page.presenting
         onActivated: page.slideshow.start(page.slideshow.order)
     }
 
@@ -281,6 +283,13 @@ Kirigami.Page {
             source: page.viewer.imageSource
             smooth: true
         }
+    }
+
+    // Images from the server can take a moment to arrive.
+    Controls.BusyIndicator {
+        anchors.centerIn: parent
+        running: (imageLoader.item as Image)?.status === Image.Loading
+        visible: running
     }
 
     Kirigami.PlaceholderMessage {

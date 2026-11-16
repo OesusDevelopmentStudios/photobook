@@ -20,15 +20,21 @@ QNetworkReply* AuthorizingNetworkAccessManager::createRequest(Operation operatio
                                                               const QNetworkRequest& request,
                                                               QIODevice* outgoingData)
 {
-    const QString token = m_credentials->tokenFor(request.url());
-    if (token.isEmpty())
+    QNetworkRequest serverRequest(request);
+
+    // Only thumbnails are kept on disk: a few full-size images would push thousands of them out of the cache.
+    if (!request.url().path().endsWith(QLatin1String("/thumbnail")))
     {
-        return QNetworkAccessManager::createRequest(operation, request, outgoingData);
+        serverRequest.setAttribute(QNetworkRequest::CacheSaveControlAttribute, false);
     }
 
-    QNetworkRequest authorizedRequest(request);
-    authorizedRequest.setRawHeader("Authorization", "Bearer " + token.toUtf8());
-    return QNetworkAccessManager::createRequest(operation, authorizedRequest, outgoingData);
+    const QString token = m_credentials->tokenFor(request.url());
+    if (!token.isEmpty())
+    {
+        serverRequest.setRawHeader("Authorization", "Bearer " + token.toUtf8());
+    }
+
+    return QNetworkAccessManager::createRequest(operation, serverRequest, outgoingData);
 }
 
 }  // namespace pictorio::network_access

@@ -57,6 +57,8 @@ public:
     // An image or folder chosen in a file dialog, which gives a URL
     Q_INVOKABLE void openImage(const QUrl& fileUrl);
     Q_INVOKABLE void openFolder(const QUrl& folderUrl);
+    // An image of the library grid, by its row: shown from the server, without a folder to step through
+    Q_INVOKABLE void openLibraryImage(int row);
 
 private:
     std::unique_ptr<settings::Settings> m_settings;

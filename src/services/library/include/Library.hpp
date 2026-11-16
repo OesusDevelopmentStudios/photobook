@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include <optional>
+
 #include <QAbstractListModel>
 #include <QList>
 
@@ -68,6 +70,7 @@ public:
     QString errorMessage() const;
     QString effectiveQuery() const;  // the search with the user's hidden-by-default filters added
     int count() const;
+    std::optional<server_client::Image> imageAt(int row) const;  // nothing for a row that is not there
 
     int rowCount(const QModelIndex& parent = {}) const override;
     QVariant data(const QModelIndex& index, int role) const override;

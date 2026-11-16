@@ -98,6 +98,11 @@ private Q_SLOTS:
     void reportsAFolderWithoutImages();
     void anImageOpenedMeanwhileWinsOverTheFolder();
 
+    void clearForgetsTheFolder();
+    void clearIgnoresAListingOnItsWay();
+    void clearedSortingChangeListsNothing();
+    void opensTheSameFolderAgainAfterClear();
+
 private:
     void openAndWaitForListing(const QString& filePath);
     void waitForListing();
@@ -331,6 +336,62 @@ void TestNavigator::anImageOpenedMeanwhileWinsOverTheFolder()
     QCOMPARE(m_navigator->currentIndex(), 1);
     QCOMPARE(requestSpy.count(), 1);  // only the image; the folder's first image is not shown
     QCOMPARE(requestSpy.first().first().toString(), petImages.last());
+}
+
+void TestNavigator::clearForgetsTheFolder()
+{
+    openAndWaitForListing(QStringLiteral("/photos/holiday/hotel.jpg"));
+    QSignalSpy positionSpy(m_navigator.get(), &Navigator::positionChanged);
+    QSignalSpy requestSpy(m_navigator.get(), &Navigator::imageRequested);
+
+    m_navigator->clear();
+    m_navigator->goToNext();
+
+    QCOMPARE(positionSpy.count(), 1);
+    QCOMPARE(requestSpy.count(), 0);
+    QCOMPARE(m_navigator->currentIndex(), -1);
+    QCOMPARE(m_navigator->imageCount(), 0);
+    QVERIFY(!m_navigator->canGoToPrevious());
+    QVERIFY(!m_navigator->canGoToNext());
+}
+
+void TestNavigator::clearIgnoresAListingOnItsWay()
+{
+    m_folderScanner->gate.acquire(openGate);
+    QSignalSpy requestSpy(m_navigator.get(), &Navigator::imageRequested);
+    m_navigator->openFolder(holidayFolder);
+
+    m_navigator->clear();
+    m_folderScanner->gate.release(1);
+
+    QTRY_COMPARE(m_folderScanner->listingCount.load(), 1);
+    QTest::qWait(50);                 // give the listing time to arrive, if it were not ignored
+    QCOMPARE(requestSpy.count(), 0);  // the folder's first image does not replace the server image
+    QCOMPARE(m_navigator->imageCount(), 0);
+}
+
+void TestNavigator::clearedSortingChangeListsNothing()
+{
+    openAndWaitForListing(holidayImages.first());
+    m_navigator->clear();
+
+    m_navigator->setSorting({SortOrder::Date});
+
+    QTest::qWait(50);
+    QCOMPARE(m_folderScanner->listingCount.load(), 1);
+    QCOMPARE(m_navigator->imageCount(), 0);
+}
+
+void TestNavigator::opensTheSameFolderAgainAfterClear()
+{
+    openAndWaitForListing(holidayImages.first());
+    m_navigator->clear();
+
+    openAndWaitForListing(holidayImages.last());
+
+    QCOMPARE(m_folderScanner->listingCount.load(), 2);
+    QCOMPARE(m_navigator->currentIndex(), 2);
+    QVERIFY(m_navigator->canGoToPrevious());
 }
 
 void TestNavigator::openAndWaitForListing(const QString& filePath)

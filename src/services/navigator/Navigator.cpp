@@ -61,6 +61,14 @@ void Navigator::openFolder(const QString& folderPath)
     Q_EMIT positionChanged();
 }
 
+void Navigator::clear()
+{
+    m_currentPath.clear();
+    m_requestedFolderPath.clear();
+    clearListing();
+    Q_EMIT positionChanged();
+}
+
 void Navigator::setSorting(const folder_scanner::Sorting& sorting)
 {
     if (sorting == m_sorting)

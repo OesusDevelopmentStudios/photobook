@@ -45,6 +45,9 @@ public:
     void openImage(const QString& filePath);
     // Lists the folder and then shows its first image in the current order.
     void openFolder(const QString& folderPath);
+    // No folder any more, e.g. for an image from the server: previous and next do nothing until an image or
+    // folder is opened again. A listing still on its way is ignored.
+    void clear();
     void setSorting(const folder_scanner::Sorting& sorting);  // lists the folder again if it changed
     void setWrapAround(bool wrapAround);  // after the last image comes the first, and the other way round
     Q_INVOKABLE void goToPrevious();

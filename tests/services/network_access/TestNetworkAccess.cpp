@@ -76,6 +76,7 @@ private Q_SLOTS:
     void sendsTheTokenWithTheRequest();
     void sendsNoTokenAfterLogout();
     void loadsAThumbnailFromDiskTheSecondTime();
+    void keepsFullImagesOffTheDisk();
 
 private:
     QNetworkReply* get(QNetworkAccessManager& networkAccess, const QUrl& url);
@@ -170,6 +171,21 @@ void TestNetworkAccess::loadsAThumbnailFromDiskTheSecondTime()
     QCOMPARE(reply->readAll(), QByteArray("webp bytes"));
     QVERIFY(reply->attribute(QNetworkRequest::SourceIsFromCacheAttribute).toBool());
     QCOMPARE(m_server->requests.size(), 1);  // the server was asked only once
+}
+
+// Even when the server marks it as never changing, a full image is loaded again each time it is opened.
+void TestNetworkAccess::keepsFullImagesOffTheDisk()
+{
+    m_credentials->setLogin(m_server->url({}), QStringLiteral("pk_secret"));
+    QNetworkAccessManager* networkAccess = createNetworkAccessManager(m_credentials, m_cacheFolder->path(), this);
+    const QUrl file = m_server->url(QStringLiteral("/api/v1/images/5/file"));
+
+    get(*networkAccess, file);
+    QNetworkReply* reply = get(*networkAccess, file);
+
+    QCOMPARE(reply->readAll(), QByteArray("webp bytes"));
+    QVERIFY(!reply->attribute(QNetworkRequest::SourceIsFromCacheAttribute).toBool());
+    QCOMPARE(m_server->requests.size(), 2);
 }
 
 QNetworkReply* TestNetworkAccess::get(QNetworkAccessManager& networkAccess, const QUrl& url)

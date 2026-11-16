@@ -124,6 +124,10 @@ Kirigami.ApplicationWindow {
             onOpenImageRequested: openImageDialog.open()
             onOpenFolderRequested: openFolderDialog.open()
             onServerPageRequested: root.showServerPage()
+            onImageOpenRequested: row => {
+                root.appManager.openLibraryImage(row);
+                root.showViewer();
+            }
         }
     }
 

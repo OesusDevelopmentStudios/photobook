@@ -67,6 +67,11 @@ private Q_SLOTS:
     void clearsErrorWhenNextImageOpens();
     void notifiesOncePerOpen();
 
+    void opensServerImage();
+    void mayAnimateServerImages_data();
+    void mayAnimateServerImages();
+    void clearsErrorWhenServerImageOpens();
+
 private:
     std::unique_ptr<Viewer> m_viewer;
     FakeImageLoader* m_imageLoader = nullptr;  // owned by m_viewer
@@ -149,6 +154,60 @@ void TestViewer::notifiesOncePerOpen()
     m_viewer->openImage(QStringLiteral("/photos/beach.jpg"));
 
     QCOMPARE(changeSpy.count(), 1);
+}
+
+void TestViewer::opensServerImage()
+{
+    QSignalSpy changeSpy(m_viewer.get(), &Viewer::currentImageChanged);
+    const QUrl fileUrl(QStringLiteral("https://photos.example.org/api/v1/images/5/file"));
+
+    m_viewer->openServerImage(fileUrl, QStringLiteral("beach.jpg"), QSize(3000, 4000), QStringLiteral("image/jpeg"));
+
+    QVERIFY(m_imageLoader->requestedPaths.isEmpty());  // nothing on this computer
+    QVERIFY(m_viewer->hasImage());
+    QCOMPARE(m_viewer->fileName(), QStringLiteral("beach.jpg"));
+    QCOMPARE(m_viewer->imageSource(), fileUrl);
+    QCOMPARE(m_viewer->imageDisplaySize(), QSize(3000, 4000));
+    QVERIFY(!m_viewer->imageAnimated());
+    QCOMPARE(changeSpy.count(), 1);
+}
+
+void TestViewer::mayAnimateServerImages_data()
+{
+    QTest::addColumn<QString>("mimeType");
+    QTest::addColumn<bool>("animated");
+
+    QTest::newRow("GIF") << QStringLiteral("image/gif") << true;
+    QTest::newRow("WebP") << QStringLiteral("image/webp") << true;
+    QTest::newRow("JPEG") << QStringLiteral("image/jpeg") << false;
+    QTest::newRow("PNG") << QStringLiteral("image/png") << false;
+}
+
+void TestViewer::mayAnimateServerImages()
+{
+    QFETCH(QString, mimeType);
+    QFETCH(bool, animated);
+
+    m_viewer->openServerImage(QUrl(QStringLiteral("https://photos.example.org/api/v1/images/5/file")),
+                              QStringLiteral("waves"),
+                              QSize(400, 300),
+                              mimeType);
+
+    QCOMPARE(m_viewer->imageAnimated(), animated);
+}
+
+void TestViewer::clearsErrorWhenServerImageOpens()
+{
+    m_imageLoader->nextResult = std::unexpected(ImageLoadError::FileNotFound);
+    m_viewer->openImage(QStringLiteral("/photos/missing.jpg"));
+
+    m_viewer->openServerImage(QUrl(QStringLiteral("https://photos.example.org/api/v1/images/5/file")),
+                              QStringLiteral("beach.jpg"),
+                              QSize(4000, 3000),
+                              QStringLiteral("image/jpeg"));
+
+    QVERIFY(m_viewer->hasImage());
+    QVERIFY(m_viewer->errorMessage().isEmpty());
 }
 
 }  // namespace pictorio::viewer

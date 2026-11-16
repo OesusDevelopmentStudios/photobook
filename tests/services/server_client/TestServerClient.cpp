@@ -579,6 +579,7 @@ void TestServerClient::downloadsTheFileAndTheThumbnail()
     const Result<QByteArray> file = valueOf(m_client->imageFile(5));
     QCOMPARE(m_transport->lastRequest().url.path(), QStringLiteral("/api/v1/images/5/file"));
     QCOMPARE(file.value(), QByteArray("jpeg bytes"));
+    QCOMPARE(m_client->imageFileUrl(5), m_transport->lastRequest().url);  // where views load it
 
     m_transport->nextResponse = answer(200, "webp bytes");
     const Result<QByteArray> thumbnail = valueOf(m_client->thumbnail(5, ThumbnailSize::Large));

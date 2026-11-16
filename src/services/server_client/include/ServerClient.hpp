@@ -68,6 +68,9 @@ public:
     // GET /images/{id}/file: the original file
     virtual QFuture<Result<QByteArray>> imageFile(int imageId) = 0;
 
+    // Where the original file is, for a view that loads it itself; it must send the token too.
+    virtual QUrl imageFileUrl(int imageId) const = 0;
+
     // GET /images/{id}/thumbnail: a WebP image
     virtual QFuture<Result<QByteArray>> thumbnail(int imageId, ThumbnailSize size) = 0;
 

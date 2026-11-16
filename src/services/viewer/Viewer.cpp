@@ -7,6 +7,17 @@
 
 #include <QFileInfo>
 
+namespace
+{
+
+// Formats whose files may hold an animation. Only the file itself can tell; a still one shows as well.
+bool mayBeAnimated(const QString& mimeType)
+{
+    return mimeType == QLatin1String("image/gif") || mimeType == QLatin1String("image/webp");
+}
+
+}  // namespace
+
 namespace pictorio::viewer
 {
 
@@ -24,7 +35,7 @@ void Viewer::openImage(const QString& filePath)
     m_fileName = QFileInfo(filePath).fileName();
     if (result.has_value())
     {
-        m_currentImage = *result;
+        m_currentImage = ShownImage{QUrl::fromLocalFile(result->filePath), result->displaySize, result->animated};
         m_errorMessage.clear();
     }
     else
@@ -33,6 +44,17 @@ void Viewer::openImage(const QString& filePath)
         m_errorMessage = image_loader::describeError(result.error());
     }
 
+    Q_EMIT currentImageChanged();
+}
+
+void Viewer::openServerImage(const QUrl& fileUrl,
+                             const QString& fileName,
+                             const QSize& displaySize,
+                             const QString& mimeType)
+{
+    m_fileName = fileName;
+    m_currentImage = ShownImage{fileUrl, displaySize, mayBeAnimated(mimeType)};
+    m_errorMessage.clear();
     Q_EMIT currentImageChanged();
 }
 
@@ -48,7 +70,7 @@ QString Viewer::fileName() const
 
 QUrl Viewer::imageSource() const
 {
-    return hasImage() ? QUrl::fromLocalFile(m_currentImage->filePath) : QUrl();
+    return hasImage() ? m_currentImage->source : QUrl();
 }
 
 QSize Viewer::imageDisplaySize() const

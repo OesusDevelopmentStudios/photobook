@@ -18,10 +18,18 @@
 namespace pictorio::viewer
 {
 
-// What the viewer page shows: the current image, or why it could not be opened.
+// What the viewer page shows: the current image, from a file or from the server, or why it could not be
+// opened.
 class Viewer : public QObject
 {
     Q_OBJECT
+
+    struct ShownImage
+    {
+        QUrl source;
+        QSize displaySize;
+        bool animated = false;
+    };
 
     Q_PROPERTY(bool hasImage READ hasImage NOTIFY currentImageChanged)
     Q_PROPERTY(QString fileName READ fileName NOTIFY currentImageChanged)
@@ -35,6 +43,10 @@ public:
     ~Viewer() override;
 
     Q_INVOKABLE void openImage(const QString& filePath);
+    // An image in the server's library, loaded from fileUrl by the page. The size is the server's, after
+    // the EXIF orientation; the MIME type tells whether it may be animated.
+    void
+    openServerImage(const QUrl& fileUrl, const QString& fileName, const QSize& displaySize, const QString& mimeType);
 
     bool hasImage() const;
     QString fileName() const;  // also set when opening failed, for the error message
@@ -48,7 +60,7 @@ Q_SIGNALS:
 
 private:
     std::unique_ptr<image_loader::ImageLoader> m_imageLoader;
-    std::optional<image_loader::ImageInfo> m_currentImage;
+    std::optional<ShownImage> m_currentImage;
     QString m_fileName;
     QString m_errorMessage;
 };

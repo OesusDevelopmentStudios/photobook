@@ -39,6 +39,7 @@ public:
     QFuture<Result<Image>> changeImageTags(int imageId, const TagChanges& changes) override;
     QFuture<Result<int>> changeTagsOfImages(const QList<int>& imageIds, const TagChanges& changes) override;
     QFuture<Result<QByteArray>> imageFile(int imageId) override;
+    QUrl imageFileUrl(int imageId) const override;
     QFuture<Result<QByteArray>> thumbnail(int imageId, ThumbnailSize size) override;
     QUrl thumbnailUrl(int imageId, ThumbnailSize size) const override;
     QFuture<Result<QList<TagCount>>> tags(const QString& prefix, const QString& namespaceName, int limit) override;

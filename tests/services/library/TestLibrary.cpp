@@ -316,6 +316,10 @@ void TestLibrary::givesTheGridWhatItShows()
              QUrl(serverUrl + QStringLiteral("/api/v1/images/1/thumbnail?size=1024")));
     QCOMPARE(m_library->data(first, Library::TakenAtRole).toDateTime().date(), QDate(2025, 7, 14));
     QCOMPARE(m_library->roleNames().value(Library::ThumbnailUrlRole), QByteArray("thumbnailUrl"));
+
+    QCOMPARE(m_library->imageAt(1)->id, 2);  // all of an image, for the viewer
+    QCOMPARE(m_library->imageAt(2), std::nullopt);
+    QCOMPARE(m_library->imageAt(-1), std::nullopt);
 }
 
 }  // namespace pictorio::library
