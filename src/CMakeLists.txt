@@ -35,6 +35,7 @@ add_subdirectory(services/server_client)
 add_subdirectory(services/token_store)
 add_subdirectory(services/connection)
 add_subdirectory(services/library)
+add_subdirectory(services/library_view)
 add_subdirectory(services/network_access)
 
 # The application. main.cpp only wires things together; logic lives in the libraries above.
@@ -65,6 +66,7 @@ ecm_target_qml_sources(pictorio SOURCES
     qml/ConnectPage.qml
     qml/AccountPage.qml
     qml/LibraryPage.qml
+    qml/LibrarySidebar.qml
 )
 
 target_link_libraries(pictorio PRIVATE
@@ -76,6 +78,7 @@ target_link_libraries(pictorio PRIVATE
     pictorio_connection
     pictorio_network_access
     pictorio_library
+    pictorio_library_view
     Qt6::Widgets
     Qt6::Qml
     Qt6::Quick

@@ -79,6 +79,13 @@ public:
 
     void setServerUsername(const QString&) override {}
 
+    std::optional<bool> librarySidebarVisible() const override
+    {
+        return std::nullopt;
+    }
+
+    void setLibrarySidebarVisible(bool) override {}
+
     std::optional<int> intervalSeconds;
     std::optional<QString> order;
 };

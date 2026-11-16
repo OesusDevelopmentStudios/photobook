@@ -33,6 +33,9 @@ public:
     virtual void setServerUrl(const QUrl& serverUrl) = 0;
     virtual std::optional<QString> serverUsername() const = 0;
     virtual void setServerUsername(const QString& username) = 0;
+
+    virtual std::optional<bool> librarySidebarVisible() const = 0;
+    virtual void setLibrarySidebarVisible(bool visible) = 0;
 };
 
 }  // namespace pictorio::settings

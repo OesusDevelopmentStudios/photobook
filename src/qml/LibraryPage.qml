@@ -10,12 +10,13 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.ki18n
 
-// The images on the server: a search bar and a grid of square thumbnails, newest first. More images load
-// as the grid nears its end.
+// The images on the server: a sidebar with the search, and a grid of square thumbnails, newest first. More
+// images load as the grid nears its end.
 Kirigami.Page {
     id: page
 
     required property Library library
+    required property LibraryView libraryView
     required property Connection connection
 
     signal openImageRequested()
@@ -28,60 +29,51 @@ Kirigami.Page {
     title: KI18n.i18nc("@title", "Library")
     padding: 0
 
-    header: Controls.ToolBar {
-        visible: page.loggedIn
+    // The sidebar's toggle sits at the left, next to the sidebar it shows.
+    titleDelegate: RowLayout {
+        spacing: Kirigami.Units.smallSpacing
 
-        Kirigami.SearchField {
-            id: searchField
+        Controls.ToolButton {
+            action: sidebarAction
+            display: Controls.AbstractButton.IconOnly
+            visible: page.loggedIn
 
-            anchors.left: parent.left
-            anchors.right: parent.right
-            placeholderText: KI18n.i18nc("@info:placeholder", "Search, e.g. category:photo summer -rating:nsfw")
-            autoAccept: false  // one search per Enter, not one per key
-            onAccepted: page.library.search(text)
-            onTextChanged: {
-                if (text.length === 0 && page.library.searchText.length > 0) {
-                    page.library.search("");  // cleared: all images again
-                }
-            }
+            Controls.ToolTip.text: text
+            Controls.ToolTip.visible: hovered
+            Controls.ToolTip.delay: Kirigami.Units.toolTipDelay
+        }
+
+        Kirigami.Heading {
+            Layout.fillWidth: true
+            text: page.title
+            elide: Text.ElideRight
+            maximumLineCount: 1
+        }
+    }
+
+    // Only while the library is shown: the viewer may be on top of it.
+    Kirigami.Action {
+        id: sidebarAction
+
+        icon.name: "sidebar-show-symbolic"
+        text: KI18n.i18nc("@action:intoolbar", "Show Sidebar")
+        shortcut: "F9"  // as Dolphin's panels
+        checkable: true
+        checked: page.libraryView.sidebarVisible
+        enabled: page.loggedIn && page.isCurrentPage
+        onToggled: page.libraryView.sidebarVisible = checked
+    }
+
+    Kirigami.Action {
+        shortcut: StandardKey.Find
+        enabled: page.loggedIn && page.isCurrentPage
+        onTriggered: {
+            page.libraryView.sidebarVisible = true;
+            sidebar.focusSearch();
         }
     }
 
     actions: [
-        Kirigami.Action {
-            icon.name: "view-sort"
-            text: KI18n.i18nc("@action:intoolbar", "Sort")
-            visible: page.loggedIn
-
-            Kirigami.Action {
-                text: KI18n.i18nc("@action:inmenu Sort order", "Newest First")
-                checkable: true
-                checked: page.library.order === Library.Order.NewestFirst
-                Controls.ActionGroup.group: orderGroup
-                onTriggered: page.library.order = Library.Order.NewestFirst
-            }
-            Kirigami.Action {
-                text: KI18n.i18nc("@action:inmenu Sort order", "Oldest First")
-                checkable: true
-                checked: page.library.order === Library.Order.OldestFirst
-                Controls.ActionGroup.group: orderGroup
-                onTriggered: page.library.order = Library.Order.OldestFirst
-            }
-            Kirigami.Action {
-                text: KI18n.i18nc("@action:inmenu Sort order", "Recently Added")
-                checkable: true
-                checked: page.library.order === Library.Order.RecentlyAdded
-                Controls.ActionGroup.group: orderGroup
-                onTriggered: page.library.order = Library.Order.RecentlyAdded
-            }
-            Kirigami.Action {
-                text: KI18n.i18nc("@action:inmenu Sort order", "Random")
-                checkable: true
-                checked: page.library.order === Library.Order.Random
-                Controls.ActionGroup.group: orderGroup
-                onTriggered: page.library.order = Library.Order.Random  // again: shuffled again
-            }
-        },
         Kirigami.Action {
             icon.name: "document-open"
             text: KI18n.i18nc("@action:inmenu", "Open Image…")
@@ -103,99 +95,124 @@ Kirigami.Page {
         }
     ]
 
-    Controls.ActionGroup {
-        id: orderGroup
-    }
-
-    GridView {
-        id: grid
-
-        // As many columns of about 8 grid units as fit; at least two.
-        readonly property int columns: Math.max(2, Math.floor(width / (Kirigami.Units.gridUnit * 8)))
-
+    RowLayout {
         anchors.fill: parent
+        spacing: 0
         visible: page.loggedIn
-        model: page.loggedIn ? page.library : null
-        clip: true
-        cellWidth: width / columns
-        cellHeight: cellWidth
-        cacheBuffer: cellHeight * 2  // rows above and below the window are made in advance
-        reuseItems: true  // tiles scrolled away are reused, not made anew
 
-        Controls.ScrollBar.vertical: Controls.ScrollBar {}
+        LibrarySidebar {
+            id: sidebar
 
-        // The next page loads while two screens of images are still ahead.
-        function loadMoreIfNearTheEnd() {
-            if (contentY + height * 3 > contentHeight) {
-                page.library.loadMore();
-            }
+            Layout.fillHeight: true
+            Layout.preferredWidth: Kirigami.Units.gridUnit * 14
+            visible: page.libraryView.sidebarVisible
+            library: page.library
         }
 
-        onContentYChanged: loadMoreIfNearTheEnd()
-        onCountChanged: loadMoreIfNearTheEnd()  // a short page may not fill the window
-        onHeightChanged: loadMoreIfNearTheEnd()
+        Kirigami.Separator {
+            Layout.fillHeight: true
+            visible: sidebar.visible
+        }
 
-        // Kept light, as many are made while scrolling: no clip (the crop stays inside the tile by itself)
-        // and no tooltip.
-        delegate: Rectangle {
-            id: tile
+        // The grid in the colours of a view, like the file list in Dolphin
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Kirigami.Theme.colorSet: Kirigami.Theme.View
+            Kirigami.Theme.inherit: false
+            color: Kirigami.Theme.backgroundColor
 
-            required property url thumbnailUrl
+            GridView {
+                id: grid
 
-            width: grid.cellWidth
-            height: grid.cellHeight
-            color: Kirigami.Theme.alternateBackgroundColor
-            border.color: Kirigami.Theme.backgroundColor
-            border.width: 1
+                // As many columns of about 8 grid units as fit; at least two.
+                readonly property int columns: Math.max(2, Math.floor(width / (Kirigami.Units.gridUnit * 8)))
 
-            Image {
                 anchors.fill: parent
-                anchors.margins: 1
-                source: tile.thumbnailUrl
-                fillMode: Image.PreserveAspectCrop  // square tiles, the image cropped to fill them
-                asynchronous: true
-                smooth: true
+                model: page.loggedIn ? page.library : null
+                clip: true
+                cellWidth: width / columns
+                cellHeight: cellWidth
+                cacheBuffer: cellHeight * 2  // rows above and below the window are made in advance
+                reuseItems: true  // tiles scrolled away are reused, not made anew
+
+                Controls.ScrollBar.vertical: Controls.ScrollBar {}
+
+                // The next page loads while two screens of images are still ahead.
+                function loadMoreIfNearTheEnd() {
+                    if (contentY + height * 3 > contentHeight) {
+                        page.library.loadMore();
+                    }
+                }
+
+                onContentYChanged: loadMoreIfNearTheEnd()
+                onCountChanged: loadMoreIfNearTheEnd()  // a short page may not fill the window
+                onHeightChanged: loadMoreIfNearTheEnd()
+
+                // Kept light, as many are made while scrolling: no clip (the crop stays inside the tile by itself)
+                // and no tooltip.
+                delegate: Rectangle {
+                    id: tile
+
+                    required property url thumbnailUrl
+
+                    width: grid.cellWidth
+                    height: grid.cellHeight
+                    color: Kirigami.Theme.alternateBackgroundColor
+                    border.color: Kirigami.Theme.backgroundColor
+                    border.width: 1
+
+                    Image {
+                        anchors.fill: parent
+                        anchors.margins: 1
+                        source: tile.thumbnailUrl
+                        fillMode: Image.PreserveAspectCrop  // square tiles, the image cropped to fill them
+                        asynchronous: true
+                        smooth: true
+                    }
+                }
+
+                footer: Item {
+                    width: grid.width
+                    height: page.library.loading ? Kirigami.Units.gridUnit * 3 : 0
+
+                    Controls.BusyIndicator {
+                        anchors.centerIn: parent
+                        running: page.library.loading
+                        visible: running
+                    }
+                }
             }
-        }
 
-        footer: Item {
-            width: grid.width
-            height: page.library.loading ? Kirigami.Units.gridUnit * 3 : 0
+            Kirigami.InlineMessage {
+                anchors.top: parent.top
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.margins: Kirigami.Units.smallSpacing
+                visible: page.library.errorMessage.length > 0
+                type: Kirigami.MessageType.Error
+                text: page.library.errorMessage
+                actions: [
+                    Kirigami.Action {
+                        icon.name: "view-refresh"
+                        text: KI18n.i18nc("@action:button", "Try Again")
+                        onTriggered: page.library.reload()
+                    }
+                ]
+            }
 
-            Controls.BusyIndicator {
+            Kirigami.PlaceholderMessage {
                 anchors.centerIn: parent
-                running: page.library.loading
-                visible: running
+                width: parent.width - Kirigami.Units.gridUnit * 4
+                visible: page.library.count === 0 && !page.library.loading
+                         && page.library.errorMessage.length === 0
+                icon.name: "image-x-generic"
+                text: page.library.searchText.length > 0
+                      ? KI18n.i18nc("@info:placeholder", "Nothing matches")
+                      : KI18n.i18nc("@info:placeholder", "No images in the library yet")
+                explanation: page.library.searchText.length > 0 ? page.library.effectiveQuery : ""
             }
         }
-    }
-
-    Kirigami.InlineMessage {
-        anchors.top: parent.top
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.margins: Kirigami.Units.smallSpacing
-        visible: page.loggedIn && page.library.errorMessage.length > 0
-        type: Kirigami.MessageType.Error
-        text: page.library.errorMessage
-        actions: [
-            Kirigami.Action {
-                icon.name: "view-refresh"
-                text: KI18n.i18nc("@action:button", "Try Again")
-                onTriggered: page.library.reload()
-            }
-        ]
-    }
-
-    Kirigami.PlaceholderMessage {
-        anchors.centerIn: parent
-        width: parent.width - Kirigami.Units.gridUnit * 4
-        visible: page.loggedIn && page.library.count === 0 && !page.library.loading
-                 && page.library.errorMessage.length === 0
-        icon.name: "image-x-generic"
-        text: page.library.searchText.length > 0 ? KI18n.i18nc("@info:placeholder", "Nothing matches")
-                                                 : KI18n.i18nc("@info:placeholder", "No images in the library yet")
-        explanation: page.library.searchText.length > 0 ? page.library.effectiveQuery : ""
     }
 
     Kirigami.LoadingPlaceholder {

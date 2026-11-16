@@ -48,6 +48,7 @@ void TestSettings::returnsNothingForValuesNeverStored()
     QCOMPARE(settings->slideshowOrder(), std::nullopt);
     QCOMPARE(settings->serverUrl(), std::nullopt);
     QCOMPARE(settings->serverUsername(), std::nullopt);
+    QCOMPARE(settings->librarySidebarVisible(), std::nullopt);
 }
 
 void TestSettings::keepsValuesAfterRestart()
@@ -58,6 +59,7 @@ void TestSettings::keepsValuesAfterRestart()
         settings->setSlideshowOrder(QStringLiteral("date"));
         settings->setServerUrl(QUrl(QStringLiteral("https://photos.example.org")));
         settings->setServerUsername(QStringLiteral("kid"));
+        settings->setLibrarySidebarVisible(false);
     }
 
     const auto settingsAfterRestart = createSettings(configFilePath());
@@ -66,6 +68,7 @@ void TestSettings::keepsValuesAfterRestart()
     QCOMPARE(settingsAfterRestart->slideshowOrder(), QStringLiteral("date"));
     QCOMPARE(settingsAfterRestart->serverUrl(), QUrl(QStringLiteral("https://photos.example.org")));
     QCOMPARE(settingsAfterRestart->serverUsername(), QStringLiteral("kid"));
+    QCOMPARE(settingsAfterRestart->librarySidebarVisible(), false);
 }
 
 // Group and key names must not change, or users lose their settings with an update.
@@ -76,15 +79,18 @@ void TestSettings::writesReadableConfigFile()
     settings->setSlideshowOrder(QStringLiteral("random"));
     settings->setServerUrl(QUrl(QStringLiteral("http://raspberrypi.local:8737")));
     settings->setServerUsername(QStringLiteral("kid"));
+    settings->setLibrarySidebarVisible(false);
 
     const KConfig configFile(configFilePath(), KConfig::SimpleConfig);
     const KConfigGroup slideshowGroup = configFile.group(QStringLiteral("Slideshow"));
     const KConfigGroup serverGroup = configFile.group(QStringLiteral("Server"));
+    const KConfigGroup libraryGroup = configFile.group(QStringLiteral("Library"));
 
     QCOMPARE(slideshowGroup.readEntry("IntervalSeconds", 0), 7);
     QCOMPARE(slideshowGroup.readEntry("Order", QString()), QStringLiteral("random"));
     QCOMPARE(serverGroup.readEntry("Url", QString()), QStringLiteral("http://raspberrypi.local:8737"));
     QCOMPARE(serverGroup.readEntry("Username", QString()), QStringLiteral("kid"));
+    QCOMPARE(libraryGroup.readEntry("SidebarVisible", QString()), QStringLiteral("false"));
     QVERIFY(!serverGroup.keyList().contains(QStringLiteral("Token")));  // the token belongs in the keyring
 }
 

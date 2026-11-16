@@ -10,6 +10,7 @@
 
 #include "Connection.hpp"
 #include "Library.hpp"
+#include "LibraryView.hpp"
 #include "Navigator.hpp"
 #include "Slideshow.hpp"
 #include "ViewTransform.hpp"
@@ -66,6 +67,14 @@ struct ForeignLibrary
     Q_GADGET
     QML_FOREIGN(pictorio::library::Library)
     QML_NAMED_ELEMENT(Library)
+    QML_UNCREATABLE("Provided by AppManager")
+};
+
+struct ForeignLibraryView
+{
+    Q_GADGET
+    QML_FOREIGN(pictorio::library_view::LibraryView)
+    QML_NAMED_ELEMENT(LibraryView)
     QML_UNCREATABLE("Provided by AppManager")
 };
 

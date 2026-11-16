@@ -1,0 +1,22 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 OesusDevelopmentStudios
+
+# How the library page is laid out, kept between runs (see include/LibraryView.hpp).
+add_library(pictorio_library_view STATIC
+    include/LibraryView.hpp
+    include/LibraryViewFactory.hpp
+    LibraryView.cpp
+    LibraryViewFactory.cpp
+)
+
+target_include_directories(pictorio_library_view PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_link_libraries(pictorio_library_view PUBLIC
+    pictorio_settings
+    Qt6::Core
+)
+
+# LibraryView is exposed to QML (app_manager/QmlForeignTypes.hpp); QML tools read its properties from these metatypes.
+qt_extract_metatypes(pictorio_library_view)

@@ -30,6 +30,9 @@ public:
     std::optional<QString> serverUsername() const override;
     void setServerUsername(const QString& username) override;
 
+    std::optional<bool> librarySidebarVisible() const override;
+    void setLibrarySidebarVisible(bool visible) override;
+
 private:
     KConfigGroup slideshowGroup() const;
     void writeSlideshowEntry(const char* key, const QVariant& value);

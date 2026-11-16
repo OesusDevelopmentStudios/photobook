@@ -13,6 +13,7 @@
 
 #include "Connection.hpp"
 #include "Library.hpp"
+#include "LibraryView.hpp"
 #include "Navigator.hpp"
 #include "NetworkAccess.hpp"
 #include "Settings.hpp"
@@ -36,6 +37,7 @@ class AppManager : public QObject
     Q_PROPERTY(pictorio::slideshow::Slideshow* slideshow READ slideshow CONSTANT)
     Q_PROPERTY(pictorio::connection::Connection* connection READ connection CONSTANT)
     Q_PROPERTY(pictorio::library::Library* library READ library CONSTANT)
+    Q_PROPERTY(pictorio::library_view::LibraryView* libraryView READ libraryView CONSTANT)
 
 public:
     explicit AppManager(QObject* parent = nullptr);
@@ -47,6 +49,7 @@ public:
     slideshow::Slideshow* slideshow() const;
     connection::Connection* connection() const;
     library::Library* library() const;
+    library_view::LibraryView* libraryView() const;
 
     // For the QML engine: images it loads from the server get the login token, and are cached on disk.
     QQmlNetworkAccessManagerFactory* networkAccessFactory() const;
@@ -63,6 +66,7 @@ private:
     std::unique_ptr<slideshow::Slideshow> m_slideshow;     // uses m_navigator and m_settings, so declared after them
     std::unique_ptr<connection::Connection> m_connection;  // uses m_settings
     std::unique_ptr<library::Library> m_library;           // uses m_connection
+    std::unique_ptr<library_view::LibraryView> m_libraryView;  // uses m_settings
     std::shared_ptr<network_access::ServerCredentials> m_serverCredentials;
     std::unique_ptr<QQmlNetworkAccessManagerFactory> m_networkAccessFactory;
 };

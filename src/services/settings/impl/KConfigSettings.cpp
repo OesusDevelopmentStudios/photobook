@@ -15,6 +15,8 @@ constexpr const char* orderKey = "Order";
 const QString serverGroupName = QStringLiteral("Server");
 constexpr const char* urlKey = "Url";
 constexpr const char* usernameKey = "Username";
+const QString libraryGroupName = QStringLiteral("Library");
+constexpr const char* sidebarVisibleKey = "SidebarVisible";
 
 }  // namespace
 
@@ -81,6 +83,24 @@ std::optional<QString> KConfigSettings::serverUsername() const
 void KConfigSettings::setServerUsername(const QString& username)
 {
     writeServerEntry(usernameKey, username);
+}
+
+std::optional<bool> KConfigSettings::librarySidebarVisible() const
+{
+    const KConfigGroup group = m_config->group(libraryGroupName);
+    if (!group.hasKey(sidebarVisibleKey))
+    {
+        return std::nullopt;
+    }
+
+    return group.readEntry(sidebarVisibleKey, true);
+}
+
+void KConfigSettings::setLibrarySidebarVisible(bool visible)
+{
+    KConfigGroup group = m_config->group(libraryGroupName);
+    group.writeEntry(sidebarVisibleKey, visible);
+    m_config->sync();
 }
 
 KConfigGroup KConfigSettings::slideshowGroup() const
