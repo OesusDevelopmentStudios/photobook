@@ -56,6 +56,7 @@ set(qmlFiles
     qml/WelcomePage.qml
     qml/ConnectPage.qml
     qml/SettingsPage.qml
+    qml/HiddenFilterSettings.qml
     qml/LibraryPage.qml
     qml/LibrarySidebar.qml
     qml/LibraryTile.qml

@@ -12,19 +12,22 @@ import org.kde.ki18n
 
 // A namespace's add field, with the server's suggestions for that namespace above it. Enter adds the highlighted
 // suggestion, or what was typed; up and down move through the suggestions. What is typed counts as a change
-// until it is added.
+// until it is added. Without a namespace (the hidden filters) suggestions come from every namespace and are
+// added as whole tags, e.g. "rating:nsfw".
 Controls.TextField {
     id: field
 
     required property TagRowsEditor editor
     required property string namespaceName
     readonly property TagSuggestions suggestions: editor.suggestions
+    readonly property bool wholeTags: namespaceName === ""
 
     placeholderText: KI18n.i18nc("@info:placeholder", "Add a tag…")
     enabled: !editor.busy
     onTextChanged: editor.setTypedName(namespaceName, text)
     onAccepted: {
-        const chosen = suggestionList.currentIndex >= 0 ? suggestions.nameAt(suggestionList.currentIndex) : text;
+        const row = suggestionList.currentIndex;
+        const chosen = row < 0 ? text : wholeTags ? suggestions.tagAt(row) : suggestions.nameAt(row);
         editor.addTag(namespaceName, chosen);  // once added, the editor empties the field
     }
 
@@ -63,19 +66,21 @@ Controls.TextField {
             delegate: Controls.ItemDelegate {
                 id: suggestion
 
+                required property string tag
                 required property string name
+                readonly property string shown: field.wholeTags ? tag : name
                 required property int imageCount
 
                 width: ListView.view.width
                 highlighted: ListView.isCurrentItem
-                onClicked: field.editor.addTag(field.namespaceName, name)
+                onClicked: field.editor.addTag(field.namespaceName, shown)
 
                 contentItem: RowLayout {
                     spacing: Kirigami.Units.largeSpacing
 
                     Controls.Label {
                         Layout.fillWidth: true
-                        text: suggestion.name
+                        text: suggestion.shown
                         elide: Text.ElideRight
                     }
 

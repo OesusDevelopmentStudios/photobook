@@ -12,8 +12,11 @@ Kirigami.ScrollablePage {
     id: page
 
     required property Connection connection
+    required property HiddenFilterEditor hiddenFilterEditor
 
     title: KI18n.i18nc("@title", "Settings")
+
+    Component.onCompleted: hiddenFilterEditor.load()
 
     ColumnLayout {
         spacing: Kirigami.Units.largeSpacing
@@ -47,6 +50,16 @@ Kirigami.ScrollablePage {
                 icon.name: "system-log-out"
                 text: KI18n.i18nc("@action:button", "Log Out")
                 onClicked: page.connection.logOut()
+            }
+
+            Kirigami.Separator {
+                Kirigami.FormData.isSection: true
+                Kirigami.FormData.label: KI18n.i18nc("@title:group", "Hidden Filters")
+            }
+
+            HiddenFilterSettings {
+                Layout.fillWidth: true
+                editor: page.hiddenFilterEditor
             }
         }
     }

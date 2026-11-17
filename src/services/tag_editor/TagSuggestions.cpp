@@ -91,6 +91,11 @@ QString TagSuggestions::nameAt(int row) const
     return row >= 0 && row < count() ? data(index(row), NameRole).toString() : QString();
 }
 
+QString TagSuggestions::tagAt(int row) const
+{
+    return row >= 0 && row < count() ? data(index(row), TagRole).toString() : QString();
+}
+
 int TagSuggestions::rowCount(const QModelIndex& parent) const
 {
     return parent.isValid() ? 0 : count();

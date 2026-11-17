@@ -161,6 +161,8 @@ void TestTagSuggestions::givesTheTagsMostUsedFirst()
     QCOMPARE(m_suggestions->data(m_suggestions->index(1), TagSuggestions::NameRole).toString(),
              QStringLiteral("summer_2025"));
     QVERIFY(m_suggestions->nameAt(2).isEmpty());
+    QCOMPARE(m_suggestions->tagAt(1), QStringLiteral("album:summer_2025"));
+    QVERIFY(m_suggestions->tagAt(2).isEmpty());
 }
 
 void TestTagSuggestions::clearsAtOnceWhenTheFieldIsEmptied()

@@ -292,6 +292,7 @@ Kirigami.ApplicationWindow {
 
         SettingsPage {
             connection: root.appManager.connection
+            hiddenFilterEditor: root.appManager.hiddenFilterEditor
             Component.onCompleted: root.addUploadStatus(this)
         }
     }
