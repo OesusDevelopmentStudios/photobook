@@ -25,7 +25,8 @@ src/
 ├── utils/              small helpers shared by several services
 └── qml/                user interface (presentation only)
 tests/                  mirrors src/: tests/utils/TestAppIdentity.cpp tests src/utils/AppIdentity.cpp
-└── qml/                QML tests, tst_<component>.qml, with C++ fakes such as FakeTagRowsEditor
+├── qml/                QML tests, tst_<component>.qml, with C++ fakes such as FakeTagRowsEditor
+└── e2e/                end-to-end tests against a real pictorio-db server, TestEndToEnd<flow>.cpp
 ```
 
 **QML contains presentation only.** Decisions (sorting, paging, what to upload, when to delete) live in
@@ -33,6 +34,16 @@ C++ services, where they can be unit-tested. What the QML itself does (a click r
 a part showing the right state) is tested in `tests/qml/` with Qt Quick Test. The tests load the
 application's QML module and run offscreen as part of `ctest`. Put the item under test in the file's
 visible root item, not in the `TestCase`, which is invisible: an invisible item gets no clicks.
+
+**End-to-end tests** (`tests/e2e/`) run the app's services against a real pictorio-db server. A plain
+`ctest` skips them. `tests/e2e/run_end_to_end_tests.py` installs the server from a pictorio-db checkout
+next to this repository into a temporary virtual environment, starts it on a temporary folder, creates
+the test accounts, runs the tests and removes everything again:
+
+```sh
+tests/e2e/run_end_to_end_tests.py                    # needs ../pictorio-db and a build in build/
+tests/e2e/run_end_to_end_tests.py --server ../pictorio-db/.venv/bin/pictorio-db   # faster: no install
+```
 
 ### Service layout
 

@@ -119,6 +119,11 @@ target_compile_definitions(TestDesktopFile PRIVATE
     DESKTOP_FILE="${PROJECT_SOURCE_DIR}/packaging/io.github.oesusdevelopmentstudios.pictorio.desktop"
 )
 
+# Against a real pictorio-db server, which e2e/run_end_to_end_tests.py starts; they skip themselves without it.
+ecm_add_test(e2e/TestEndToEndLogin.cpp
+    LINK_LIBRARIES pictorio_connection Qt6::Test KF6::I18n
+)
+
 # The QML tests, tst_*.qml in qml/: one Qt Quick Test executable that uses the application's QML module,
 # offscreen. Qt's messages go to stderr, not to the system journal, so failures show in the test output.
 add_executable(TestQml qml/TestQml.cpp qml/FakeTagRowsEditor.hpp qml/TestServices.hpp)
