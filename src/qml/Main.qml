@@ -240,6 +240,7 @@ Kirigami.ApplicationWindow {
                 root.showUploadPage();
             }
             onCopyImageRequested: root.appManager.copyCurrentImage()
+            onOpenFolderRequested: root.appManager.openCurrentImageFolder()
             onUploadFolderRequested: {
                 root.appManager.uploadCurrentFolder();  // listed in the background, while the page opens
                 root.showUploadPage();

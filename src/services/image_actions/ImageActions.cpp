@@ -10,6 +10,7 @@
 #include <QBuffer>
 #include <QClipboard>
 #include <QFile>
+#include <QFileInfo>
 #include <QGuiApplication>
 #include <QImageReader>
 #include <QMimeData>
@@ -21,10 +22,15 @@
 namespace pictorio::image_actions
 {
 
-ImageActions::ImageActions(connection::Connection* connection, QObject* parent)
+ImageActions::ImageActions(connection::Connection* connection,
+                           std::unique_ptr<FileManager> fileManager,
+                           QObject* parent)
     : QObject(parent)
     , m_connection(connection)
+    , m_fileManager(std::move(fileManager))
 {}
+
+ImageActions::~ImageActions() = default;
 
 void ImageActions::copyLocalImage(const QString& filePath)
 {
@@ -64,6 +70,22 @@ void ImageActions::copyLibraryImage(int imageId, const QString& mimeType)
         if (copyToClipboard(*file, mimeType, {}))
         {
             Q_EMIT copied();
+        }
+    });
+}
+
+void ImageActions::openContainingFolder(const QString& filePath)
+{
+    if (!QFileInfo::exists(filePath))
+    {
+        Q_EMIT failed(i18nc("@info %1 is a file path", "%1 is no longer there.", filePath));
+        return;
+    }
+
+    m_fileManager->showFile(filePath).then(this, [this](const std::expected<void, QString>& shown) {
+        if (!shown.has_value())
+        {
+            Q_EMIT failed(i18nc("@info %1 is the reason", "The folder could not be opened: %1", shown.error()));
         }
     });
 }

@@ -17,9 +17,10 @@
 #include <QTest>
 
 #include "Connection.hpp"
-#include "ImageActionsFactory.hpp"
+#include "ImageActions.hpp"
 #include "ServerClientFactory.hpp"
 #include "SettingsFactory.hpp"
+#include "fakes/FakeFileManager.hpp"
 #include "fakes/FakeServer.hpp"
 #include "fakes/FakeTokenStore.hpp"
 #include "fakes/ImageJson.hpp"
@@ -60,8 +61,9 @@ bool clipboardHasImage()
 
 }  // namespace
 
-// Copying an image to the clipboard: a local file with its URL, a library image once downloaded. Runs on the
-// offscreen platform, whose clipboard stays in the process.
+// Copying an image to the clipboard, a local file with its URL, a library image once downloaded; showing a file
+// in the file manager. Runs on the offscreen platform, whose clipboard stays in the process; the file manager is
+// a fake, so no window opens.
 class TestImageActions : public QObject
 {
     Q_OBJECT
@@ -76,6 +78,9 @@ private Q_SLOTS:
     void reportsAMissingFile();
     void copiesALibraryImageOnceDownloaded();
     void reportsAFailedDownload();
+    void showsAFileInItsFolder();
+    void reportsAFileThatIsGone();
+    void reportsAFileManagerThatDoesNotOpen();
 
 private:
     QString writtenFile(const QString& name, const QByteArray& content) const;
@@ -84,6 +89,7 @@ private:
     std::unique_ptr<settings::Settings> m_settings;
     std::shared_ptr<FakeServer> m_server;
     std::unique_ptr<Connection> m_connection;
+    std::shared_ptr<fakes::FileManagerWindows> m_windows;
     std::unique_ptr<ImageActions> m_actions;
 };
 
@@ -116,7 +122,8 @@ void TestImageActions::init()
         m_settings.get());
     m_connection->restoreLogin();
     QTRY_COMPARE(m_connection->state(), Connection::State::LoggedIn);
-    m_actions = createImageActions(m_connection.get());
+    m_windows = std::make_shared<fakes::FileManagerWindows>();
+    m_actions = std::make_unique<ImageActions>(m_connection.get(), std::make_unique<fakes::FakeFileManager>(m_windows));
 }
 
 void TestImageActions::copiesALocalImageWithItsFile()
@@ -199,6 +206,39 @@ void TestImageActions::reportsAFailedDownload()
     QTRY_COMPARE(failed.size(), 1);
     QVERIFY(!m_actions->isBusy());
     QVERIFY(!clipboardHasImage());
+}
+
+void TestImageActions::showsAFileInItsFolder()
+{
+    const QString filePath = writtenFile(QStringLiteral("beach.png"), encodedImage("PNG"));
+    QSignalSpy failed(m_actions.get(), &ImageActions::failed);
+
+    m_actions->openContainingFolder(filePath);
+
+    QTRY_COMPARE(m_windows->shownFiles, QStringList({filePath}));
+    QCOMPARE(failed.size(), 0);
+}
+
+// E.g. moved away while it was on screen
+void TestImageActions::reportsAFileThatIsGone()
+{
+    QSignalSpy failed(m_actions.get(), &ImageActions::failed);
+
+    m_actions->openContainingFolder(m_folder->filePath(QStringLiteral("gone.png")));
+
+    QCOMPARE(failed.size(), 1);
+    QVERIFY(m_windows->shownFiles.isEmpty());
+}
+
+void TestImageActions::reportsAFileManagerThatDoesNotOpen()
+{
+    m_windows->opens = false;
+    QSignalSpy failed(m_actions.get(), &ImageActions::failed);
+
+    m_actions->openContainingFolder(writtenFile(QStringLiteral("beach.png"), encodedImage("PNG")));
+
+    QTRY_COMPARE(failed.size(), 1);
+    QVERIFY(failed.first().first().toString().contains(QStringLiteral("No file manager here")));
 }
 
 QString TestImageActions::writtenFile(const QString& name, const QByteArray& content) const

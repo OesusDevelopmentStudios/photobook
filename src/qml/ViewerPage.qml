@@ -30,6 +30,7 @@ Kirigami.Page {
     signal uploadImageRequested()   // the image on screen, to the upload page's list
     signal uploadFolderRequested()  // the images of its folder, without subfolders
     signal copyImageRequested()
+    signal openFolderRequested()  // the image's, in the file manager
     signal leaveRequested()  // back, while there are unsaved tag changes; the window asks first
 
     onBackRequested: event => {
@@ -165,6 +166,13 @@ Kirigami.Page {
             shortcut: StandardKey.Copy
             enabled: page.viewer.hasImage && !page.imageActions.busy
             onTriggered: page.copyImageRequested()
+        },
+        Kirigami.Action {
+            icon.name: "document-open-folder"
+            text: KI18n.i18nc("@action:inmenu", "Open Containing Folder")
+            displayHint: Kirigami.DisplayHint.AlwaysHide
+            visible: page.viewer.hasImage && !page.viewer.fromLibrary
+            onTriggered: page.openFolderRequested()
         },
         // A local image to the server's library. Not while an upload runs: its list is fixed then.
         Kirigami.Action {

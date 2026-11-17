@@ -247,6 +247,15 @@ void AppManager::copyCurrentImage()
     }
 }
 
+void AppManager::openCurrentImageFolder()
+{
+    const QUrl image = m_viewer->imageSource();
+    if (image.isLocalFile())
+    {
+        m_imageActions->openContainingFolder(image.toLocalFile());
+    }
+}
+
 void AppManager::showLibraryImage(int row)
 {
     const std::optional<server_client::Image> image = m_library->imageAt(row);

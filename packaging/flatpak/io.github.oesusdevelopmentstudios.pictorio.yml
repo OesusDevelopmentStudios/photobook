@@ -33,6 +33,7 @@ finish-args:
   - --share=network                    # the pictorio-db server
   - --talk-name=org.freedesktop.secrets  # the login token in the keyring: the Secret Service…
   - --talk-name=org.kde.kwalletd6        # …or KWallet
+  - --talk-name=org.freedesktop.FileManager1  # "Open Containing Folder": the file manager selects the image
 
 modules:
   # Image metadata (the date a photo was taken). Not in the KDE runtime, so it is built here.

@@ -5,12 +5,14 @@
 
 #include "ImageActionsFactory.hpp"
 
+#include "impl/KioFileManager.hpp"
+
 namespace pictorio::image_actions
 {
 
 std::unique_ptr<ImageActions> createImageActions(connection::Connection* connection)
 {
-    return std::make_unique<ImageActions>(connection);
+    return std::make_unique<ImageActions>(connection, std::make_unique<KioFileManager>());
 }
 
 }  // namespace pictorio::image_actions
