@@ -14,9 +14,20 @@ Kirigami.ScrollablePage {
     required property Connection connection
     required property HiddenFilterEditor hiddenFilterEditor
 
+    // The window asks first about unsaved filter changes, then goes back or logs out.
+    signal leaveRequested()  // back, while there are unsaved filter changes
+    signal logOutRequested()
+
     title: KI18n.i18nc("@title", "Settings")
 
     Component.onCompleted: hiddenFilterEditor.load()
+
+    onBackRequested: event => {
+        if (hiddenFilterEditor.hasChanges) {
+            event.accepted = true;  // the page stays until the changes are saved or dropped
+            leaveRequested();
+        }
+    }
 
     ColumnLayout {
         spacing: Kirigami.Units.largeSpacing
@@ -49,7 +60,8 @@ Kirigami.ScrollablePage {
             Controls.Button {
                 icon.name: "system-log-out"
                 text: KI18n.i18nc("@action:button", "Log Out")
-                onClicked: page.connection.logOut()
+                objectName: "logOut"
+                onClicked: page.logOutRequested()
             }
 
             Kirigami.Separator {

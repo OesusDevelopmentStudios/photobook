@@ -6,7 +6,8 @@ import QtTest
 import io.github.oesusdevelopmentstudios.pictorio
 import pictorio.tests
 
-// The settings page's hidden filters: the saved ones as chips, removing and adding filters, Save and Cancel.
+// The settings page's hidden filters: the saved ones as chips, removing and adding filters, Save and Cancel; with
+// unsaved changes, going back and logging out are left to the window, which asks first.
 // The server has "rating:nsfw" and "category:refs" saved and keeps what is saved; the page loads them on opening.
 // The TestCase is invisible; what it tests is created in the visible root, where it can be clicked.
 Item {
@@ -133,6 +134,49 @@ Item {
             tryCompare(editor, "saving", false);
             compare(shownFilters(page), ["rating:nsfw", "character:*"]);
             verify(!findChild(page, "saveFilters").enabled, "nothing left to save");
+        }
+
+        // As Kirigami sends it, e.g. for the toolbar's back button
+        function requestBack(page: SettingsPage): bool {
+            const event = {accepted: false};
+            page.backRequested(event);
+            return event.accepted;
+        }
+
+        function test_goesBackWithoutChanges() {
+            const page = shownPage();
+            const leaveRequested = createTemporaryObject(spyComponent, testCase, {target: page,
+                                                                                  signalName: "leaveRequested"});
+
+            verify(!requestBack(page), "Kirigami goes back");
+            compare(leaveRequested.count, 0);
+        }
+
+        function test_staysWithUnsavedChanges() {
+            const page = shownPage();
+            const leaveRequested = createTemporaryObject(spyComponent, testCase, {target: page,
+                                                                                  signalName: "leaveRequested"});
+            findChild(page, "addFilter").text = "character:*";  // typed, not added: a change too
+
+            verify(requestBack(page), "the page stays");
+            compare(leaveRequested.count, 1);
+        }
+
+        function test_leavesLoggingOutToTheWindow() {
+            const page = shownPage();
+            const logOutRequested = createTemporaryObject(spyComponent, testCase, {target: page,
+                                                                                   signalName: "logOutRequested"});
+
+            mouseClick(findChild(page, "logOut"));
+
+            compare(logOutRequested.count, 1);
+            compare(TestServices.accountConnection.state, Connection.State.LoggedIn);
+        }
+
+        Component {
+            id: spyComponent
+
+            SignalSpy {}
         }
 
         function test_showsWhenNoFiltersAreHidden() {

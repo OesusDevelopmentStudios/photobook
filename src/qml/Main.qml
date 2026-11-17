@@ -49,7 +49,7 @@ Kirigami.ApplicationWindow {
 
     // Back to the library if it is in the page stack; otherwise it comes in place of the current page.
     function showLibrary() {
-        afterTagChangesSettled(showLibraryNow);
+        afterChangesSettled(appManager.tagEditor, showLibraryNow);
     }
 
     function showLibraryNow() {
@@ -63,17 +63,20 @@ Kirigami.ApplicationWindow {
         pageStack.replace(libraryPage);
     }
 
-    // Unsaved tag changes would be lost on leaving the viewer: the user saves or drops them first, or stays.
-    property var actionAfterTagChanges: null
+    // Unsaved changes, to an image's tags or to the hidden filters, would be lost on leaving their page: the user
+    // saves or drops them first, or stays. The editor is the tag editor or the hidden filter editor.
+    property var editorToSettle: null
+    property var actionAfterChanges: null
 
-    function afterTagChangesSettled(action) {
-        if (!appManager.tagEditor.hasChanges) {
+    function afterChangesSettled(editor, action) {
+        if (!editor.hasChanges) {
             action();
             return;
         }
 
-        actionAfterTagChanges = action;
-        unsavedTagsDialog.open();
+        editorToSettle = editor;
+        actionAfterChanges = action;
+        unsavedChangesDialog.open();
     }
 
     // On top of the current page, so going back returns to it; also while an upload runs.
@@ -111,11 +114,12 @@ Kirigami.ApplicationWindow {
         }
     }
 
-    // Unsaved tags first; once they are settled, closing again comes back here for a running upload.
+    // Unsaved changes first; once they are settled, closing again comes back here for the next, or a running upload.
     onClosing: close => {
-        if (appManager.tagEditor.hasChanges) {
+        const unsaved = [appManager.tagEditor, appManager.hiddenFilterEditor].find(editor => editor.hasChanges);
+        if (unsaved) {
             close.accepted = false;
-            afterTagChangesSettled(() => root.close());
+            afterChangesSettled(unsaved, () => root.close());
         } else if (appManager.uploader.running && !quitDuringUpload) {
             close.accepted = false;
             runningUploadDialog.open();
@@ -144,38 +148,47 @@ Kirigami.ApplicationWindow {
     }
 
     Kirigami.PromptDialog {
-        id: unsavedTagsDialog
+        id: unsavedChangesDialog
 
-        title: KI18n.i18nc("@title:window", "Unsaved Tags")
-        subtitle: KI18n.i18nc("@info", "Save the changes to this image's tags?")
+        readonly property bool filters: root.editorToSettle === root.appManager.hiddenFilterEditor
+
+        title: filters ? KI18n.i18nc("@title:window", "Unsaved Hidden Filters")
+                       : KI18n.i18nc("@title:window", "Unsaved Tags")
+        subtitle: filters ? KI18n.i18nc("@info", "Save the changes to your hidden filters?")
+                          : KI18n.i18nc("@info", "Save the changes to this image's tags?")
         standardButtons: Kirigami.Dialog.Save | Kirigami.Dialog.Discard | Kirigami.Dialog.Cancel
 
-        onAccepted: root.appManager.tagEditor.save()  // the action follows once saved
+        onAccepted: root.editorToSettle.save()  // the action follows once saved
         onDiscarded: {
-            root.appManager.tagEditor.cancel();
+            root.editorToSettle.cancel();
             close();
-            root.runActionAfterTagChanges();
+            root.runActionAfterChanges();
         }
-        onRejected: root.actionAfterTagChanges = null
+        onRejected: {
+            root.actionAfterChanges = null;
+            root.editorToSettle = null;
+        }
     }
 
-    function runActionAfterTagChanges() {
-        const action = actionAfterTagChanges;
-        actionAfterTagChanges = null;
+    function runActionAfterChanges() {
+        const action = actionAfterChanges;
+        actionAfterChanges = null;
+        editorToSettle = null;
         action?.();
     }
 
-    // Saved: on with what the user wanted. Refused: the user stays, with the reason in the details footer.
+    // Saved: on with what the user wanted. Refused: the user stays, with the reason shown by the editor's page.
     Connections {
-        target: root.appManager.tagEditor
+        target: root.editorToSettle
 
         function onSaved() {
-            root.runActionAfterTagChanges();
+            root.runActionAfterChanges();
         }
 
         function onErrorMessageChanged() {
-            if (root.appManager.tagEditor.errorMessage.length > 0) {
-                root.actionAfterTagChanges = null;
+            if (root.editorToSettle.errorMessage.length > 0) {
+                root.actionAfterChanges = null;
+                root.editorToSettle = null;
             }
         }
     }
@@ -229,7 +242,7 @@ Kirigami.ApplicationWindow {
                 root.appManager.uploadCurrentFolder();  // listed in the background, while the page opens
                 root.showUploadPage();
             }
-            onLeaveRequested: root.afterTagChangesSettled(() => root.pageStack.pop())
+            onLeaveRequested: root.afterChangesSettled(root.appManager.tagEditor, () => root.pageStack.pop())
             Component.onCompleted: root.addUploadStatus(this)
         }
     }
@@ -293,6 +306,9 @@ Kirigami.ApplicationWindow {
         SettingsPage {
             connection: root.appManager.connection
             hiddenFilterEditor: root.appManager.hiddenFilterEditor
+            onLeaveRequested: root.afterChangesSettled(root.appManager.hiddenFilterEditor, () => root.pageStack.pop())
+            onLogOutRequested: root.afterChangesSettled(root.appManager.hiddenFilterEditor,
+                                                        () => root.appManager.connection.logOut())
             Component.onCompleted: root.addUploadStatus(this)
         }
     }
