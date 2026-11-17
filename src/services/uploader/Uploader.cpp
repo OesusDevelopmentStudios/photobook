@@ -52,10 +52,14 @@ QString describeError(const ApiError& error)
 namespace pictorio::uploader
 {
 
-Uploader::Uploader(connection::Connection* connection, tag_editor::UploadTagEditor* tagEditor, QObject* parent)
+Uploader::Uploader(connection::Connection* connection,
+                   tag_editor::UploadTagEditor* tagEditor,
+                   std::unique_ptr<Trash> trash,
+                   QObject* parent)
     : QAbstractListModel(parent)
     , m_connection(connection)
     , m_tagEditor(tagEditor)
+    , m_trash(std::move(trash))
 {}
 
 void Uploader::addFiles(const QList<QUrl>& fileUrls)
@@ -167,6 +171,20 @@ int Uploader::alreadyThereCount() const
 int Uploader::failedCount() const
 {
     return countIn(FileState::Failed);
+}
+
+bool Uploader::movesOriginalsToTrash() const
+{
+    return m_moveOriginalsToTrash;
+}
+
+void Uploader::setMoveOriginalsToTrash(bool move)
+{
+    if (move != m_moveOriginalsToTrash)
+    {
+        m_moveOriginalsToTrash = move;
+        Q_EMIT moveOriginalsToTrashChanged();
+    }
 }
 
 int Uploader::rowCount(const QModelIndex& parent) const
@@ -326,9 +344,30 @@ void Uploader::addTagsToDuplicate(int row, int imageId)
         });
 }
 
-void Uploader::fileIsOnTheServer(int /*row*/)
+// The only place where an original goes: the server has a file with the same SHA-256.
+void Uploader::fileIsOnTheServer(int row)
 {
-    uploadNext();
+    if (!m_moveOriginalsToTrash)
+    {
+        uploadNext();
+        return;
+    }
+
+    m_trash->moveToTrash(m_files.at(row).path).then(this, [this, row](const std::expected<void, QString>& trashed) {
+        if (!trashed.has_value())
+        {
+            addMessage(row, i18nc("@info %1 is the reason", "It could not be moved to the trash: %1", trashed.error()));
+        }
+
+        uploadNext();
+    });
+}
+
+// Keeps the file's state; e.g. both its tags and the trash may have failed.
+void Uploader::addMessage(int row, const QString& message)
+{
+    const UploadFile& file = m_files.at(row);
+    setState(row, file.state, file.message.isEmpty() ? message : file.message + QLatin1Char('\n') + message);
 }
 
 void Uploader::fail(int row, const QString& message)

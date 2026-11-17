@@ -1,0 +1,26 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * SPDX-FileCopyrightText: 2026 OesusDevelopmentStudios
+ */
+
+#pragma once
+
+#include <expected>
+
+#include <QFuture>
+#include <QString>
+
+namespace pictorio::uploader
+{
+
+// The user's trash, from where a file can be restored. The uploader removes originals only this way.
+class Trash
+{
+public:
+    virtual ~Trash();
+
+    // The reason, if the file is still where it was.
+    virtual QFuture<std::expected<void, QString>> moveToTrash(const QString& filePath) = 0;
+};
+
+}  // namespace pictorio::uploader

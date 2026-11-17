@@ -17,9 +17,9 @@
 #include "SettingsFactory.hpp"
 #include "TagEditorFactory.hpp"
 #include "Uploader.hpp"
-#include "UploaderFactory.hpp"
 #include "fakes/FakeServer.hpp"
 #include "fakes/FakeTokenStore.hpp"
+#include "fakes/FakeTrash.hpp"
 #include "fakes/ImageJson.hpp"
 
 namespace pictorio::uploader
@@ -107,9 +107,14 @@ private Q_SLOTS:
     void sendsNothingWhenATagIsRefused();
     void keepsTheTagsWhileSending();
     void keepsTheListWhileSending();
+    void keepsTheOriginalsByDefault();
+    void trashesOnlyWhatTheServerHas();
+    void trashesOnlyAfterTheServerAnswers();
+    void keepsTheStateWhenTheTrashFails();
 
 private:
     QUrl fileNamed(const QString& relativePath);
+    QString pathOf(const QString& relativePath) const;
     QList<FileState> states() const;
     void uploadAndWait();
 
@@ -118,6 +123,7 @@ private:
     std::shared_ptr<FakeServer> m_server;
     std::unique_ptr<Connection> m_connection;
     std::unique_ptr<tag_editor::UploadTagEditor> m_tagEditor;
+    std::shared_ptr<fakes::TrashCan> m_trashCan;
     std::unique_ptr<Uploader> m_uploader;
 };
 
@@ -158,7 +164,9 @@ void TestUploader::init()
     QTRY_COMPARE(m_connection->state(), Connection::State::LoggedIn);
     m_tagEditor = tag_editor::createUploadTagEditor(m_connection.get());
     QVERIFY(m_tagEditor->addTag(QStringLiteral("general"), QStringLiteral("beach")));
-    m_uploader = createUploader(m_connection.get(), m_tagEditor.get());
+    m_trashCan = std::make_shared<fakes::TrashCan>();
+    m_uploader = std::make_unique<Uploader>(
+        m_connection.get(), m_tagEditor.get(), std::make_unique<fakes::FakeTrash>(m_trashCan));
 }
 
 // A file of the test folder, created with its own content
@@ -174,6 +182,11 @@ QUrl TestUploader::fileNamed(const QString& relativePath)
 
     file.write(relativePath.toUtf8());
     return QUrl::fromLocalFile(path);
+}
+
+QString TestUploader::pathOf(const QString& relativePath) const
+{
+    return m_folder->filePath(relativePath);
 }
 
 QList<FileState> TestUploader::states() const
@@ -353,6 +366,63 @@ void TestUploader::keepsTheListWhileSending()
     QTRY_VERIFY(!m_uploader->isRunning());
     m_uploader->removeFile(0);
     QCOMPARE(m_uploader->count(), 0);
+}
+
+void TestUploader::keepsTheOriginalsByDefault()
+{
+    m_uploader->addFiles({fileNamed(QStringLiteral("beach.jpg")), fileNamed(QStringLiteral("copy.jpg"))});
+
+    uploadAndWait();
+
+    QCOMPARE(states(), QList<FileState>({FileState::Uploaded, FileState::AlreadyThere}));
+    QVERIFY(m_trashCan->files.isEmpty());
+}
+
+// New, or the same SHA-256 on the server: only those originals may go.
+void TestUploader::trashesOnlyWhatTheServerHas()
+{
+    m_uploader->addFiles({fileNamed(QStringLiteral("beach.jpg")),
+                          fileNamed(QStringLiteral("copy.jpg")),
+                          fileNamed(QStringLiteral("hidden_copy.jpg")),
+                          fileNamed(QStringLiteral("notes.png")),
+                          fileNamed(QStringLiteral("other_copy.jpg"))});
+    m_uploader->setMoveOriginalsToTrash(true);
+
+    uploadAndWait();
+
+    QCOMPARE(m_trashCan->files,
+             QStringList({pathOf(QStringLiteral("beach.jpg")),
+                          pathOf(QStringLiteral("copy.jpg")),
+                          pathOf(QStringLiteral("hidden_copy.jpg"))}));
+}
+
+void TestUploader::trashesOnlyAfterTheServerAnswers()
+{
+    m_uploader->addFiles({fileNamed(QStringLiteral("beach.jpg"))});
+    m_uploader->setMoveOriginalsToTrash(true);
+    m_server->holdAnswers = true;
+
+    m_uploader->start();
+    QTRY_COMPARE(m_server->requestsTo("POST", imagesUrl).size(), 1);
+    QTest::qWait(50);
+    QVERIFY(m_trashCan->files.isEmpty());
+
+    m_server->releaseAnswers();
+    QTRY_COMPARE(m_trashCan->files, QStringList{pathOf(QStringLiteral("beach.jpg"))});
+}
+
+// The server has the files all the same; the user learns why the originals are still there.
+void TestUploader::keepsTheStateWhenTheTrashFails()
+{
+    m_uploader->addFiles({fileNamed(QStringLiteral("beach.jpg")), fileNamed(QStringLiteral("copy.jpg"))});
+    m_uploader->setMoveOriginalsToTrash(true);
+    m_trashCan->works = false;
+
+    uploadAndWait();
+
+    QCOMPARE(states(), QList<FileState>({FileState::Uploaded, FileState::AlreadyThere}));
+    QVERIFY(m_uploader->index(0).data(Uploader::MessageRole).toString().contains(QStringLiteral("No trash here")));
+    QVERIFY(m_uploader->index(1).data(Uploader::MessageRole).toString().contains(QStringLiteral("No trash here")));
 }
 
 }  // namespace pictorio::uploader

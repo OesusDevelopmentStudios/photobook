@@ -5,12 +5,20 @@
 add_library(pictorio_uploader STATIC
     include/Uploader.hpp
     include/UploaderFactory.hpp
+    include/Trash.hpp
+    impl/KioTrash.hpp
+    impl/KioTrash.cpp
+    Trash.cpp
     Uploader.cpp
     UploaderFactory.cpp
 )
 
-target_include_directories(pictorio_uploader PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
+# Users of the service see only include/; impl/ stays private to the service.
+target_include_directories(pictorio_uploader
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 target_link_libraries(pictorio_uploader
@@ -23,6 +31,7 @@ target_link_libraries(pictorio_uploader
         pictorio_utils
         Qt6::Concurrent  # hashes files and lists folders in the background
         KF6::I18n
+        KF6::KIOCore  # moves originals to the trash
 )
 
 # Uploader is exposed to QML (app_manager/QmlForeignTypes.hpp); QML tools read its properties from these metatypes.

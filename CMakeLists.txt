@@ -52,6 +52,7 @@ find_package(KF6 ${KF_MIN_VERSION} REQUIRED COMPONENTS
     I18n         # translations
     CoreAddons   # application metadata (KAboutData)
     Config       # settings file (KConfig)
+    KIO          # moving uploaded originals to the trash
 )
 
 # The login token for the server, kept in the system keyring (KWallet or the Secret Service).
