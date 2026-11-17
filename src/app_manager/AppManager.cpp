@@ -77,6 +77,7 @@ AppManager::AppManager(QObject* parent)
     , m_bulkTagEditor(tag_editor::createBulkTagEditor(m_connection.get()))
     , m_uploadTagEditor(tag_editor::createUploadTagEditor(m_connection.get()))
     , m_uploader(uploader::createUploader(m_connection.get(), m_uploadTagEditor.get()))
+    , m_hiddenFilterEditor(tag_editor::createHiddenFilterEditor(m_connection.get()))
     , m_serverCredentials(std::make_shared<network_access::ServerCredentials>())
     , m_networkAccessFactory(network_access::createNetworkAccessFactory(
           m_serverCredentials,
@@ -101,6 +102,10 @@ AppManager::AppManager(QObject* parent)
 
     // New images, and tags added to ones the server had: the grid shows them.
     connect(m_uploader.get(), &uploader::Uploader::finished, m_library.get(), &library::Library::reload);
+
+    // Saved hidden filters change what the server leaves out of a search, so the search runs again.
+    connect(
+        m_hiddenFilterEditor.get(), &tag_editor::HiddenFilterEditor::saved, m_library.get(), &library::Library::reload);
 
     // Saved tags: the grid and the viewer show the image as the server answered.
     connect(m_tagEditor.get(), &tag_editor::TagEditor::saved, this, [this](const server_client::Image& image) {
@@ -171,6 +176,11 @@ tag_editor::BulkTagEditor* AppManager::bulkTagEditor() const
 tag_editor::UploadTagEditor* AppManager::uploadTagEditor() const
 {
     return m_uploadTagEditor.get();
+}
+
+tag_editor::HiddenFilterEditor* AppManager::hiddenFilterEditor() const
+{
+    return m_hiddenFilterEditor.get();
 }
 
 uploader::Uploader* AppManager::uploader() const

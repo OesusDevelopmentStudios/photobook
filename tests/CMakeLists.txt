@@ -100,6 +100,10 @@ ecm_add_test(services/tag_editor/TestUploadTagEditor.cpp
     LINK_LIBRARIES pictorio_tag_editor Qt6::Test KF6::I18n
 )
 
+ecm_add_test(services/tag_editor/TestHiddenFilterEditor.cpp
+    LINK_LIBRARIES pictorio_tag_editor Qt6::Test KF6::I18n
+)
+
 ecm_add_test(services/uploader/TestUploader.cpp
     LINK_LIBRARIES pictorio_uploader Qt6::Test KF6::I18n
 )

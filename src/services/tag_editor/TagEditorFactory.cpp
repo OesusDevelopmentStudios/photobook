@@ -23,6 +23,11 @@ std::unique_ptr<UploadTagEditor> createUploadTagEditor(connection::Connection* c
     return std::make_unique<UploadTagEditor>(connection);
 }
 
+std::unique_ptr<HiddenFilterEditor> createHiddenFilterEditor(connection::Connection* connection)
+{
+    return std::make_unique<HiddenFilterEditor>(connection);
+}
+
 std::unique_ptr<TagSuggestions> createTagSuggestions(connection::Connection* connection)
 {
     return std::make_unique<TagSuggestions>(connection);
