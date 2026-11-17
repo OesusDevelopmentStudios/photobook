@@ -16,6 +16,7 @@ namespace pictorio::server_client
 // The API's JSON answers as the client's types. Anything missing or of the wrong type gives an
 // invalid_response error that names the field.
 Result<ServerInfo> serverInfoFrom(const QJsonValue& json);
+Result<LocalLibrary> localLibraryFrom(const QJsonValue& json);
 Result<Login> loginFrom(const QJsonValue& json);
 Result<CurrentUser> currentUserFrom(const QJsonValue& json);
 Result<QList<DeviceToken>> devicesFrom(const QJsonValue& json);

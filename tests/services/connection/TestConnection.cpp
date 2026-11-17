@@ -5,8 +5,10 @@
 
 #include <memory>
 
+#include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
+#include <QUrlQuery>
 
 #include "Connection.hpp"
 #include "ServerClientFactory.hpp"
@@ -28,6 +30,7 @@ using fakes::response;
 using server_client::HttpRequest;
 
 const QString serverUrl = QStringLiteral("https://photos.example.org");
+const QString localUrl = serverUrl + QStringLiteral("/api/v1/server/local");
 
 const QByteArray serverInfoJson = R"({"name":"pictorio-db","version":"0.1.0","api_version":1,"setup_required":false})";
 const QByteArray loginJson = R"({"token_id":3,"token":"pk_new","user":{"id":2,"username":"kid","role":"user"}})";
@@ -61,8 +64,15 @@ private Q_SLOTS:
 
     void logsOutAndEndsThisDevicesLogin();
 
+    void learnsWhereTheLibraryIsWhenTheServerRunsHere();
+    void learnsItWhenTheLoginIsRestored();
+    void knowsNoFolderOfAServerElsewhere();
+    void doesNotAskWithoutAMachineId();
+    void forgetsTheFolderOnLogout();
+
 private:
-    std::unique_ptr<Connection> createConnection();
+    // machineId: this computer's app-specific ID; empty: none known
+    std::unique_ptr<Connection> createConnection(const QString& machineId = {});
     void logInAsKid(Connection& connection);
 
     std::unique_ptr<QTemporaryDir> m_folder;
@@ -84,13 +94,13 @@ void TestConnection::init()
     m_keyring = std::make_shared<Keyring>();
 }
 
-std::unique_ptr<Connection> TestConnection::createConnection()
+std::unique_ptr<Connection> TestConnection::createConnection(const QString& machineId)
 {
     auto serverClientFactory = [server = m_server](const QUrl& url) {
         return server_client::createServerClient(url, server);
     };
     return std::make_unique<Connection>(
-        serverClientFactory, std::make_unique<FakeTokenStore>(m_keyring), m_settings.get());
+        serverClientFactory, std::make_unique<FakeTokenStore>(m_keyring), m_settings.get(), machineId);
 }
 
 void TestConnection::logInAsKid(Connection& connection)
@@ -281,6 +291,68 @@ void TestConnection::logsOutAndEndsThisDevicesLogin()
     const QString revokeUrl = serverUrl + QStringLiteral("/api/v1/auth/tokens/3");
     QTRY_COMPARE(m_server->requestsTo("DELETE", revokeUrl).size(), 1);
     QCOMPARE(fakes::authorizationOf(m_server->requestsTo("DELETE", revokeUrl).first()), QByteArray("Bearer pk_new"));
+}
+
+void TestConnection::learnsWhereTheLibraryIsWhenTheServerRunsHere()
+{
+    m_server->answer("GET", localUrl, response(200, R"({"library_dir":"/home/kid/Pictures/pictorio-library"})"));
+    const auto connection = createConnection(QStringLiteral("9d623a36"));
+    QSignalSpy changed(connection.get(), &Connection::localLibraryDirChanged);
+
+    logInAsKid(*connection);
+
+    QTRY_COMPARE(connection->localLibraryDir(), QStringLiteral("/home/kid/Pictures/pictorio-library"));
+    QCOMPARE(changed.size(), 1);
+    const QUrl asked = m_server->requestsTo("GET", localUrl).first().url;
+    QCOMPARE(QUrlQuery(asked).queryItemValue(QStringLiteral("machine")), QStringLiteral("9d623a36"));
+}
+
+void TestConnection::learnsItWhenTheLoginIsRestored()
+{
+    m_server->answer("GET", localUrl, response(200, R"({"library_dir":"/home/kid/Pictures/pictorio-library"})"));
+    m_settings->setServerUrl(QUrl(serverUrl));
+    m_keyring->tokens.insert(serverUrl, QStringLiteral("pk_kept"));
+    const auto connection = createConnection(QStringLiteral("9d623a36"));
+
+    connection->restoreLogin();
+
+    QTRY_COMPARE(connection->localLibraryDir(), QStringLiteral("/home/kid/Pictures/pictorio-library"));
+}
+
+void TestConnection::knowsNoFolderOfAServerElsewhere()
+{
+    m_server->answer("GET", localUrl, problem(404, "not_same_machine"));
+    const auto connection = createConnection(QStringLiteral("9d623a36"));
+
+    logInAsKid(*connection);
+
+    QTRY_COMPARE(m_server->requestsTo("GET", localUrl).size(), 1);
+    QTest::qWait(50);  // the answer arrives after the request
+    QVERIFY(connection->localLibraryDir().isEmpty());
+    QCOMPARE(connection->state(), Connection::State::LoggedIn);  // not an error
+}
+
+void TestConnection::doesNotAskWithoutAMachineId()
+{
+    const auto connection = createConnection();
+
+    logInAsKid(*connection);
+
+    QTest::qWait(50);
+    QVERIFY(m_server->requestsTo("GET", localUrl).isEmpty());
+    QVERIFY(connection->localLibraryDir().isEmpty());
+}
+
+void TestConnection::forgetsTheFolderOnLogout()
+{
+    m_server->answer("GET", localUrl, response(200, R"({"library_dir":"/home/kid/Pictures/pictorio-library"})"));
+    const auto connection = createConnection(QStringLiteral("9d623a36"));
+    logInAsKid(*connection);
+    QTRY_VERIFY(!connection->localLibraryDir().isEmpty());
+
+    connection->logOut();
+
+    QVERIFY(connection->localLibraryDir().isEmpty());
 }
 
 }  // namespace pictorio::connection

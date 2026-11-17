@@ -249,6 +249,14 @@ QFuture<Result<ImagePage>> RestServerClient::searchImages(const ImageQuery& quer
     });
 }
 
+QFuture<Result<LocalLibrary>> RestServerClient::localLibrary(const QString& machineId)
+{
+    QUrlQuery parameters;
+    parameters.addQueryItem(QStringLiteral("machine"), machineId);
+    return send("GET", QStringLiteral("/server/local"), std::nullopt, parameters)
+        .then([](const HttpResponse& response) { return jsonAnswer(response, statusOk, localLibraryFrom); });
+}
+
 QFuture<Result<ImageCount>> RestServerClient::countImages(const ImageQuery& query)
 {
     QUrlQuery parameters;

@@ -171,7 +171,8 @@ Kirigami.Page {
             icon.name: "document-open-folder"
             text: KI18n.i18nc("@action:inmenu", "Open Containing Folder")
             displayHint: Kirigami.DisplayHint.AlwaysHide
-            visible: page.viewer.hasImage && !page.viewer.fromLibrary
+            // A library image's file is only reachable when the server runs on this computer.
+            visible: page.viewer.hasImage && (!page.viewer.fromLibrary || page.connection.localLibraryDir.length > 0)
             onTriggered: page.openFolderRequested()
         },
         // A local image to the server's library. Not while an upload runs: its list is fixed then.

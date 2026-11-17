@@ -144,6 +144,12 @@ struct ImagePage
     QString effectiveQuery;  // the query with the hidden filters that were added
 };
 
+// Where the library is on the server's computer, for a client on that computer
+struct LocalLibrary
+{
+    QString libraryDir;  // an image's file is there at its storagePath
+};
+
 struct ImageCount
 {
     int count = 0;           // over all pages of the search

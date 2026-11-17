@@ -27,6 +27,7 @@ target_link_libraries(pictorio_connection
         pictorio_token_store
     PRIVATE
         KF6::I18n
+        pictorio_utils  # this computer's machine ID
 )
 
 # Connection is exposed to QML (app_manager/QmlForeignTypes.hpp); QML tools read its properties from these metatypes.

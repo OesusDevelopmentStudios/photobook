@@ -32,6 +32,10 @@ public:
     // GET /server/info, works without a login
     virtual QFuture<Result<ServerInfo>> serverInfo() = 0;
 
+    // GET /server/local: the library folder, if the server runs on this computer. machineId is this computer's
+    // app-specific ID (utils/MachineId.hpp); another computer's answer is 404 not_same_machine.
+    virtual QFuture<Result<LocalLibrary>> localLibrary(const QString& machineId) = 0;
+
     // POST /auth/tokens: logs this device in. Does not set the token; the caller stores it first.
     virtual QFuture<Result<Login>>
     logIn(const QString& username, const QString& password, const QString& deviceName) = 0;

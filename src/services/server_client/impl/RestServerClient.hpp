@@ -27,6 +27,7 @@ public:
     void setToken(const QString& token) override;
 
     QFuture<Result<ServerInfo>> serverInfo() override;
+    QFuture<Result<LocalLibrary>> localLibrary(const QString& machineId) override;
     QFuture<Result<Login>> logIn(const QString& username, const QString& password, const QString& deviceName) override;
     QFuture<Result<CurrentUser>> currentUser() override;
     QFuture<Result<CurrentUser>> changeOwnPassword(const QString& currentPassword, const QString& newPassword) override;

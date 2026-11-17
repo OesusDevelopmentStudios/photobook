@@ -30,6 +30,8 @@ class Connection : public QObject
     Q_PROPERTY(QString serverDescription READ serverDescription NOTIFY serverChanged)
     Q_PROPERTY(bool plainHttp READ isPlainHttp NOTIFY serverChanged)
     Q_PROPERTY(QString username READ username NOTIFY userChanged)
+    // The library folder on this computer, when the server runs here; otherwise empty
+    Q_PROPERTY(QString localLibraryDir READ localLibraryDir NOTIFY localLibraryDirChanged)
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged)
     Q_PROPERTY(QString keyringWarning READ keyringWarning NOTIFY keyringWarningChanged)
 
@@ -49,10 +51,12 @@ public:
     // Makes the client for a server address; tests answer from canned responses through it.
     using ServerClientFactory = std::function<std::unique_ptr<server_client::ServerClient>(const QUrl&)>;
 
-    // The settings are not owned and must outlive the connection.
+    // The settings are not owned and must outlive the connection. appSpecificMachineId: this computer's
+    // (utils/MachineId.hpp), to learn whether the server runs here too; empty: never asked.
     Connection(ServerClientFactory serverClientFactory,
                std::unique_ptr<token_store::TokenStore> tokenStore,
                settings::Settings* settings,
+               QString appSpecificMachineId = {},
                QObject* parent = nullptr);
     ~Connection() override;
 
@@ -72,9 +76,10 @@ public:
     bool isPlainHttp() const;           // passwords and images travel unencrypted
     QString username() const;
     QStringList restrictedTags() const;  // what the logged-in user may not see or use
-    QString token() const;               // for images loaded straight from the server; empty when logged out
-    QString errorMessage() const;        // why the last step failed; empty if it did not
-    QString keyringWarning() const;      // set if the login cannot be kept for the next start
+    QString localLibraryDir() const;
+    QString token() const;           // for images loaded straight from the server; empty when logged out
+    QString errorMessage() const;    // why the last step failed; empty if it did not
+    QString keyringWarning() const;  // set if the login cannot be kept for the next start
 
     // The client of the current server; logged in while the state is LoggedIn. Null before a server is found.
     server_client::ServerClient* client() const;
@@ -83,6 +88,7 @@ Q_SIGNALS:
     void stateChanged();
     void serverChanged();
     void userChanged();
+    void localLibraryDirChanged();
     void errorMessageChanged();
     void keyringWarningChanged();
 
@@ -94,6 +100,8 @@ private:
     void finishLogin(const server_client::Login& login);
     void keepToken(const QString& token);
     void readCurrentUser();
+    void askWhereTheLibraryIs();
+    void setLocalLibraryDir(const QString& folder);
     void revokeOnServer(const QString& token);
     void setState(State state);
     void setErrorMessage(const QString& message);
@@ -115,6 +123,8 @@ private:
     QStringList m_restrictedTags;
     QString m_errorMessage;
     QString m_keyringWarning;
+    QString m_appSpecificMachineId;
+    QString m_localLibraryDir;
 };
 
 }  // namespace pictorio::connection

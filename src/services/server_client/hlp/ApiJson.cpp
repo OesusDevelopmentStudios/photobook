@@ -268,6 +268,14 @@ Result<ImagePage> imagePageFrom(const QJsonValue& json)
     return checked(reader, page);
 }
 
+Result<LocalLibrary> localLibraryFrom(const QJsonValue& json)
+{
+    JsonReader reader(json.toObject());
+    LocalLibrary library;
+    library.libraryDir = reader.string(QStringLiteral("library_dir"));
+    return checked(reader, library);
+}
+
 Result<ImageCount> imageCountFrom(const QJsonValue& json)
 {
     JsonReader reader(json.toObject());

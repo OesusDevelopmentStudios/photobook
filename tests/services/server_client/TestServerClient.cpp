@@ -133,6 +133,7 @@ private Q_SLOTS:
     void sendsTheTokenOnceItIsSet();
 
     void readsTheServerInfo();
+    void asksWhereTheLibraryIsOnThisComputer();
     void logsInAndReadsTheToken();
     void readsTheCurrentUser();
     void changesTheOwnPassword();
@@ -232,6 +233,19 @@ void TestServerClient::readsTheServerInfo()
     QCOMPARE(info->version, QStringLiteral("0.1.0"));
     QCOMPARE(info->apiVersion, 1);
     QVERIFY(info->setupRequired);
+}
+
+void TestServerClient::asksWhereTheLibraryIsOnThisComputer()
+{
+    m_transport->nextResponse = answer(200, R"({"library_dir":"/home/kid/Pictures/pictorio-library"})");
+
+    const Result<LocalLibrary> library = valueOf(m_client->localLibrary(QStringLiteral("9d623a36")));
+
+    const QUrl url = m_transport->lastRequest().url;
+    QCOMPARE(url.path(), QStringLiteral("/api/v1/server/local"));
+    QCOMPARE(serverSideValue(url, "machine"), QStringLiteral("9d623a36"));
+    QVERIFY(library.has_value());
+    QCOMPARE(library->libraryDir, QStringLiteral("/home/kid/Pictures/pictorio-library"));
 }
 
 void TestServerClient::logsInAndReadsTheToken()

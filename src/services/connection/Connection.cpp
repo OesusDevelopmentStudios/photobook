@@ -57,11 +57,13 @@ namespace pictorio::connection
 Connection::Connection(ServerClientFactory serverClientFactory,
                        std::unique_ptr<token_store::TokenStore> tokenStore,
                        settings::Settings* settings,
+                       QString appSpecificMachineId,
                        QObject* parent)
     : QObject(parent)
     , m_serverClientFactory(std::move(serverClientFactory))
     , m_tokenStore(std::move(tokenStore))
     , m_settings(settings)
+    , m_appSpecificMachineId(std::move(appSpecificMachineId))
 {}
 
 Connection::~Connection() = default;
@@ -105,6 +107,7 @@ void Connection::restoreLogin()
                 m_restrictedTags = currentUser->restrictedTags;
                 Q_EMIT userChanged();
                 setState(State::LoggedIn);
+                askWhereTheLibraryIs();
                 return;
             }
 
@@ -176,6 +179,7 @@ void Connection::logOut()
     m_tokenStore->deleteToken(keyringKey());
     m_restrictedTags.clear();
     Q_EMIT userChanged();
+    setLocalLibraryDir({});
     setErrorMessage({});
     setState(State::ServerFound);
 }
@@ -221,6 +225,11 @@ QString Connection::username() const
 QStringList Connection::restrictedTags() const
 {
     return m_restrictedTags;
+}
+
+QString Connection::localLibraryDir() const
+{
+    return m_localLibraryDir;
 }
 
 QString Connection::token() const
@@ -307,6 +316,7 @@ void Connection::finishLogin(const server_client::Login& login)
     keepToken(m_token);
     setState(State::LoggedIn);
     readCurrentUser();  // the restricted tags; until they arrive, the server still refuses what it must
+    askWhereTheLibraryIs();
 }
 
 void Connection::keepToken(const QString& token)
@@ -330,6 +340,31 @@ void Connection::readCurrentUser()
             Q_EMIT userChanged();
         }
     });
+}
+
+// Only a server on this computer answers with its library folder; any other answer leaves it unknown.
+void Connection::askWhereTheLibraryIs()
+{
+    if (m_appSpecificMachineId.isEmpty())
+    {
+        return;
+    }
+
+    m_client->localLibrary(m_appSpecificMachineId).then(this, [this](const Result<LocalLibrary>& library) {
+        if (m_state == State::LoggedIn)
+        {
+            setLocalLibraryDir(library.has_value() ? library->libraryDir : QString());
+        }
+    });
+}
+
+void Connection::setLocalLibraryDir(const QString& folder)
+{
+    if (folder != m_localLibraryDir)
+    {
+        m_localLibraryDir = folder;
+        Q_EMIT localLibraryDirChanged();
+    }
 }
 
 void Connection::revokeOnServer(const QString& token)

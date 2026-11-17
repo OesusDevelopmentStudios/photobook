@@ -7,6 +7,7 @@
 
 #include "ServerClientFactory.hpp"
 #include "TokenStoreFactory.hpp"
+#include "utils/MachineId.hpp"
 
 namespace pictorio::connection
 {
@@ -14,7 +15,8 @@ namespace pictorio::connection
 std::unique_ptr<Connection> createConnection(settings::Settings* settings)
 {
     auto serverClientFactory = [](const QUrl& serverUrl) { return server_client::createServerClient(serverUrl); };
-    return std::make_unique<Connection>(serverClientFactory, token_store::createTokenStore(), settings);
+    return std::make_unique<Connection>(
+        serverClientFactory, token_store::createTokenStore(), settings, utils::thisComputersAppSpecificId());
 }
 
 }  // namespace pictorio::connection

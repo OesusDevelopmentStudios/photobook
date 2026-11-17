@@ -5,6 +5,7 @@
 
 #include "app_manager/AppManager.hpp"
 
+#include <QDir>
 #include <QFileInfo>
 #include <QStandardPaths>
 
@@ -113,6 +114,7 @@ AppManager::AppManager(QObject* parent)
     // Saved tags: the grid and the viewer show the image as the server answered.
     connect(m_tagEditor.get(), &tag_editor::TagEditor::saved, this, [this](const server_client::Image& image) {
         m_library->replaceImage(image);
+        m_libraryImageOnScreen = image;  // a tag that forms the path may have moved its file
         m_viewer->updateDetails(detailsOf(image));
     });
 
@@ -253,6 +255,11 @@ void AppManager::openCurrentImageFolder()
     if (image.isLocalFile())
     {
         m_imageActions->openContainingFolder(image.toLocalFile());
+    }
+    else if (m_libraryImageOnScreen.has_value() && !m_connection->localLibraryDir().isEmpty())
+    {
+        m_imageActions->openContainingFolder(
+            QDir(m_connection->localLibraryDir()).filePath(m_libraryImageOnScreen->storagePath));
     }
 }
 

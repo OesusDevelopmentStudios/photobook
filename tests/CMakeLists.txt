@@ -23,6 +23,10 @@ ecm_add_test(utils/TestFileHash.cpp
     LINK_LIBRARIES pictorio_utils Qt6::Test
 )
 
+ecm_add_test(utils/TestMachineId.cpp
+    LINK_LIBRARIES pictorio_utils Qt6::Test
+)
+
 ecm_add_test(services/image_loader/TestImageLoader.cpp
     LINK_LIBRARIES pictorio_image_loader Qt6::Test KF6::I18n LibExiv2::LibExiv2
 )

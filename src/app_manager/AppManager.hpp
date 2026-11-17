@@ -84,7 +84,8 @@ public:
     Q_INVOKABLE void uploadCurrentFolder();
     // The image on screen to the clipboard: a local file, or a library image downloaded first
     Q_INVOKABLE void copyCurrentImage();
-    // The local file on screen in the file manager, selected in its folder
+    // The file on screen in the file manager, selected in its folder: a local file, or a library image when the
+    // server runs on this computer
     Q_INVOKABLE void openCurrentImageFolder();
 
 private:
