@@ -20,15 +20,18 @@ work=$(cd "$work" && pwd)
 pictorio_db=$(cd "${PICTORIO_DB_SOURCE:-$repository/../pictorio-db}" && pwd)
 
 # The libraries the SDK lacks (exiv2, QtKeychain), built from the Flatpak manifest; pictorio itself is built
-# below, with its tests, which the manifest leaves out.
-flatpak-builder --force-clean --stop-at=pictorio --state-dir="$work/state" "$work/app" "$manifest"
+# below, with its tests, which the manifest leaves out. Without rofiles-fuse, which needs FUSE, as containers
+# such as CI's lack it; it only guards flatpak-builder's cache.
+flatpak-builder --force-clean --disable-rofiles-fuse --stop-at=pictorio --state-dir="$work/state" \
+    "$work/app" "$manifest"
 
 # A command in the SDK's sandbox, with those libraries in /app. It sees only the folders named here; the
-# network is for installing and reaching the test server.
+# network is for installing and reaching the test server. flatpak build, not flatpak-builder --run, which
+# would need rofiles-fuse again.
 in_sdk() {
-    flatpak-builder --run --state-dir="$work/state" \
+    flatpak build --die-with-parent \
         --filesystem="$repository" --filesystem="$pictorio_db" --filesystem="$work" --share=network \
-        "$work/app" "$manifest" "$@"
+        "$work/app" "$@"
 }
 
 in_sdk cmake -S "$repository" -B "$work/build" -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=/app
