@@ -16,6 +16,7 @@
 #include "SettingsFactory.hpp"
 #include "SlideshowFactory.hpp"
 #include "TagEditorFactory.hpp"
+#include "UploaderFactory.hpp"
 #include "ViewTransformFactory.hpp"
 #include "ViewerFactory.hpp"
 
@@ -73,6 +74,8 @@ AppManager::AppManager(QObject* parent)
     , m_libraryView(library_view::createLibraryView(m_settings.get()))
     , m_tagEditor(tag_editor::createTagEditor(m_connection.get()))
     , m_bulkTagEditor(tag_editor::createBulkTagEditor(m_connection.get()))
+    , m_uploadTagEditor(tag_editor::createUploadTagEditor(m_connection.get()))
+    , m_uploader(uploader::createUploader(m_connection.get(), m_uploadTagEditor.get()))
     , m_serverCredentials(std::make_shared<network_access::ServerCredentials>())
     , m_networkAccessFactory(network_access::createNetworkAccessFactory(
           m_serverCredentials,
@@ -159,6 +162,16 @@ tag_editor::TagEditor* AppManager::tagEditor() const
 tag_editor::BulkTagEditor* AppManager::bulkTagEditor() const
 {
     return m_bulkTagEditor.get();
+}
+
+tag_editor::UploadTagEditor* AppManager::uploadTagEditor() const
+{
+    return m_uploadTagEditor.get();
+}
+
+uploader::Uploader* AppManager::uploader() const
+{
+    return m_uploader.get();
 }
 
 QQmlNetworkAccessManagerFactory* AppManager::networkAccessFactory() const

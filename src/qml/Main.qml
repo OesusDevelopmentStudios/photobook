@@ -127,15 +127,18 @@ Kirigami.ApplicationWindow {
         }
     }
 
+    // The file dialogs' choice of types: images, or anything
+    readonly property list<string> imageNameFilters: [
+        KI18n.i18nc("@item:inlistbox File type filter",
+                    "Images (*.jpg *.jpeg *.png *.webp *.gif *.avif *.heic *.heif *.jxl *.tif *.tiff *.bmp)"),
+        KI18n.i18nc("@item:inlistbox File type filter", "All files (*)")
+    ]
+
     FileDialog {
         id: openImageDialog
 
         title: KI18n.i18nc("@title:window", "Open Image")
-        nameFilters: [
-            KI18n.i18nc("@item:inlistbox File type filter",
-                        "Images (*.jpg *.jpeg *.png *.webp *.gif *.avif *.heic *.heif *.jxl *.tif *.tiff *.bmp)"),
-            KI18n.i18nc("@item:inlistbox File type filter", "All files (*)")
-        ]
+        nameFilters: root.imageNameFilters
         onAccepted: {
             root.appManager.openImage(selectedFile);
             root.showViewer();
@@ -192,10 +195,20 @@ Kirigami.ApplicationWindow {
             onOpenImageRequested: openImageDialog.open()
             onOpenFolderRequested: openFolderDialog.open()
             onServerPageRequested: root.showServerPage()
+            onUploadRequested: root.pageStack.push(uploadPage)  // going back returns to the library
             onImageOpenRequested: row => {
                 root.appManager.openLibraryImage(row);
                 root.showViewer();
             }
+        }
+    }
+
+    Component {
+        id: uploadPage
+
+        UploadPage {
+            uploader: root.appManager.uploader
+            imageNameFilters: root.imageNameFilters
         }
     }
 

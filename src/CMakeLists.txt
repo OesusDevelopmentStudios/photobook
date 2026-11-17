@@ -66,6 +66,7 @@ set(qmlFiles
     qml/TagValueBox.qml
     qml/TagRowContent.qml
     qml/BulkTagPanel.qml
+    qml/UploadPage.qml
 )
 
 # At the module's root, though they are in qml/ here: only files at the root see the module's C++ types.
@@ -107,6 +108,7 @@ target_link_libraries(pictorio_ui PUBLIC
     pictorio_library
     pictorio_library_view
     pictorio_tag_editor
+    pictorio_uploader
     Qt6::Qml
     Qt6::Quick
     Qt6::QuickControls2

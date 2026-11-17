@@ -224,7 +224,7 @@ QHash<int, QByteArray> Uploader::roleNames() const
         {FilePathRole, "filePath"},
         {FileNameRole, "fileName"},
         {FolderRole, "folder"},
-        {StateRole, "state"},
+        {StateRole, "fileState"},
         {MessageRole, "message"},
     };
 }

@@ -24,6 +24,7 @@ Kirigami.Page {
     signal openImageRequested()
     signal openFolderRequested()
     signal serverPageRequested()
+    signal uploadRequested()
     signal imageOpenRequested(int row)
 
     readonly property int connectionState: connection.state
@@ -142,6 +143,13 @@ Kirigami.Page {
             visible: page.loggedIn
             enabled: page.isCurrentPage && page.libraryView.tileSize > page.libraryView.minimumTileSize
             onTriggered: page.resizeTiles(() => page.libraryView.resizeTilesBySteps(-1))
+        },
+        Kirigami.Action {
+            icon.name: "cloud-upload"
+            text: KI18n.i18nc("@action:inmenu", "Upload…")
+            displayHint: Kirigami.DisplayHint.AlwaysHide
+            visible: page.loggedIn
+            onTriggered: page.uploadRequested()
         },
         Kirigami.Action {
             icon.name: "document-open"
