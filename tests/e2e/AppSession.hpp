@@ -21,6 +21,7 @@
 #include <QUrl>
 
 #include "ApiTypes.hpp"
+#include "HiddenFilterEditor.hpp"
 #include "Library.hpp"
 #include "LibraryFactory.hpp"
 #include "TagEditor.hpp"
@@ -65,7 +66,8 @@ inline QStringList storedFiles(const EndToEndServer& server, const QString& orig
 }
 
 // The app's services as AppManager wires them, for one user logged in to the test server: uploading,
-// the library's search and editing an image's tags. Originals go to a fake trash, which only notes them.
+// the library's search, editing an image's tags and the hidden filters. Originals go to a fake trash, which only notes
+// them.
 class AppSession
 {
 public:
@@ -79,6 +81,7 @@ public:
               &*m_connection, m_uploadTagEditor.get(), std::make_unique<fakes::FakeTrash>(m_trashCan)))
         , m_library(library::createLibrary(&*m_connection))
         , m_tagEditor(tag_editor::createTagEditor(&*m_connection))
+        , m_hiddenFilterEditor(tag_editor::createHiddenFilterEditor(&*m_connection))
     {}
 
     bool logIn(const EndToEndServer& server, const QString& username)
@@ -167,6 +170,12 @@ public:
         return m_library->errorMessage();
     }
 
+    // The last search as the server ran it, with the hidden filters it added
+    QString effectiveQuery() const
+    {
+        return m_library->effectiveQuery();
+    }
+
     // As in the viewer's footer: Edit Tags, then the change, then Save. The image as the server saved it.
     template <typename Change>
     std::optional<server_client::Image> editTags(const server_client::Image& image, Change change)
@@ -197,6 +206,50 @@ public:
         return m_tagEditor->errorMessage();
     }
 
+    // As on the settings page: the saved filters loaded, these instead, Save. True once the server has them.
+    bool saveHiddenFilters(const QStringList& filters)
+    {
+        tag_editor::HiddenFilterEditor& editor = *m_hiddenFilterEditor;
+        editor.load();
+        if (!QTest::qWaitFor([&editor]() { return !editor.isLoading(); }, answerTimeout) ||
+            !editor.errorMessage().isEmpty())
+        {
+            return false;
+        }
+
+        for (const QString& filter : editor.filtersAfterChanges())
+        {
+            editor.removeTag(filter);
+        }
+
+        for (const QString& filter : filters)
+        {
+            if (!editor.addTag({}, filter))
+            {
+                return false;
+            }
+        }
+
+        if (!editor.hasChanges())
+        {
+            return true;  // already as wanted
+        }
+
+        bool saved = false;
+        const QMetaObject::Connection onSaved =
+            QObject::connect(&editor, &tag_editor::HiddenFilterEditor::saved, [&saved]() { saved = true; });
+        editor.save();
+        const bool answered =
+            QTest::qWaitFor([&saved, &editor]() { return saved || !editor.isSaving(); }, answerTimeout);
+        QObject::disconnect(onSaved);
+        return answered && saved;
+    }
+
+    QString hiddenFilterError() const
+    {
+        return m_hiddenFilterEditor->errorMessage();
+    }
+
 private:
     QTemporaryDir m_folder;  // the settings and the sample images
     AppConnection m_connection;
@@ -205,6 +258,7 @@ private:
     std::unique_ptr<uploader::Uploader> m_uploader;
     std::unique_ptr<library::Library> m_library;
     std::unique_ptr<tag_editor::TagEditor> m_tagEditor;
+    std::unique_ptr<tag_editor::HiddenFilterEditor> m_hiddenFilterEditor;
 };
 
 }  // namespace pictorio::e2e
