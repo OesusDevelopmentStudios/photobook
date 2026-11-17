@@ -22,9 +22,12 @@ Kirigami.Page {
     required property Slideshow slideshow
     required property Connection connection
     required property TagEditor tagEditor
+    required property Uploader uploader
 
     signal serverPageRequested()
     signal libraryRequested()
+    signal uploadImageRequested()   // the image on screen, to the upload page's list
+    signal uploadFolderRequested()  // the images of its folder, without subfolders
     signal leaveRequested()  // back, while there are unsaved tag changes; the window asks first
 
     onBackRequested: event => {
@@ -151,6 +154,25 @@ Kirigami.Page {
             shortcut: "Ctrl+R"
             enabled: page.viewer.hasImage
             onTriggered: page.viewTransform.rotateClockwise()
+        },
+        // A local image to the server's library. Not while an upload runs: its list is fixed then.
+        Kirigami.Action {
+            icon.name: "cloud-upload"
+            text: KI18n.i18nc("@action:intoolbar", "Import to Server")
+            visible: page.connection.state === Connection.State.LoggedIn && page.viewer.hasImage
+                     && !page.viewer.fromLibrary
+            enabled: !page.uploader.running
+
+            Kirigami.Action {
+                icon.name: "image-x-generic"
+                text: KI18n.i18nc("@action:inmenu Import to the server", "This Image")
+                onTriggered: page.uploadImageRequested()
+            }
+            Kirigami.Action {
+                icon.name: "folder-pictures"
+                text: KI18n.i18nc("@action:inmenu Import to the server", "This Folder")
+                onTriggered: page.uploadFolderRequested()
+            }
         },
         Kirigami.Action {
             icon.name: "view-preview"

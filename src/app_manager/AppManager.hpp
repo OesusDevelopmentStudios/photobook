@@ -71,6 +71,9 @@ public:
     Q_INVOKABLE void openFolder(const QUrl& folderUrl);
     // An image of the library grid, by its row; next and previous step through the library's results.
     Q_INVOKABLE void openLibraryImage(int row);
+    // The local image on screen, or the images of its folder without subfolders, join the upload list.
+    Q_INVOKABLE void uploadCurrentImage();
+    Q_INVOKABLE void uploadCurrentFolder();
 
 private:
     void showLibraryImage(int row);  // from the server, in the viewer

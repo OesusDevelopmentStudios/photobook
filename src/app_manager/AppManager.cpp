@@ -5,6 +5,7 @@
 
 #include "app_manager/AppManager.hpp"
 
+#include <QFileInfo>
 #include <QStandardPaths>
 
 #include "ConnectionFactory.hpp"
@@ -195,6 +196,24 @@ void AppManager::openFolder(const QUrl& folderUrl)
 void AppManager::openLibraryImage(int row)
 {
     m_navigator->openLibraryImage(m_library.get(), row);
+}
+
+void AppManager::uploadCurrentImage()
+{
+    const QUrl image = m_viewer->imageSource();
+    if (image.isLocalFile())
+    {
+        m_uploader->addFiles({image});
+    }
+}
+
+void AppManager::uploadCurrentFolder()
+{
+    const QUrl image = m_viewer->imageSource();
+    if (image.isLocalFile())
+    {
+        m_uploader->addFolder(QUrl::fromLocalFile(QFileInfo(image.toLocalFile()).path()), false);
+    }
 }
 
 void AppManager::showLibraryImage(int row)

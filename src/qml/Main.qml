@@ -218,8 +218,17 @@ Kirigami.ApplicationWindow {
             slideshow: root.appManager.slideshow
             connection: root.appManager.connection
             tagEditor: root.appManager.tagEditor
+            uploader: root.appManager.uploader
             onServerPageRequested: root.showServerPage()
             onLibraryRequested: root.showLibrary()
+            onUploadImageRequested: {
+                root.appManager.uploadCurrentImage();
+                root.showUploadPage();
+            }
+            onUploadFolderRequested: {
+                root.appManager.uploadCurrentFolder();  // listed in the background, while the page opens
+                root.showUploadPage();
+            }
             onLeaveRequested: root.afterTagChangesSettled(() => root.pageStack.pop())
             Component.onCompleted: root.addUploadStatus(this)
         }
