@@ -1,0 +1,210 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * SPDX-FileCopyrightText: 2026 OesusDevelopmentStudios
+ */
+
+#pragma once
+
+#include <memory>
+#include <optional>
+#include <utility>
+
+#include <QDir>
+#include <QDirIterator>
+#include <QImage>
+#include <QList>
+#include <QRandomGenerator>
+#include <QString>
+#include <QStringList>
+#include <QTemporaryDir>
+#include <QTest>
+#include <QUrl>
+
+#include "ApiTypes.hpp"
+#include "Library.hpp"
+#include "LibraryFactory.hpp"
+#include "TagEditor.hpp"
+#include "TagEditorFactory.hpp"
+#include "UploadTagEditor.hpp"
+#include "Uploader.hpp"
+#include "e2e/EndToEndServer.hpp"
+#include "fakes/FakeTrash.hpp"
+
+namespace pictorio::e2e
+{
+
+// A small PNG of random pixels, so that every image is new to the server, which refuses a file it has.
+inline bool writeSampleImage(const QString& filePath)
+{
+    QImage image(16, 16, QImage::Format_RGB32);
+    for (int y = 0; y < image.height(); ++y)
+    {
+        for (int x = 0; x < image.width(); ++x)
+        {
+            image.setPixel(x, y, QRandomGenerator::global()->generate() | 0xff000000);
+        }
+    }
+
+    return image.save(filePath, "PNG");
+}
+
+// The image files the server keeps for an uploaded file, by their path in its library folder, e.g.
+// "photo/sample_artist/2026/beach_3f2a….png". The server names a file after the original and its hash.
+inline QStringList storedFiles(const EndToEndServer& server, const QString& originalStem)
+{
+    const QDir library(server.libraryDir);
+    QStringList files;
+    QDirIterator found(
+        server.libraryDir, {originalStem + QStringLiteral("_*")}, QDir::Files, QDirIterator::Subdirectories);
+    while (found.hasNext())
+    {
+        files.append(library.relativeFilePath(found.next()));
+    }
+
+    return files;
+}
+
+// The app's services as AppManager wires them, for one user logged in to the test server: uploading,
+// the library's search and editing an image's tags. Originals go to a fake trash, which only notes them.
+class AppSession
+{
+public:
+    // A tag as typed into a namespace's row, e.g. {"author", "Sample Artist"}
+    using TypedTag = std::pair<QString, QString>;
+
+    AppSession()
+        : m_connection(m_folder.filePath(QStringLiteral("pictoriorc")), std::make_shared<fakes::Keyring>())
+        , m_uploadTagEditor(tag_editor::createUploadTagEditor(&*m_connection))
+        , m_uploader(std::make_unique<uploader::Uploader>(
+              &*m_connection, m_uploadTagEditor.get(), std::make_unique<fakes::FakeTrash>(m_trashCan)))
+        , m_library(library::createLibrary(&*m_connection))
+        , m_tagEditor(tag_editor::createTagEditor(&*m_connection))
+    {}
+
+    bool logIn(const EndToEndServer& server, const QString& username)
+    {
+        return m_connection.logIn(server, username, server.password);
+    }
+
+    connection::Connection& connection()
+    {
+        return *m_connection;
+    }
+
+    uploader::Uploader& uploader()
+    {
+        return *m_uploader;
+    }
+
+    tag_editor::UploadTagEditor& uploadTagEditor()
+    {
+        return *m_uploadTagEditor;
+    }
+
+    const fakes::TrashCan& trashCan() const
+    {
+        return *m_trashCan;
+    }
+
+    // A new sample image in this session's folder, e.g. "beach" for beach.png; empty if it could not be written
+    QString newSampleImage(const QString& stem)
+    {
+        const QString filePath = m_folder.filePath(stem + QStringLiteral(".png"));
+        return writeSampleImage(filePath) ? filePath : QString();
+    }
+
+    // As on the upload page: the tags typed into their rows, the file added, Start. How the file went.
+    std::pair<uploader::Uploader::FileState, QString> upload(const QString& filePath, const QList<TypedTag>& tags)
+    {
+        m_uploader->clear();
+        m_uploadTagEditor->clear();
+        m_uploadTagEditor->load();
+        for (const auto& [namespaceName, typedName] : tags)
+        {
+            if (!m_uploadTagEditor->addTag(namespaceName, typedName))
+            {
+                return {uploader::Uploader::FileState::Failed, m_uploadTagEditor->errorMessage()};
+            }
+        }
+
+        m_uploader->addFiles({QUrl::fromLocalFile(filePath)});
+        if (!QTest::qWaitFor([this]() { return m_uploader->waitingCount() == 1; }, answerTimeout))
+        {
+            return {uploader::Uploader::FileState::Failed, QStringLiteral("The file was not added")};
+        }
+
+        m_uploader->start();
+        if (!QTest::qWaitFor([this]() { return !m_uploader->isRunning(); }, answerTimeout))
+        {
+            return {uploader::Uploader::FileState::Failed, QStringLiteral("The upload did not end")};
+        }
+
+        const QModelIndex row = m_uploader->index(0);
+        return {row.data(uploader::Uploader::StateRole).value<uploader::Uploader::FileState>(),
+                row.data(uploader::Uploader::MessageRole).toString()};
+    }
+
+    // As typed into the library's search field: every image found, in the library's order
+    QList<server_client::Image> search(const QString& text)
+    {
+        m_library->search(text);
+        QList<server_client::Image> images;
+        if (!QTest::qWaitFor([this]() { return !m_library->isLoading(); }, answerTimeout))
+        {
+            return images;
+        }
+
+        for (int row = 0; row < m_library->count(); ++row)
+        {
+            images.append(*m_library->imageAt(row));
+        }
+
+        return images;
+    }
+
+    QString libraryError() const
+    {
+        return m_library->errorMessage();
+    }
+
+    // As in the viewer's footer: Edit Tags, then the change, then Save. The image as the server saved it.
+    template <typename Change>
+    std::optional<server_client::Image> editTags(const server_client::Image& image, Change change)
+    {
+        std::optional<server_client::Image> saved;
+        const QMetaObject::Connection onSaved =
+            QObject::connect(m_tagEditor.get(),
+                             &tag_editor::TagEditor::saved,
+                             [&saved](const server_client::Image& answer) { saved = answer; });
+        m_tagEditor->setImage(image);
+        m_tagEditor->startEditing();
+        if (change(*m_tagEditor))
+        {
+            m_tagEditor->save();
+            if (!QTest::qWaitFor([&saved, this]() { return saved.has_value() || !m_tagEditor->isSaving(); },
+                                 answerTimeout))
+            {
+                m_tagEditor->cancel();  // no answer: nothing saved
+            }
+        }
+
+        QObject::disconnect(onSaved);
+        return saved;
+    }
+
+    QString tagEditorError() const
+    {
+        return m_tagEditor->errorMessage();
+    }
+
+private:
+    QTemporaryDir m_folder;  // the settings and the sample images
+    AppConnection m_connection;
+    std::shared_ptr<fakes::TrashCan> m_trashCan = std::make_shared<fakes::TrashCan>();
+    std::unique_ptr<tag_editor::UploadTagEditor> m_uploadTagEditor;
+    std::unique_ptr<uploader::Uploader> m_uploader;
+    std::unique_ptr<library::Library> m_library;
+    std::unique_ptr<tag_editor::TagEditor> m_tagEditor;
+};
+
+}  // namespace pictorio::e2e
