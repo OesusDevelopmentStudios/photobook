@@ -133,6 +133,7 @@ void Uploader::start()
 
     m_tags = *tags;
     m_cancelled = false;
+    m_filesInRun = countIn(FileState::Waiting);
     m_tagEditor->setBusy(true);  // the same tags for every file
     setRunning(true);
     uploadNext();
@@ -176,6 +177,17 @@ int Uploader::alreadyThereCount() const
 int Uploader::failedCount() const
 {
     return countIn(FileState::Failed);
+}
+
+int Uploader::filesInRun() const
+{
+    return m_filesInRun;
+}
+
+// The run's files that are neither waiting nor being sent; after a cancel, the rest stays waiting.
+int Uploader::filesDoneInRun() const
+{
+    return m_filesInRun - countIn(FileState::Waiting) - countIn(FileState::Uploading);
 }
 
 bool Uploader::movesOriginalsToTrash() const

@@ -67,6 +67,7 @@ set(qmlFiles
     qml/TagRowContent.qml
     qml/BulkTagPanel.qml
     qml/UploadPage.qml
+    qml/UploadIndicator.qml
 )
 
 # At the module's root, though they are in qml/ here: only files at the root see the module's C++ types.

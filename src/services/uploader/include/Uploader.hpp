@@ -35,6 +35,9 @@ class Uploader : public QAbstractListModel
     Q_PROPERTY(int uploadedCount READ uploadedCount NOTIFY progressChanged)
     Q_PROPERTY(int alreadyThereCount READ alreadyThereCount NOTIFY progressChanged)
     Q_PROPERTY(int failedCount READ failedCount NOTIFY progressChanged)
+    // The files of the last start(), and how many of them are done (also those that failed)
+    Q_PROPERTY(int filesInRun READ filesInRun NOTIFY progressChanged)
+    Q_PROPERTY(int filesDoneInRun READ filesDoneInRun NOTIFY progressChanged)
     Q_PROPERTY(bool moveOriginalsToTrash READ movesOriginalsToTrash WRITE setMoveOriginalsToTrash NOTIFY
                    moveOriginalsToTrashChanged)  // off by default
 
@@ -82,6 +85,8 @@ public:
     int uploadedCount() const;
     int alreadyThereCount() const;
     int failedCount() const;
+    int filesInRun() const;
+    int filesDoneInRun() const;
     bool movesOriginalsToTrash() const;
     void setMoveOriginalsToTrash(bool move);
 
@@ -124,6 +129,7 @@ private:
     QStringList m_tags;  // of the upload that is running
     bool m_running = false;
     bool m_cancelled = false;
+    int m_filesInRun = 0;
     bool m_moveOriginalsToTrash = false;
     int m_foldersBeingListed = 0;
 };

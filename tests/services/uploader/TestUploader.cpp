@@ -98,6 +98,7 @@ private Q_SLOTS:
 
     void listsTheFilesToUpload();
     void countsTheFilesStillWaiting();
+    void countsTheFilesOfARun();
     void addsAFolderWithOrWithoutSubfolders();
     void sendsOneFileAtATimeWithTheTags();
     void tellsHowEachFileWent();
@@ -234,6 +235,27 @@ void TestUploader::countsTheFilesStillWaiting()
     m_uploader->addFiles({fileNamed(QStringLiteral("sunset.jpg"))});
 
     QCOMPARE(m_uploader->waitingCount(), 1);  // the failed one is not sent again
+}
+
+// For the progress of an upload: an earlier run's files do not count.
+void TestUploader::countsTheFilesOfARun()
+{
+    m_uploader->addFiles({fileNamed(QStringLiteral("notes.png"))});
+    uploadAndWait();
+    m_uploader->addFiles({fileNamed(QStringLiteral("beach.jpg")), fileNamed(QStringLiteral("sunset.jpg"))});
+    m_server->holdAnswers = true;
+
+    m_uploader->start();
+
+    QCOMPARE(m_uploader->filesInRun(), 2);
+    QCOMPARE(m_uploader->filesDoneInRun(), 0);
+    QTRY_COMPARE(m_server->requestsTo("POST", imagesUrl).size(), 2);  // notes.png, then beach.jpg
+    m_server->releaseAnswers();
+    QTRY_COMPARE(m_uploader->filesDoneInRun(), 1);
+    QTRY_COMPARE(m_server->requestsTo("POST", imagesUrl).size(), 3);
+    m_server->releaseAnswers();
+    QTRY_VERIFY(!m_uploader->isRunning());
+    QCOMPARE(m_uploader->filesDoneInRun(), 2);
 }
 
 void TestUploader::addsAFolderWithOrWithoutSubfolders()

@@ -76,6 +76,34 @@ Kirigami.ApplicationWindow {
         unsavedTagsDialog.open();
     }
 
+    // On top of the current page, so going back returns to it; also while an upload runs.
+    function showUploadPage() {
+        pageStack.push(uploadPage);
+    }
+
+    // While an upload runs, the other pages show it at the end of their toolbar, and it leads to the upload page.
+    Kirigami.Action {
+        id: uploadStatusAction
+
+        readonly property Uploader uploader: root.appManager.uploader
+
+        visible: uploader.running
+        icon.name: "cloud-upload"
+        text: KI18n.i18nc("@info:tooltip %1 and %2 are numbers of files", "Uploading: %1 of %2 done",
+                          uploader.filesDoneInRun, uploader.filesInRun)
+        displayHint: Kirigami.DisplayHint.KeepVisible
+        displayComponent: UploadIndicator {
+            action: uploadStatusAction
+            progress: uploadStatusAction.uploader.filesInRun > 0
+                      ? uploadStatusAction.uploader.filesDoneInRun / uploadStatusAction.uploader.filesInRun : 0
+        }
+        onTriggered: root.showUploadPage()
+    }
+
+    function addUploadStatus(page: Kirigami.Page) {
+        page.actions.push(uploadStatusAction);
+    }
+
     // On top of the current page, so going back returns to it.
     function showViewer() {
         if (!(pageStack.currentItem instanceof ViewerPage)) {
@@ -168,6 +196,7 @@ Kirigami.ApplicationWindow {
             onServerPageRequested: root.showServerPage()
             onLibraryRequested: root.showLibrary()
             onLeaveRequested: root.afterTagChangesSettled(() => root.pageStack.pop())
+            Component.onCompleted: root.addUploadStatus(this)
         }
     }
 
@@ -180,6 +209,7 @@ Kirigami.ApplicationWindow {
             onOpenFolderRequested: openFolderDialog.open()
             onServerPageRequested: root.showServerPage()
             onLibraryRequested: root.showLibrary()
+            Component.onCompleted: root.addUploadStatus(this)
         }
     }
 
@@ -195,11 +225,12 @@ Kirigami.ApplicationWindow {
             onOpenImageRequested: openImageDialog.open()
             onOpenFolderRequested: openFolderDialog.open()
             onServerPageRequested: root.showServerPage()
-            onUploadRequested: root.pageStack.push(uploadPage)  // going back returns to the library
+            onUploadRequested: root.showUploadPage()
             onImageOpenRequested: row => {
                 root.appManager.openLibraryImage(row);
                 root.showViewer();
             }
+            Component.onCompleted: root.addUploadStatus(this)
         }
     }
 
@@ -218,6 +249,7 @@ Kirigami.ApplicationWindow {
 
         ConnectPage {
             connection: root.appManager.connection
+            Component.onCompleted: root.addUploadStatus(this)
         }
     }
 
@@ -226,6 +258,7 @@ Kirigami.ApplicationWindow {
 
         AccountPage {
             connection: root.appManager.connection
+            Component.onCompleted: root.addUploadStatus(this)
         }
     }
 
