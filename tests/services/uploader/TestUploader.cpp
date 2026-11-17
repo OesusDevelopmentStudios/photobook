@@ -97,6 +97,7 @@ private Q_SLOTS:
     void init();
 
     void listsTheFilesToUpload();
+    void countsTheFilesStillWaiting();
     void addsAFolderWithOrWithoutSubfolders();
     void sendsOneFileAtATimeWithTheTags();
     void tellsHowEachFileWent();
@@ -218,6 +219,21 @@ void TestUploader::listsTheFilesToUpload()
     QCOMPARE(first.data(Uploader::FileNameRole).toString(), QStringLiteral("beach.jpg"));
     QCOMPARE(first.data(Uploader::FolderRole).toString(), m_folder->filePath(QStringLiteral("holiday")));
     QCOMPARE(first.data(Uploader::StateRole).value<FileState>(), FileState::Waiting);
+}
+
+void TestUploader::countsTheFilesStillWaiting()
+{
+    QSignalSpy progress(m_uploader.get(), &Uploader::progressChanged);
+
+    m_uploader->addFiles({fileNamed(QStringLiteral("notes.png")), fileNamed(QStringLiteral("beach.jpg"))});
+
+    QCOMPARE(m_uploader->waitingCount(), 2);
+    QVERIFY(!progress.isEmpty());
+
+    uploadAndWait();
+    m_uploader->addFiles({fileNamed(QStringLiteral("sunset.jpg"))});
+
+    QCOMPARE(m_uploader->waitingCount(), 1);  // the failed one is not sent again
 }
 
 void TestUploader::addsAFolderWithOrWithoutSubfolders()

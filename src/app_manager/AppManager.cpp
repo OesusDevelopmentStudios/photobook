@@ -98,6 +98,9 @@ AppManager::AppManager(QObject* parent)
             m_library.get(),
             &library::Library::replaceImage);
 
+    // New images, and tags added to ones the server had: the grid shows them.
+    connect(m_uploader.get(), &uploader::Uploader::finished, m_library.get(), &library::Library::reload);
+
     // Saved tags: the grid and the viewer show the image as the server answered.
     connect(m_tagEditor.get(), &tag_editor::TagEditor::saved, this, [this](const server_client::Image& image) {
         m_library->replaceImage(image);

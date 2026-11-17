@@ -6,7 +6,8 @@ import QtTest
 import io.github.oesusdevelopmentstudios.pictorio
 import pictorio.tests
 
-// The upload page's list: the chosen files, taken off it again, and folders with or without their subfolders.
+// The upload page: the chosen files, taken off the list again, and folders with or without their subfolders;
+// starting, the trash option and how the files went. The connection is not logged in, so every file fails.
 // The TestCase is invisible; what it tests is created in the visible root, where it can be clicked.
 Item {
     id: root
@@ -26,12 +27,14 @@ Item {
             UploadPage {
                 anchors.fill: parent
                 uploader: TestServices.uploader
+                tagEditor: TestServices.uploadTagEditor
                 imageNameFilters: []
             }
         }
 
         function init() {
             TestServices.uploader.clear();
+            TestServices.uploader.moveOriginalsToTrash = false;
         }
 
         function shownPage(): UploadPage {
@@ -80,6 +83,40 @@ Item {
             mouseClick(findChild(page, "includeSubfolders"));
             page.addFolder(TestServices.sampleFolder);
             tryCompare(TestServices.uploader, "count", 2);  // the subfolder's image; beach.jpg was listed already
+        }
+
+        function test_startsOnlyWithFilesWaiting() {
+            const page = shownPage();
+            const start = findChild(page, "startUpload");
+            verify(!start.enabled);
+
+            TestServices.uploader.addFiles([TestServices.sampleFile("beach.jpg")]);
+
+            verify(start.enabled);
+        }
+
+        function test_tellsHowTheFilesWent() {
+            const page = shownPage();
+            TestServices.uploader.addFiles([TestServices.sampleFile("beach.jpg"),
+                                            TestServices.sampleFile("day2/sunset.jpg")]);
+
+            mouseClick(findChild(page, "startUpload"));
+
+            tryCompare(TestServices.uploader, "failedCount", 2);
+            tryCompare(TestServices.uploader, "running", false);
+            compare(findChild(page, "summary").text, "2 failed");
+            verify(!findChild(page, "startUpload").enabled);  // nothing is waiting any more
+            verify(!findChild(page, "cancelUpload").enabled);
+        }
+
+        function test_choosesToMoveTheOriginalsToTheTrash() {
+            const page = shownPage();
+            const moveToTrash = findChild(page, "moveToTrash");
+            verify(!moveToTrash.checked);
+
+            mouseClick(moveToTrash);
+
+            verify(TestServices.uploader.moveOriginalsToTrash);
         }
     }
 }

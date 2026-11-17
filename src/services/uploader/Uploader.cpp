@@ -158,6 +158,11 @@ bool Uploader::isFindingFiles() const
     return m_foldersBeingListed > 0;
 }
 
+int Uploader::waitingCount() const
+{
+    return countIn(FileState::Waiting);
+}
+
 int Uploader::uploadedCount() const
 {
     return countIn(FileState::Uploaded);
@@ -254,6 +259,7 @@ void Uploader::appendFiles(const QStringList& filePaths)
 
     endInsertRows();
     Q_EMIT countChanged();
+    Q_EMIT progressChanged();  // more files waiting
 }
 
 // The SHA-256 is computed in the background: large files take a while.
@@ -328,7 +334,6 @@ void Uploader::send(int row, const QString& sha256)
         });
 }
 
-// So the upload's tags apply to every file of it, new or not
 void Uploader::addTagsToDuplicate(int row, int imageId)
 {
     m_connection->client()

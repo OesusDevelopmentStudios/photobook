@@ -40,6 +40,7 @@ class TestServices : public QObject
 
     Q_PROPERTY(pictorio::viewer::Viewer* viewer READ viewer CONSTANT)
     Q_PROPERTY(pictorio::tag_editor::TagEditor* tagEditor READ tagEditor CONSTANT)
+    Q_PROPERTY(pictorio::tag_editor::UploadTagEditor* uploadTagEditor READ uploadTagEditor CONSTANT)
     Q_PROPERTY(pictorio::uploader::Uploader* uploader READ uploader CONSTANT)
     Q_PROPERTY(QUrl sampleFolder READ sampleFolder CONSTANT)  // holiday/beach.jpg, holiday/day2/sunset.jpg
 
@@ -99,6 +100,11 @@ public:
     tag_editor::TagEditor* tagEditor() const
     {
         return m_tagEditor.get();
+    }
+
+    tag_editor::UploadTagEditor* uploadTagEditor() const
+    {
+        return m_uploadTagEditor.get();
     }
 
     uploader::Uploader* uploader() const

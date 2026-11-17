@@ -11,14 +11,29 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.ki18n
 
-// Sending images to the server's library: the files to upload, and how each of them went.
+// Sending images to the server's library: the files to upload, the tags they all get, and how each of them went.
 Kirigami.Page {
     id: page
 
     required property Uploader uploader
+    required property UploadTagEditor tagEditor
     required property list<string> imageNameFilters  // for the file dialog, as the app's other one
 
+    property bool cancelling: false  // the file being sent goes on; the rest waits
+
     title: KI18n.i18nc("@title", "Upload")
+
+    Component.onCompleted: tagEditor.load()  // the rows need the server's namespaces
+
+    Connections {
+        target: page.uploader
+
+        function onRunningChanged() {
+            if (!page.uploader.running) {
+                page.cancelling = false;
+            }
+        }
+    }
 
     // The folder's images, and with "Include subfolders" also those below it. Listed in the background.
     function addFolder(folderUrl: url) {
@@ -37,6 +52,22 @@ Kirigami.Page {
             return KI18n.i18nc("@info:status of a file", "Failed");
         }
         return KI18n.i18nc("@info:status of a file", "Waiting");
+    }
+
+    // How the files went so far, e.g. "40 uploaded, 1 already on the server, 1 failed"
+    function summaryText(): string {
+        const parts = [];
+        if (uploader.uploadedCount > 0) {
+            parts.push(KI18n.i18ncp("@info", "%1 uploaded", "%1 uploaded", uploader.uploadedCount));
+        }
+        if (uploader.alreadyThereCount > 0) {
+            parts.push(KI18n.i18ncp("@info", "%1 already on the server", "%1 already on the server",
+                                    uploader.alreadyThereCount));
+        }
+        if (uploader.failedCount > 0) {
+            parts.push(KI18n.i18ncp("@info", "%1 failed", "%1 failed", uploader.failedCount));
+        }
+        return parts.join(KI18n.i18nc("@info Between the parts of a list", ", "));
     }
 
     ColumnLayout {
@@ -90,6 +121,7 @@ Kirigami.Page {
         Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
+            Layout.minimumHeight: Kirigami.Units.gridUnit * 6
             Kirigami.Theme.colorSet: Kirigami.Theme.View
             Kirigami.Theme.inherit: false
             color: Kirigami.Theme.backgroundColor
@@ -203,6 +235,111 @@ Kirigami.Page {
                 icon.name: "cloud-upload"
                 text: KI18n.i18nc("@info:placeholder", "No images to upload yet")
                 explanation: KI18n.i18nc("@info:placeholder", "Add files, or a folder of images.")
+            }
+        }
+
+        Kirigami.Heading {
+            level: 4
+            text: KI18n.i18nc("@title:group", "Tags for every image")
+        }
+
+        // A row per namespace, as in the viewer's edit view: the name, and its dropdown or tags at the right
+        Repeater {
+            model: page.tagEditor.namespaceRows
+
+            delegate: RowLayout {
+                id: namespaceRow
+
+                required property string namespaceName
+                required property bool dropdown
+                required property bool fixedValues
+                required property bool keepable
+                required property var options
+                required property string value
+                required property bool changed
+                required property var tags
+
+                Layout.fillWidth: true
+                spacing: Kirigami.Units.largeSpacing
+
+                Controls.Label {
+                    Layout.preferredWidth: Kirigami.Units.gridUnit * 7
+                    Layout.preferredHeight: Math.max(implicitHeight, rowContent.firstLineHeight)
+                    Layout.alignment: Qt.AlignTop
+                    horizontalAlignment: Text.AlignRight
+                    verticalAlignment: Text.AlignVCenter
+                    text: namespaceRow.namespaceName + ":"  // as written in a tag, e.g. "author:"
+                    color: Kirigami.Theme.disabledTextColor
+                    elide: Text.ElideRight
+                }
+
+                TagRowContent {
+                    id: rowContent
+
+                    Layout.fillWidth: true
+                    editor: page.tagEditor
+                    namespaceName: namespaceRow.namespaceName
+                    dropdown: namespaceRow.dropdown
+                    fixedValues: namespaceRow.fixedValues
+                    keepable: namespaceRow.keepable
+                    options: namespaceRow.options
+                    value: namespaceRow.value
+                    changed: namespaceRow.changed
+                    tags: namespaceRow.tags
+                }
+            }
+        }
+
+        // E.g. a tag an admin has restricted for this account
+        Kirigami.InlineMessage {
+            Layout.fillWidth: true
+            visible: text.length > 0
+            type: Kirigami.MessageType.Error
+            text: page.tagEditor.errorMessage
+        }
+
+        Controls.CheckBox {
+            objectName: "moveToTrash"
+            text: KI18n.i18nc("@option:check", "Move the originals to the trash once the server has them")
+            checked: page.uploader.moveOriginalsToTrash
+            enabled: !page.uploader.running
+            onToggled: page.uploader.moveOriginalsToTrash = checked
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: Kirigami.Units.smallSpacing
+
+            Controls.Label {
+                objectName: "summary"
+                Layout.fillWidth: true
+                text: page.summaryText()
+                elide: Text.ElideRight
+            }
+
+            Controls.Button {
+                objectName: "startUpload"
+                icon.name: "cloud-upload"
+                text: KI18n.i18nc("@action:button", "Start Upload")
+                // Not while a folder is still being listed: its files would join a running upload.
+                enabled: !page.uploader.running && !page.uploader.findingFiles && page.uploader.waitingCount > 0
+                onClicked: page.uploader.start()  // a refused tag keeps it from starting; the message says why
+            }
+
+            Controls.Button {
+                objectName: "cancelUpload"
+                icon.name: "dialog-cancel"
+                text: page.cancelling ? KI18n.i18nc("@action:button", "Cancelling…")
+                                      : KI18n.i18nc("@action:button Stop the upload", "Cancel")
+                enabled: page.uploader.running && !page.cancelling
+                onClicked: {
+                    page.cancelling = true;
+                    page.uploader.cancel();
+                }
+
+                Controls.ToolTip.text: KI18n.i18nc("@info:tooltip", "Stop after the file being sent")
+                Controls.ToolTip.visible: hovered
+                Controls.ToolTip.delay: Kirigami.Units.toolTipDelay
             }
         }
     }

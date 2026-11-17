@@ -31,6 +31,7 @@ class Uploader : public QAbstractListModel
     Q_PROPERTY(int count READ count NOTIFY countChanged)
     Q_PROPERTY(bool running READ isRunning NOTIFY runningChanged)
     Q_PROPERTY(bool findingFiles READ isFindingFiles NOTIFY findingFilesChanged)  // a folder is being listed
+    Q_PROPERTY(int waitingCount READ waitingCount NOTIFY progressChanged)         // what start() would send
     Q_PROPERTY(int uploadedCount READ uploadedCount NOTIFY progressChanged)
     Q_PROPERTY(int alreadyThereCount READ alreadyThereCount NOTIFY progressChanged)
     Q_PROPERTY(int failedCount READ failedCount NOTIFY progressChanged)
@@ -77,6 +78,7 @@ public:
     int count() const;
     bool isRunning() const;
     bool isFindingFiles() const;
+    int waitingCount() const;
     int uploadedCount() const;
     int alreadyThereCount() const;
     int failedCount() const;

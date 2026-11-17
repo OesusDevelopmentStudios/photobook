@@ -208,6 +208,7 @@ Kirigami.ApplicationWindow {
 
         UploadPage {
             uploader: root.appManager.uploader
+            tagEditor: root.appManager.uploadTagEditor
             imageNameFilters: root.imageNameFilters
         }
     }
