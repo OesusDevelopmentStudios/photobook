@@ -232,12 +232,14 @@ Kirigami.ApplicationWindow {
             connection: root.appManager.connection
             tagEditor: root.appManager.tagEditor
             uploader: root.appManager.uploader
+            imageActions: root.appManager.imageActions
             onServerPageRequested: root.showServerPage()
             onLibraryRequested: root.showLibrary()
             onUploadImageRequested: {
                 root.appManager.uploadCurrentImage();
                 root.showUploadPage();
             }
+            onCopyImageRequested: root.appManager.copyCurrentImage()
             onUploadFolderRequested: {
                 root.appManager.uploadCurrentFolder();  // listed in the background, while the page opens
                 root.showUploadPage();
@@ -310,6 +312,18 @@ Kirigami.ApplicationWindow {
             onLogOutRequested: root.afterChangesSettled(root.appManager.hiddenFilterEditor,
                                                         () => root.appManager.connection.logOut())
             Component.onCompleted: root.addUploadStatus(this)
+        }
+    }
+
+    Connections {
+        target: root.appManager.imageActions
+
+        function onCopied() {
+            root.showPassiveNotification(KI18n.i18nc("@info", "Image copied"));
+        }
+
+        function onFailed(message: string) {
+            root.showPassiveNotification(message);
         }
     }
 

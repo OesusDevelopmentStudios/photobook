@@ -23,11 +23,13 @@ Kirigami.Page {
     required property Connection connection
     required property TagEditor tagEditor
     required property Uploader uploader
+    required property ImageActions imageActions
 
     signal serverPageRequested()
     signal libraryRequested()
     signal uploadImageRequested()   // the image on screen, to the upload page's list
     signal uploadFolderRequested()  // the images of its folder, without subfolders
+    signal copyImageRequested()
     signal leaveRequested()  // back, while there are unsaved tag changes; the window asks first
 
     onBackRequested: event => {
@@ -154,6 +156,15 @@ Kirigami.Page {
             shortcut: "Ctrl+R"
             enabled: page.viewer.hasImage
             onTriggered: page.viewTransform.rotateClockwise()
+        },
+        // In the menu; Ctrl+C reaches it unless a text field, e.g. while editing tags, takes it first.
+        Kirigami.Action {
+            icon.name: "edit-copy"
+            text: KI18n.i18nc("@action:inmenu", "Copy Image")
+            displayHint: Kirigami.DisplayHint.AlwaysHide
+            shortcut: StandardKey.Copy
+            enabled: page.viewer.hasImage && !page.imageActions.busy
+            onTriggered: page.copyImageRequested()
         },
         // A local image to the server's library. Not while an upload runs: its list is fixed then.
         Kirigami.Action {

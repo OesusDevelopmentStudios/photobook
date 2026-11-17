@@ -10,6 +10,7 @@
 
 #include "ConnectionFactory.hpp"
 #include "FolderScannerFactory.hpp"
+#include "ImageActionsFactory.hpp"
 #include "ImageLoaderFactory.hpp"
 #include "LibraryFactory.hpp"
 #include "LibraryViewFactory.hpp"
@@ -78,6 +79,7 @@ AppManager::AppManager(QObject* parent)
     , m_uploadTagEditor(tag_editor::createUploadTagEditor(m_connection.get()))
     , m_uploader(uploader::createUploader(m_connection.get(), m_uploadTagEditor.get()))
     , m_hiddenFilterEditor(tag_editor::createHiddenFilterEditor(m_connection.get()))
+    , m_imageActions(image_actions::createImageActions(m_connection.get()))
     , m_serverCredentials(std::make_shared<network_access::ServerCredentials>())
     , m_networkAccessFactory(network_access::createNetworkAccessFactory(
           m_serverCredentials,
@@ -89,6 +91,7 @@ AppManager::AppManager(QObject* parent)
     // Only library images have tags to edit.
     connect(m_navigator.get(), &navigator::Navigator::imageRequested, this, [this]() {
         m_tagEditor->setImage(std::nullopt);
+        m_libraryImageOnScreen.reset();
     });
 
     // Tags for many images at once: the selected ones, and each as the server has it after the change.
@@ -183,6 +186,11 @@ tag_editor::HiddenFilterEditor* AppManager::hiddenFilterEditor() const
     return m_hiddenFilterEditor.get();
 }
 
+image_actions::ImageActions* AppManager::imageActions() const
+{
+    return m_imageActions.get();
+}
+
 uploader::Uploader* AppManager::uploader() const
 {
     return m_uploader.get();
@@ -226,10 +234,24 @@ void AppManager::uploadCurrentFolder()
     }
 }
 
+void AppManager::copyCurrentImage()
+{
+    const QUrl image = m_viewer->imageSource();
+    if (image.isLocalFile())
+    {
+        m_imageActions->copyLocalImage(image.toLocalFile());
+    }
+    else if (m_libraryImageOnScreen.has_value())
+    {
+        m_imageActions->copyLibraryImage(m_libraryImageOnScreen->id, m_libraryImageOnScreen->mimeType);
+    }
+}
+
 void AppManager::showLibraryImage(int row)
 {
     const std::optional<server_client::Image> image = m_library->imageAt(row);
     m_tagEditor->setImage(image);
+    m_libraryImageOnScreen = image;
     if (!image.has_value() || m_connection->client() == nullptr)
     {
         return;

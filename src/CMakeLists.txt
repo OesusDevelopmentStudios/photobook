@@ -40,6 +40,7 @@ add_subdirectory(services/library_view)
 add_subdirectory(services/tag_editor)
 add_subdirectory(services/uploader)
 add_subdirectory(services/network_access)
+add_subdirectory(services/image_actions)
 
 # The user interface: the QML files and the C++ types they use, the AppManager and through it the services. A
 # static library that is also a QML module, so the application and the QML tests use the same one. The URI is
@@ -111,6 +112,7 @@ target_link_libraries(pictorio_ui PUBLIC
     pictorio_library_view
     pictorio_tag_editor
     pictorio_uploader
+    pictorio_image_actions
     Qt6::Qml
     Qt6::Quick
     Qt6::QuickControls2

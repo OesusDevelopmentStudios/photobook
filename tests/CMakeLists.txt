@@ -108,6 +108,12 @@ ecm_add_test(services/uploader/TestUploader.cpp
     LINK_LIBRARIES pictorio_uploader Qt6::Test KF6::I18n
 )
 
+ecm_add_test(services/image_actions/TestImageActions.cpp
+    LINK_LIBRARIES pictorio_image_actions Qt6::Gui Qt6::Test KF6::I18n
+)
+# The clipboard needs a GUI platform; offscreen keeps it in the process.
+set_tests_properties(TestImageActions PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 ecm_add_test(services/network_access/TestNetworkAccess.cpp
     LINK_LIBRARIES pictorio_network_access Qt6::Test
 )

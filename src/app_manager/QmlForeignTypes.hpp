@@ -11,6 +11,7 @@
 #include "BulkTagEditor.hpp"
 #include "Connection.hpp"
 #include "HiddenFilterEditor.hpp"
+#include "ImageActions.hpp"
 #include "Library.hpp"
 #include "LibraryView.hpp"
 #include "Navigator.hpp"
@@ -106,6 +107,14 @@ struct ForeignUploadTagEditor
     Q_GADGET
     QML_FOREIGN(pictorio::tag_editor::UploadTagEditor)
     QML_NAMED_ELEMENT(UploadTagEditor)
+    QML_UNCREATABLE("Provided by AppManager")
+};
+
+struct ForeignImageActions
+{
+    Q_GADGET
+    QML_FOREIGN(pictorio::image_actions::ImageActions)
+    QML_NAMED_ELEMENT(ImageActions)
     QML_UNCREATABLE("Provided by AppManager")
 };
 
