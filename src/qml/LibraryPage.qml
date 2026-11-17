@@ -164,8 +164,8 @@ Kirigami.Page {
             onTriggered: page.openFolderRequested()
         },
         Kirigami.Action {
-            icon.name: page.loggedIn ? "user-identity" : "network-server"
-            text: page.loggedIn ? KI18n.i18nc("@action:inmenu", "Account…")
+            icon.name: page.loggedIn ? "configure" : "network-server"
+            text: page.loggedIn ? KI18n.i18nc("@action:inmenu", "Settings…")
                                 : KI18n.i18nc("@action:inmenu", "Connect to Server…")
             displayHint: Kirigami.DisplayHint.AlwaysHide
             onTriggered: page.serverPageRequested()

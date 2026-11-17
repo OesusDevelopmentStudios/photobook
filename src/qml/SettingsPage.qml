@@ -7,13 +7,13 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.ki18n
 
-// The server this app is logged in to, and logging out.
+// The app's configuration, one section per topic.
 Kirigami.ScrollablePage {
     id: page
 
     required property Connection connection
 
-    title: KI18n.i18nc("@title", "Account")
+    title: KI18n.i18nc("@title", "Settings")
 
     ColumnLayout {
         spacing: Kirigami.Units.largeSpacing
@@ -27,6 +27,11 @@ Kirigami.ScrollablePage {
 
         Kirigami.FormLayout {
             Layout.fillWidth: true
+
+            Kirigami.Separator {
+                Kirigami.FormData.isSection: true
+                Kirigami.FormData.label: KI18n.i18nc("@title:group", "Account")
+            }
 
             Controls.Label {
                 Kirigami.FormData.label: KI18n.i18nc("@label", "Server:")

@@ -55,7 +55,7 @@ set(qmlFiles
     qml/SlideshowControls.qml
     qml/WelcomePage.qml
     qml/ConnectPage.qml
-    qml/AccountPage.qml
+    qml/SettingsPage.qml
     qml/LibraryPage.qml
     qml/LibrarySidebar.qml
     qml/LibraryTile.qml

@@ -44,7 +44,7 @@ Kirigami.ApplicationWindow {
 
     function showServerPage() {
         const loggedIn = appManager.connection.state === Connection.State.LoggedIn;
-        pageStack.push(loggedIn ? accountPage : connectPage);
+        pageStack.push(loggedIn ? settingsPage : connectPage);
     }
 
     // Back to the library if it is in the page stack; otherwise it comes in place of the current page.
@@ -288,9 +288,9 @@ Kirigami.ApplicationWindow {
     }
 
     Component {
-        id: accountPage
+        id: settingsPage
 
-        AccountPage {
+        SettingsPage {
             connection: root.appManager.connection
             Component.onCompleted: root.addUploadStatus(this)
         }
@@ -304,7 +304,7 @@ Kirigami.ApplicationWindow {
         }
     }
 
-    // Logging in leads from the connect page to the library; logging out turns the account page into the
+    // Logging in leads from the connect page to the library; logging out turns the settings page into the
     // connect page.
     Connections {
         target: root.appManager.connection
@@ -314,7 +314,7 @@ Kirigami.ApplicationWindow {
             const loggedIn = root.appManager.connection.state === Connection.State.LoggedIn;
             if (loggedIn && currentPage instanceof ConnectPage) {
                 root.showLibrary();
-            } else if (!loggedIn && currentPage instanceof AccountPage) {
+            } else if (!loggedIn && currentPage instanceof SettingsPage) {
                 root.pageStack.replace(connectPage);
             }
         }

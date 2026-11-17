@@ -184,8 +184,8 @@ Kirigami.Page {
         Kirigami.Action {
             readonly property bool loggedIn: page.connection.state === Connection.State.LoggedIn
 
-            icon.name: loggedIn ? "user-identity" : "network-server"
-            text: loggedIn ? KI18n.i18nc("@action:inmenu", "Account…")
+            icon.name: loggedIn ? "configure" : "network-server"
+            text: loggedIn ? KI18n.i18nc("@action:inmenu", "Settings…")
                            : KI18n.i18nc("@action:inmenu", "Connect to Server…")
             displayHint: Kirigami.DisplayHint.AlwaysHide  // in the menu, not the toolbar
             onTriggered: page.serverPageRequested()
