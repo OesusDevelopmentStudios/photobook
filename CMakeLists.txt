@@ -39,6 +39,7 @@ endif()
 find_package(Qt6 ${QT_MIN_VERSION} REQUIRED COMPONENTS
     Core
     Concurrent
+    DBus         # the Trash portal, in a Flatpak
     Gui
     Network      # talking to the pictorio-db server
     Qml

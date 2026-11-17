@@ -8,6 +8,8 @@ add_library(pictorio_uploader STATIC
     include/Trash.hpp
     impl/KioTrash.hpp
     impl/KioTrash.cpp
+    impl/PortalTrash.hpp
+    impl/PortalTrash.cpp
     Trash.cpp
     Uploader.cpp
     UploaderFactory.cpp
@@ -31,7 +33,9 @@ target_link_libraries(pictorio_uploader
         pictorio_utils
         Qt6::Concurrent  # hashes files and lists folders in the background
         KF6::I18n
-        KF6::KIOCore  # moves originals to the trash
+        KF6::KIOCore      # moves originals to the trash…
+        Qt6::DBus         # …or the Trash portal does, in a Flatpak
+        KF6::CoreAddons   # KSandbox: are we in a Flatpak?
 )
 
 # Uploader is exposed to QML (app_manager/QmlForeignTypes.hpp); QML tools read its properties from these metatypes.
