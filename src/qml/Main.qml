@@ -111,11 +111,36 @@ Kirigami.ApplicationWindow {
         }
     }
 
+    // Unsaved tags first; once they are settled, closing again comes back here for a running upload.
     onClosing: close => {
         if (appManager.tagEditor.hasChanges) {
             close.accepted = false;
             afterTagChangesSettled(() => root.close());
+        } else if (appManager.uploader.running && !quitDuringUpload) {
+            close.accepted = false;
+            runningUploadDialog.open();
         }
+    }
+
+    property bool quitDuringUpload: false  // the user chose to quit anyway
+
+    // Quitting stops an upload; leaving its page does not.
+    Kirigami.PromptDialog {
+        id: runningUploadDialog
+
+        title: KI18n.i18nc("@title:window", "Upload Running")
+        subtitle: KI18n.i18nc("@info", "Quitting stops the upload. The files not sent yet stay where they are.")
+        standardButtons: Kirigami.Dialog.Cancel
+        customFooterActions: [
+            Kirigami.Action {
+                icon.name: "application-exit"
+                text: KI18n.i18nc("@action:button", "Quit Anyway")
+                onTriggered: {
+                    root.quitDuringUpload = true;
+                    root.close();
+                }
+            }
+        ]
     }
 
     Kirigami.PromptDialog {
