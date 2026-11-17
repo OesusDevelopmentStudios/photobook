@@ -45,6 +45,13 @@ tests/e2e/run_end_to_end_tests.py                    # needs ../pictorio-db and 
 tests/e2e/run_end_to_end_tests.py --server ../pictorio-db/.venv/bin/pictorio-db   # faster: no install
 ```
 
+**CI** (`.github/workflows/ci.yml`) builds and runs all tests, the end-to-end ones too, inside the KDE SDK
+the Flatpak is built with, against pictorio-db at a fixed commit. The same runs locally, into `build-sdk/`:
+
+```sh
+tests/run_in_flatpak_sdk.sh    # needs flatpak-builder, the KDE SDK and ../pictorio-db
+```
+
 ### Service layout
 
 ```

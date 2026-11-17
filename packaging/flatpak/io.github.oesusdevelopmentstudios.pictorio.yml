@@ -93,4 +93,5 @@ modules:
         skip:
           - build
           - build-flatpak
+          - build-sdk
           - .flatpak-builder

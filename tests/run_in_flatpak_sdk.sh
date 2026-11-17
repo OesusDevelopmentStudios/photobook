@@ -1,0 +1,41 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 OesusDevelopmentStudios
+#
+# Builds pictorio and runs all its tests, the end-to-end tests too, inside the KDE SDK that the Flatpak is
+# built with: the same compiler, Qt and KDE Frameworks as the Flatpak. CI runs it; it works locally too.
+#
+#   tests/run_in_flatpak_sdk.sh [work folder]    # default: build-sdk/ in this repository
+#
+# Needs flatpak-builder, the SDK the manifest names, and a pictorio-db checkout next to this repository, or
+# where PICTORIO_DB_SOURCE says.
+
+set -eu
+
+repository=$(cd "$(dirname "$0")/.." && pwd)
+manifest="$repository/packaging/flatpak/io.github.oesusdevelopmentstudios.pictorio.yml"
+work="${1:-$repository/build-sdk}"
+mkdir -p "$work"
+work=$(cd "$work" && pwd)
+pictorio_db=$(cd "${PICTORIO_DB_SOURCE:-$repository/../pictorio-db}" && pwd)
+
+# The libraries the SDK lacks (exiv2, QtKeychain), built from the Flatpak manifest; pictorio itself is built
+# below, with its tests, which the manifest leaves out.
+flatpak-builder --force-clean --stop-at=pictorio --state-dir="$work/state" "$work/app" "$manifest"
+
+# A command in the SDK's sandbox, with those libraries in /app. It sees only the folders named here; the
+# network is for installing and reaching the test server.
+in_sdk() {
+    flatpak-builder --run --state-dir="$work/state" \
+        --filesystem="$repository" --filesystem="$pictorio_db" --filesystem="$work" --share=network \
+        "$work/app" "$manifest" "$@"
+}
+
+in_sdk cmake -S "$repository" -B "$work/build" -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=/app
+in_sdk cmake --build "$work/build"
+in_sdk ctest --test-dir "$work/build" --output-on-failure
+in_sdk cmake --build "$work/build" --target pictorio_ui_qmllint
+
+# The server runs in the same sandbox, so the tests reach it and get its address without anything passed in.
+in_sdk python3 "$repository/tests/e2e/run_end_to_end_tests.py" \
+    --pictorio-db "$pictorio_db" --build-dir "$work/build" --temp-parent "$work"
