@@ -12,8 +12,9 @@ import pictorio.tests
 Item {
     id: root
 
+    // Room for the whole page, so the buttons at its bottom can be clicked without scrolling
     width: 800
-    height: 500
+    height: 700
 
     TestCase {
         id: testCase
@@ -107,6 +108,30 @@ Item {
             compare(findChild(page, "summary").text, "2 failed");
             verify(!findChild(page, "startUpload").enabled);  // nothing is waiting any more
             verify(!findChild(page, "cancelUpload").enabled);
+        }
+
+        // A window too small for the page: it scrolls, and nothing overlaps.
+        function test_scrollsInASmallWindow() {
+            const small = createTemporaryQmlObject("import QtQuick; Item { width: 360; height: 260 }", root);
+            const page = createTemporaryObject(pageComponent, small);
+            const frame = findChild(page, "fileListFrame");
+            const placeholder = findChild(page, "emptyPlaceholder");
+
+            tryVerify(() => placeholder.implicitHeight <= frame.height, 1000,
+                      "the empty list's placeholder sticks out of its frame");
+            tryVerify(() => lastButtonReachable(page), 1000, "the page cannot be scrolled to its last buttons");
+        }
+
+        // Scrolled to its end (if it can scroll), the page shows its last button.
+        function lastButtonReachable(page: UploadPage): bool {
+            const flickable = findChild(page, "pageScroll")?.contentItem;
+            if (flickable) {
+                flickable.contentX = Math.max(0, flickable.contentWidth - flickable.width);
+                flickable.contentY = Math.max(0, flickable.contentHeight - flickable.height);
+            }
+            const cancel = findChild(page, "cancelUpload");
+            const corner = cancel.mapToItem(page, cancel.width, cancel.height);
+            return corner.x <= page.width && corner.y <= page.height;
         }
 
         function test_choosesToMoveTheOriginalsToTheTrash() {
