@@ -12,8 +12,10 @@ the admin API, then runs the tests and removes everything again.
     tests/e2e/run_end_to_end_tests.py --server ../pictorio-db/.venv/bin/pictorio-db   # no new venv
     tests/e2e/run_end_to_end_tests.py -- some other test command
 
-The tests learn the server's address, the accounts' password and the library folder from the environment
-variables PICTORIO_E2E_*; without them they skip themselves.
+The server reads a machine ID of its own from a file in the temporary folder, so that a test can be the app on
+the server's computer without the real machine ID. The tests learn the server's address, the accounts'
+password, the library folder and that file from the environment variables PICTORIO_E2E_*; without them they
+skip themselves.
 """
 
 import argparse
@@ -100,11 +102,13 @@ def main() -> int:
     try:
         server_command = arguments.server or install_server(arguments.pictorio_db, work_dir / "venv")
         library_dir = work_dir / "library"
+        machine_id_file = work_dir / "machine-id"
+        machine_id_file.write_text(secrets.token_hex(16) + "\n")
         port = free_port()
         server_url = f"http://127.0.0.1:{port}"
         server = ServerProcess(
             [str(server_command), "serve"],
-            server_environment(work_dir / "data", library_dir, port),
+            server_environment(work_dir / "data", library_dir, machine_id_file, port),
             work_dir / "server.log",
         )
         wait_until_answering(server, server_url)
@@ -121,6 +125,7 @@ def main() -> int:
                 "PICTORIO_E2E_SERVER_URL": server_url,
                 "PICTORIO_E2E_PASSWORD": password,
                 "PICTORIO_E2E_LIBRARY_DIR": str(library_dir),
+                "PICTORIO_E2E_MACHINE_ID_FILE": str(machine_id_file),
             }
         )
         test_command = arguments.test_command or [
@@ -177,12 +182,13 @@ def free_port() -> int:
         return probe.getsockname()[1]
 
 
-def server_environment(data_dir: Path, library_dir: Path, port: int) -> dict[str, str]:
+def server_environment(data_dir: Path, library_dir: Path, machine_id_file: Path, port: int) -> dict[str, str]:
     environment = {name: value for name, value in os.environ.items() if not name.startswith("PICTORIO_")}
     environment.update(
         {
             "PICTORIO_DATA_DIR": str(data_dir),
             "PICTORIO_LIBRARY_DIR": str(library_dir),
+            "PICTORIO_HOST_MACHINE_ID_FILE": str(machine_id_file),
             "PICTORIO_HOST": "127.0.0.1",
             "PICTORIO_PORT": str(port),
         }

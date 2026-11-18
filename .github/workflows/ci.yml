@@ -30,7 +30,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           repository: OesusDevelopmentStudios/pictorio-db
-          ref: 1bec7ffe5816773a1bf4bd3dad145a5219c650d2
+          ref: 199a4c06e71c68fa089805da174761d6f7222e16
           path: pictorio-db
 
       # flatpak-builder needs a session bus; the container has none, nor the machine-id to start one itself.

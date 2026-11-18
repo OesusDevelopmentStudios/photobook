@@ -33,9 +33,10 @@ constexpr std::chrono::milliseconds answerTimeout{10'000};
 // The pictorio-db server the script started, as it describes it in the environment
 struct EndToEndServer
 {
-    QUrl url;            // e.g. http://127.0.0.1:41234
-    QString password;    // of every account
-    QString libraryDir;  // where the server keeps the image files
+    QUrl url;               // e.g. http://127.0.0.1:41234
+    QString password;       // of every account
+    QString libraryDir;     // where the server keeps the image files
+    QString machineIdFile;  // the server's computer's machine ID: the app reading it is on that computer
 
     // Nothing unless the script set the environment, e.g. in a plain ctest run
     static std::optional<EndToEndServer> fromEnvironment()
@@ -46,23 +47,29 @@ struct EndToEndServer
             return std::nullopt;
         }
 
-        return EndToEndServer{
-            QUrl(url), qEnvironmentVariable("PICTORIO_E2E_PASSWORD"), qEnvironmentVariable("PICTORIO_E2E_LIBRARY_DIR")};
+        return EndToEndServer{QUrl(url),
+                              qEnvironmentVariable("PICTORIO_E2E_PASSWORD"),
+                              qEnvironmentVariable("PICTORIO_E2E_LIBRARY_DIR"),
+                              qEnvironmentVariable("PICTORIO_E2E_MACHINE_ID_FILE")};
     }
 };
 
 // A connection as the app makes one, over real HTTP, with its settings in a temporary folder and the login
 // token in a fake keyring, never the user's own. Restarting the app is a second one with the same settings
-// file and keyring.
+// file and keyring. appSpecificMachineId: as utils/MachineId.hpp makes it; empty: never asks where the
+// library folder is.
 class AppConnection
 {
 public:
-    AppConnection(const QString& settingsFile, std::shared_ptr<fakes::Keyring> keyring)
+    AppConnection(const QString& settingsFile,
+                  std::shared_ptr<fakes::Keyring> keyring,
+                  const QString& appSpecificMachineId = {})
         : m_settings(settings::createSettings(settingsFile))
         , m_connection(std::make_unique<connection::Connection>(
               [](const QUrl& url) { return server_client::createServerClient(url); },
               std::make_unique<fakes::FakeTokenStore>(std::move(keyring)),
-              m_settings.get()))
+              m_settings.get(),
+              appSpecificMachineId))
     {}
 
     connection::Connection& operator*() const

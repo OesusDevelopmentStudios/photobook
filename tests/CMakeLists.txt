@@ -150,6 +150,10 @@ ecm_add_test(e2e/TestEndToEndRestrictions.cpp
     LINK_LIBRARIES pictorio_uploader pictorio_library pictorio_tag_editor pictorio_utils Qt6::Gui Qt6::Test KF6::I18n
 )
 
+ecm_add_test(e2e/TestEndToEndLocalLibrary.cpp
+    LINK_LIBRARIES pictorio_uploader pictorio_library pictorio_tag_editor pictorio_utils Qt6::Gui Qt6::Test KF6::I18n
+)
+
 # The QML tests, tst_*.qml in qml/: one Qt Quick Test executable that uses the application's QML module,
 # offscreen. Qt's messages go to stderr, not to the system journal, so failures show in the test output.
 add_executable(TestQml qml/TestQml.cpp qml/FakeTagRowsEditor.hpp qml/TestServices.hpp)
