@@ -66,6 +66,9 @@ find_package(LibExiv2 0.28 REQUIRED)
 # Imported by the QML files at run time, so CMake cannot see them through linking.
 ecm_find_qmlmodule(org.kde.kirigami REQUIRED)
 ecm_find_qmlmodule(org.kde.ki18n REQUIRED)
+# ConvergentContextMenu for the right-click menus, since 1.7. No version given: ECM checks one only under the
+# install prefix, and in the Flatpak the module is in the runtime instead.
+ecm_find_qmlmodule(org.kde.kirigamiaddons.components REQUIRED)
 ecm_find_qmlmodule(QtQuick.Dialogs REQUIRED)  # the file dialog for opening an image
 
 add_subdirectory(src)

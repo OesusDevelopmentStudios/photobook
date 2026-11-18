@@ -7,6 +7,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls as Controls
 import org.kde.kirigami as Kirigami
+import org.kde.kirigamiaddons.components as Components
 import org.kde.ki18n
 
 // Shows the current image with zoom and rotation, or a message when there is none.
@@ -143,6 +144,8 @@ Kirigami.Page {
             onTriggered: page.zoomAroundCenter(() => page.viewTransform.showActualSize())
         },
         Kirigami.Action {
+            id: rotateLeftAction
+
             icon.name: "object-rotate-left"
             text: KI18n.i18nc("@action:intoolbar", "Rotate Left")
             displayHint: Kirigami.DisplayHint.IconOnly
@@ -151,6 +154,8 @@ Kirigami.Page {
             onTriggered: page.viewTransform.rotateCounterclockwise()
         },
         Kirigami.Action {
+            id: rotateRightAction
+
             icon.name: "object-rotate-right"
             text: KI18n.i18nc("@action:intoolbar", "Rotate Right")
             displayHint: Kirigami.DisplayHint.IconOnly
@@ -160,6 +165,8 @@ Kirigami.Page {
         },
         // In the menu; Ctrl+C reaches it unless a text field, e.g. while editing tags, takes it first.
         Kirigami.Action {
+            id: copyImageAction
+
             icon.name: "edit-copy"
             text: KI18n.i18nc("@action:inmenu", "Copy Image")
             displayHint: Kirigami.DisplayHint.AlwaysHide
@@ -168,6 +175,8 @@ Kirigami.Page {
             onTriggered: page.copyImageRequested()
         },
         Kirigami.Action {
+            id: openFolderAction
+
             icon.name: "document-open-folder"
             text: KI18n.i18nc("@action:inmenu", "Open Containing Folder")
             displayHint: Kirigami.DisplayHint.AlwaysHide
@@ -177,6 +186,8 @@ Kirigami.Page {
         },
         // A local image to the server's library. Not while an upload runs: its list is fixed then.
         Kirigami.Action {
+            id: importAction
+
             icon.name: "cloud-upload"
             text: KI18n.i18nc("@action:intoolbar", "Import to Server")
             visible: page.connection.state === Connection.State.LoggedIn && page.viewer.hasImage
@@ -314,6 +325,11 @@ Kirigami.Page {
                 () => page.viewTransform.zoomBy(delta))
         }
 
+        TapHandler {
+            acceptedButtons: Qt.RightButton
+            onTapped: imageMenu.popup()
+        }
+
         // Double-click switches between fit and 100 %.
         TapHandler {
             onDoubleTapped: eventPoint => page.zoomAround(
@@ -321,6 +337,35 @@ Kirigami.Page {
                 () => page.viewTransform.fitToWindow ? page.viewTransform.showActualSize()
                                                      : page.viewTransform.fitToWindow = true)
         }
+    }
+
+    // The right-click menu: the page's own actions, so it shows and enables them as the toolbar does.
+    Components.ConvergentContextMenu {
+        id: imageMenu
+
+        actions: [
+            copyImageAction,
+            openFolderAction,
+            separatorAction,
+            rotateLeftAction,
+            rotateRightAction,
+            importSeparatorAction,
+            importAction
+        ]
+    }
+
+    // The menu's separators; declared inside it, they would replace its actions.
+    Kirigami.Action {
+        id: separatorAction
+
+        separator: true
+    }
+
+    Kirigami.Action {
+        id: importSeparatorAction
+
+        separator: true
+        visible: importAction.visible
     }
 
     Component {
