@@ -256,10 +256,33 @@ void AppManager::openCurrentImageFolder()
     {
         m_imageActions->openContainingFolder(image.toLocalFile());
     }
-    else if (m_libraryImageOnScreen.has_value() && !m_connection->localLibraryDir().isEmpty())
+    else if (m_libraryImageOnScreen.has_value())
     {
-        m_imageActions->openContainingFolder(
-            QDir(m_connection->localLibraryDir()).filePath(m_libraryImageOnScreen->storagePath));
+        openFolderOf(*m_libraryImageOnScreen);
+    }
+}
+
+void AppManager::copyLibraryImage(int row)
+{
+    if (const std::optional<server_client::Image> image = m_library->imageAt(row))
+    {
+        m_imageActions->copyLibraryImage(image->id, image->mimeType);
+    }
+}
+
+void AppManager::openLibraryImageFolder(int row)
+{
+    if (const std::optional<server_client::Image> image = m_library->imageAt(row))
+    {
+        openFolderOf(*image);
+    }
+}
+
+void AppManager::openFolderOf(const server_client::Image& image)
+{
+    if (!m_connection->localLibraryDir().isEmpty())
+    {
+        m_imageActions->openContainingFolder(QDir(m_connection->localLibraryDir()).filePath(image.storagePath));
     }
 }
 

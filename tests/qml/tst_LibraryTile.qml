@@ -5,7 +5,8 @@ import QtQuick
 import QtTest
 import io.github.oesusdevelopmentstudios.pictorio
 
-// A tile of the library grid: a click opens the image; with Ctrl and Shift it selects, as in Dolphin.
+// A tile of the library grid: a click opens the image; with Ctrl and Shift it selects, as in Dolphin; a
+// right-click asks for its menu.
 // The TestCase is invisible; what it tests is created in the visible root, where it can be clicked.
 Item {
     id: root
@@ -54,13 +55,19 @@ Item {
             signalName: "rangeSelected"
         }
 
-        function clickedTile(modifiers: int): LibraryTile {
+        SignalSpy {
+            id: menuAsked
+
+            signalName: "menuRequested"
+        }
+
+        function clickedTile(modifiers: int, button = Qt.LeftButton): LibraryTile {
             const tile = createTemporaryObject(tileComponent, root);
-            for (const spy of [opened, toggled, ranged]) {
+            for (const spy of [opened, toggled, ranged, menuAsked]) {
                 spy.clear();
                 spy.target = tile;
             }
-            mouseClick(tile, tile.width / 2, tile.height / 2, Qt.LeftButton, modifiers);
+            mouseClick(tile, tile.width / 2, tile.height / 2, button, modifiers);
             return tile;
         }
 
@@ -94,6 +101,14 @@ Item {
             compare(ranged.count, 1);
             compare(ranged.signalArguments[0][0], 4);
             compare(ranged.signalArguments[0][1], true);
+        }
+
+        function test_asksForItsMenuOnARightClick() {
+            clickedTile(Qt.NoModifier, Qt.RightButton);
+
+            compare(menuAsked.count, 1);
+            compare(menuAsked.signalArguments[0][0], 4);
+            compare(opened.count + toggled.count + ranged.count, 0);
         }
     }
 }

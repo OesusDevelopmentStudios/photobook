@@ -11,8 +11,9 @@ import org.kde.kirigami as Kirigami
 import org.kde.ki18n
 
 // One image in the library grid, its thumbnail cropped square. Hovered, it is highlighted and shows its
-// details; clicked, it opens; Ctrl+ and Shift+clicked, it is selected as in Dolphin. Kept light, as many are
-// made while scrolling: the details exist only while the tile is hovered.
+// details; clicked, it opens; Ctrl+ and Shift+clicked, it is selected as in Dolphin; right-clicked, it asks for
+// its menu. Kept light, as many are made while scrolling: the details exist only while the tile is hovered, and
+// the menu is the grid's.
 Item {
     id: tile
 
@@ -37,6 +38,7 @@ Item {
     signal openRequested(int row)
     signal selectionToggled(int row)                       // Ctrl+click
     signal rangeSelected(int row, bool addToSelection)  // Shift+click; with Ctrl, added to the selection
+    signal menuRequested(int row)                          // right-click
 
     HoverHandler {
         id: hover
@@ -61,6 +63,11 @@ Item {
     TapHandler {
         acceptedModifiers: Qt.ControlModifier | Qt.ShiftModifier
         onTapped: tile.rangeSelected(tile.index, true)
+    }
+
+    TapHandler {
+        acceptedButtons: Qt.RightButton
+        onTapped: tile.menuRequested(tile.index)
     }
 
     // As Breeze highlights a hovered or a selected item in a list

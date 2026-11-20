@@ -87,9 +87,13 @@ public:
     // The file on screen in the file manager, selected in its folder: a local file, or a library image when the
     // server runs on this computer
     Q_INVOKABLE void openCurrentImageFolder();
+    // As the two above, for an image of the library grid by its row, without opening it
+    Q_INVOKABLE void copyLibraryImage(int row);
+    Q_INVOKABLE void openLibraryImageFolder(int row);
 
 private:
-    void showLibraryImage(int row);  // from the server, in the viewer
+    void showLibraryImage(int row);                        // from the server, in the viewer
+    void openFolderOf(const server_client::Image& image);  // only when the server runs on this computer
 
     std::unique_ptr<settings::Settings> m_settings;
     std::unique_ptr<viewer::Viewer> m_viewer;

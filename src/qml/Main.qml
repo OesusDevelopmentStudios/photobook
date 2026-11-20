@@ -272,6 +272,7 @@ Kirigami.ApplicationWindow {
             bulkTagEditor: root.appManager.bulkTagEditor
             navigator: root.appManager.navigator
             connection: root.appManager.connection
+            imageActions: root.appManager.imageActions
             onOpenImageRequested: openImageDialog.open()
             onOpenFolderRequested: openFolderDialog.open()
             onServerPageRequested: root.showServerPage()
@@ -280,6 +281,8 @@ Kirigami.ApplicationWindow {
                 root.appManager.openLibraryImage(row);
                 root.showViewer();
             }
+            onImageCopyRequested: row => root.appManager.copyLibraryImage(row)
+            onImageFolderRequested: row => root.appManager.openLibraryImageFolder(row)
             Component.onCompleted: root.addUploadStatus(this)
         }
     }

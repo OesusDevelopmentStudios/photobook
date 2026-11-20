@@ -8,6 +8,7 @@ import QtQuick
 import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
+import org.kde.kirigamiaddons.components as Components
 import org.kde.ki18n
 
 // The images on the server: a sidebar with the search, and a grid of square thumbnails, newest first. More
@@ -20,12 +21,15 @@ Kirigami.Page {
     required property BulkTagEditor bulkTagEditor
     required property Navigator navigator
     required property Connection connection
+    required property ImageActions imageActions
 
     signal openImageRequested()
     signal openFolderRequested()
     signal serverPageRequested()
     signal uploadRequested()
     signal imageOpenRequested(int row)
+    signal imageCopyRequested(int row)
+    signal imageFolderRequested(int row)  // the image's, in the file manager
 
     readonly property int connectionState: connection.state
     readonly property bool loggedIn: connectionState === Connection.State.LoggedIn
@@ -122,6 +126,34 @@ Kirigami.Page {
         onTriggered: {
             page.libraryView.sidebarVisible = true;
             sidebar.focusSearch();
+        }
+    }
+
+    // A tile's right-click menu, one for the whole grid. It acts on that tile alone, whatever is selected.
+    Components.ConvergentContextMenu {
+        id: tileMenu
+
+        property int row: -1
+
+        Kirigami.Action {
+            icon.name: "document-open"
+            text: KI18n.i18nc("@action:inmenu", "Open")
+            onTriggered: page.imageOpenRequested(tileMenu.row)
+        }
+
+        Kirigami.Action {
+            icon.name: "edit-copy"
+            text: KI18n.i18nc("@action:inmenu", "Copy Image")
+            enabled: !page.imageActions.busy
+            onTriggered: page.imageCopyRequested(tileMenu.row)
+        }
+
+        // A library image's file is only reachable when the server runs on this computer.
+        Kirigami.Action {
+            icon.name: "document-open-folder"
+            text: KI18n.i18nc("@action:inmenu", "Open Containing Folder")
+            visible: page.connection.localLibraryDir.length > 0
+            onTriggered: page.imageFolderRequested(tileMenu.row)
         }
     }
 
@@ -259,6 +291,10 @@ Kirigami.Page {
                     onOpenRequested: row => page.imageOpenRequested(row)
                     onSelectionToggled: row => page.library.toggleSelected(row)
                     onRangeSelected: (row, addToSelection) => page.library.selectRange(row, addToSelection)
+                    onMenuRequested: row => {
+                        tileMenu.row = row;
+                        tileMenu.popup();
+                    }
                 }
 
                 footer: Item {
