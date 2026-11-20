@@ -270,13 +270,11 @@ Kirigami.Page {
             [{action: rotateLeftAction, labelled: false}, {action: rotateRightAction, labelled: false}],
             [{action: saveRotationAction, labelled: true}],
             [{action: librarySlideshowAction, labelled: true}, {action: folderSlideshowAction, labelled: true}],
-            [
-                {action: zoomOutAction, labelled: false},
-                {action: zoomInAction, labelled: false},
-                {action: fitAction, labelled: true},
-                {action: actualSizeAction, labelled: true},
-                {action: importAction, labelled: true}
-            ]
+            // The rest, each on its own except the zoom pair, from the left of the toolbar
+            [{action: zoomOutAction, labelled: false}, {action: zoomInAction, labelled: false}],
+            [{action: fitAction, labelled: true}],
+            [{action: actualSizeAction, labelled: true}],
+            [{action: importAction, labelled: true}]
         ]
         allActions: page.actions
         // A little to spare: Kirigami's buttons may differ from the probes by a few pixels, e.g. a menu arrow.

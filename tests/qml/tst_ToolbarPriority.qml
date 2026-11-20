@@ -6,8 +6,8 @@ import QtTest
 import org.kde.kirigami as Kirigami
 import io.github.oesusdevelopmentstudios.pictorio
 
-// A toolbar growing narrower, as the viewer's: first the labels collapse, then whole groups go to the overflow
-// menu, the least important first, the image navigation last.
+// A toolbar growing narrower, as the viewer's: first the labels collapse one at a time, then whole groups go to
+// the overflow menu, the least important first, the image navigation last.
 TestCase {
     id: testCase
 
@@ -101,56 +101,71 @@ TestCase {
 
     function test_showsTheLabelsWhileThereIsRoom() {
         const toolbar = priority();
-        toolbar.availableWidth = toolbar.neededWidth(0);
+        toolbar.availableWidth = toolbar.neededWidth(0, 0);
 
-        compare(toolbar.level, 0);
+        compare(toolbar.collapsedLabels, 0);
+        compare(toolbar.hiddenGroups, 0);
         compare(toolbar.displayHint(save), Kirigami.DisplayHint.NoPreference);
         compare(toolbar.displayHint(previous), Kirigami.DisplayHint.IconOnly);  // never with a label
     }
 
-    function test_collapsesTheLabelsBeforeHidingAnything() {
-        const toolbar = priority();
-        toolbar.availableWidth = toolbar.neededWidth(0) - 1;
+    // Fit's first, then the slideshow's, then Save Rotation's: the least important first. Nothing hidden yet.
+    function test_collapsesOneLabelAtATime_data() {
+        const label = Kirigami.DisplayHint.NoPreference;
+        const icon = Kirigami.DisplayHint.IconOnly;
+        return [
+            {tag: "fit", collapsed: 1, hints: [icon, icon, icon, icon, label, label, icon]},
+            {tag: "slideshow", collapsed: 2, hints: [icon, icon, icon, icon, label, icon, icon]},
+            {tag: "save", collapsed: 3, hints: [icon, icon, icon, icon, icon, icon, icon]}
+        ];
+    }
 
-        compare(toolbar.level, 1);
-        verify(hints(toolbar).every(hint => hint === Kirigami.DisplayHint.IconOnly));
+    function test_collapsesOneLabelAtATime(data) {
+        const toolbar = priority();
+        toolbar.availableWidth = toolbar.neededWidth(data.collapsed - 1, 0) - 1;
+
+        compare(toolbar.collapsedLabels, data.collapsed);
+        compare(toolbar.hiddenGroups, 0);
+        compare(hints(toolbar), data.hints);
     }
 
     function test_hidesTheLeastImportantFirst_data() {
-        const iconOnly = Kirigami.DisplayHint.IconOnly;
+        const icon = Kirigami.DisplayHint.IconOnly;
         const hidden = Kirigami.DisplayHint.AlwaysHide;
         return [
-            {tag: "the rest", level: 2, hints: [iconOnly, iconOnly, iconOnly, iconOnly, iconOnly, iconOnly, hidden]},
-            {tag: "slideshow", level: 3, hints: [iconOnly, iconOnly, iconOnly, iconOnly, iconOnly, hidden, hidden]},
-            {tag: "save", level: 4, hints: [iconOnly, iconOnly, iconOnly, iconOnly, hidden, hidden, hidden]},
-            {tag: "rotation, together", level: 5, hints: [iconOnly, iconOnly, hidden, hidden, hidden, hidden, hidden]},
-            {tag: "navigation, together", level: 6, hints: [hidden, hidden, hidden, hidden, hidden, hidden, hidden]}
+            {tag: "the rest", hidden: 1, hints: [icon, icon, icon, icon, icon, icon, hidden]},
+            {tag: "slideshow", hidden: 2, hints: [icon, icon, icon, icon, icon, hidden, hidden]},
+            {tag: "save", hidden: 3, hints: [icon, icon, icon, icon, hidden, hidden, hidden]},
+            {tag: "rotation, together", hidden: 4, hints: [icon, icon, hidden, hidden, hidden, hidden, hidden]},
+            {tag: "navigation, together", hidden: 5, hints: [hidden, hidden, hidden, hidden, hidden, hidden, hidden]}
         ];
     }
 
     function test_hidesTheLeastImportantFirst(data) {
         const toolbar = priority();
-        toolbar.availableWidth = toolbar.neededWidth(data.level - 1) - 1;
+        const allCollapsed = toolbar.collapseOrder.length;
+        toolbar.availableWidth = toolbar.neededWidth(allCollapsed, data.hidden - 1) - 1;
 
-        compare(toolbar.level, data.level);
+        compare(toolbar.collapsedLabels, allCollapsed);
+        compare(toolbar.hiddenGroups, data.hidden);
         compare(hints(toolbar), data.hints);
     }
 
     function test_needsNoRoomForWhatIsNotShown() {
         const toolbar = priority();
-        const withSave = toolbar.neededWidth(1);
+        const withSave = toolbar.neededWidth(3, 0);
 
         save.visible = false;
 
-        compare(toolbar.neededWidth(1), withSave - toolbar.spacing - toolbar.iconButtonWidth);
+        compare(toolbar.neededWidth(3, 0), withSave - toolbar.spacing - toolbar.iconButtonWidth);
     }
 
     // The settings are only ever in the overflow menu; the upload's indicator takes an icon's room.
     function test_countsActionsInNoGroup() {
         const toolbar = priority();
-        const withUpload = toolbar.neededWidth(1);
+        const withUpload = toolbar.neededWidth(3, 0);
         toolbar.allActions = [previous, next, slideshow, fit, save, rotateLeft, rotateRight, settings, upload];
 
-        compare(toolbar.neededWidth(1), withUpload + toolbar.spacing + toolbar.iconButtonWidth);
+        compare(toolbar.neededWidth(3, 0), withUpload + toolbar.spacing + toolbar.iconButtonWidth);
     }
 }
