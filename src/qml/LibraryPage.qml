@@ -116,8 +116,8 @@ Kirigami.Page {
 
     Kirigami.Action {
         shortcut: "Escape"
-        enabled: page.loggedIn && page.isCurrentPage && page.library.selectedCount > 0
-        onTriggered: page.library.clearSelection()
+        enabled: page.loggedIn && page.isCurrentPage && page.library.selecting
+        onTriggered: page.library.stopSelecting()
     }
 
     Kirigami.Action {
@@ -135,9 +135,11 @@ Kirigami.Page {
 
         property int row: -1
 
+        // While selecting, a click only selects; an image opens once done.
         Kirigami.Action {
             icon.name: "document-open"
             text: KI18n.i18nc("@action:inmenu", "Open")
+            visible: !page.library.selecting
             onTriggered: page.imageOpenRequested(tileMenu.row)
         }
 
@@ -214,8 +216,8 @@ Kirigami.Page {
 
             Layout.fillHeight: true
             Layout.preferredWidth: Kirigami.Units.gridUnit * 14
-            // Also while images are selected: the panel for their tags is there.
-            visible: page.libraryView.sidebarVisible || page.library.selectedCount > 0
+            // Also while selecting images: the panel for their tags is there.
+            visible: page.libraryView.sidebarVisible || page.library.selecting
             library: page.library
             libraryView: page.libraryView
             bulkTagEditor: page.bulkTagEditor
@@ -288,6 +290,7 @@ Kirigami.Page {
                     height: grid.cellHeight
                     thumbnailSize: grid.thumbnailSize
                     useLargeThumbnail: grid.largeThumbnails
+                    selecting: page.library.selecting
                     onOpenRequested: row => page.imageOpenRequested(row)
                     onSelectionToggled: row => page.library.toggleSelected(row)
                     onRangeSelected: (row, addToSelection) => page.library.selectRange(row, addToSelection)

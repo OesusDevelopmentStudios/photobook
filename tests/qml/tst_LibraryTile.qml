@@ -5,8 +5,8 @@ import QtQuick
 import QtTest
 import io.github.oesusdevelopmentstudios.pictorio
 
-// A tile of the library grid: a click opens the image; with Ctrl and Shift it selects, as in Dolphin; a
-// right-click asks for its menu.
+// A tile of the library grid: a click opens the image, or selects it while selecting; with Ctrl and Shift it
+// selects, as in Dolphin; a right-click asks for its menu.
 // The TestCase is invisible; what it tests is created in the visible root, where it can be clicked.
 Item {
     id: root
@@ -61,8 +61,8 @@ Item {
             signalName: "menuRequested"
         }
 
-        function clickedTile(modifiers: int, button = Qt.LeftButton): LibraryTile {
-            const tile = createTemporaryObject(tileComponent, root);
+        function clickedTile(modifiers: int, button = Qt.LeftButton, selecting = false): LibraryTile {
+            const tile = createTemporaryObject(tileComponent, root, {selecting: selecting});
             for (const spy of [opened, toggled, ranged, menuAsked]) {
                 spy.clear();
                 spy.target = tile;
@@ -77,6 +77,15 @@ Item {
             compare(opened.count, 1);
             compare(opened.signalArguments[0][0], 4);
             compare(toggled.count + ranged.count, 0);
+        }
+
+        // Choosing images for their tags: no Ctrl needed
+        function test_togglesOnAClickWhileSelecting() {
+            clickedTile(Qt.NoModifier, Qt.LeftButton, true);
+
+            compare(toggled.count, 1);
+            compare(toggled.signalArguments[0][0], 4);
+            compare(opened.count + ranged.count, 0);
         }
 
         function test_togglesWithCtrl() {

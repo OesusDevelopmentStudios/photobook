@@ -32,6 +32,7 @@ class Library : public QAbstractListModel
     Q_PROPERTY(int count READ count NOTIFY countChanged)
     Q_PROPERTY(int totalCount READ totalCount NOTIFY totalCountChanged)
     Q_PROPERTY(int selectedCount READ selectedCount NOTIFY selectionChanged)
+    Q_PROPERTY(bool selecting READ isSelecting NOTIFY selectingChanged)
 
 public:
     enum class Order
@@ -80,9 +81,13 @@ public:
     // The image with the same id gets this one's data, e.g. after its tags changed on the server.
     void replaceImage(const server_client::Image& image);
 
-    // Selecting images, as in Dolphin. The selection is kept by image, so it stays while pages load; a new
-    // search empties it.
-    Q_INVOKABLE void toggleSelected(int row);  // Ctrl+click; also where a range starts
+    // Selecting images for changing their tags at once. There is a selection only while selecting: selecting an
+    // image starts it, stopping empties the selection, and so does logging out. The selection is kept by image,
+    // so it stays while pages load; a new search empties it and goes on selecting.
+    Q_INVOKABLE void startSelecting();
+    Q_INVOKABLE void stopSelecting();
+    bool isSelecting() const;
+    Q_INVOKABLE void toggleSelected(int row);  // a click while selecting, or Ctrl+click; also where a range starts
     // Shift+click: the images from where the last range started to this one; added to the selection, or
     // instead of it.
     Q_INVOKABLE void selectRange(int row, bool addToSelection);
@@ -105,6 +110,7 @@ Q_SIGNALS:
     void countChanged();
     void totalCountChanged();
     void selectionChanged();
+    void selectingChanged();
 
 private:
     bool isLoggedIn() const;
@@ -112,6 +118,7 @@ private:
     void loadTotalCount();
     void setTotalCount(int totalCount);
     void setSelection(const QSet<int>& imageIds);
+    void setSelecting(bool selecting);
     void addPage(const server_client::ImagePage& page);
     void clearImages();
     void setLoading(bool loading);
@@ -132,6 +139,7 @@ private:
     int m_totalCount = -1;
     QSet<int> m_selectedImageIds;
     int m_rangeStartRow = -1;  // none yet
+    bool m_selecting = false;
 };
 
 }  // namespace pictorio::library

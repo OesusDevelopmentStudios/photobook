@@ -66,6 +66,7 @@ void Library::reload()
     setLoading(false);
     if (!isLoggedIn())
     {
+        setSelecting(false);
         return;
     }
 
@@ -157,6 +158,22 @@ void Library::replaceImage(const server_client::Image& image)
     Q_EMIT dataChanged(changed, changed);
 }
 
+void Library::startSelecting()
+{
+    setSelecting(true);
+}
+
+void Library::stopSelecting()
+{
+    clearSelection();
+    setSelecting(false);
+}
+
+bool Library::isSelecting() const
+{
+    return m_selecting;
+}
+
 void Library::toggleSelected(int row)
 {
     const std::optional<server_client::Image> image = imageAt(row);
@@ -172,6 +189,7 @@ void Library::toggleSelected(int row)
     }
 
     m_rangeStartRow = row;
+    setSelecting(true);
     setSelection(selection);
 }
 
@@ -190,6 +208,7 @@ void Library::selectRange(int row, bool addToSelection)
     }
 
     m_rangeStartRow = start;
+    setSelecting(true);
     setSelection(selection);
 }
 
@@ -256,6 +275,15 @@ void Library::setSelection(const QSet<int>& imageIds)
     }
 
     Q_EMIT selectionChanged();
+}
+
+void Library::setSelecting(bool selecting)
+{
+    if (selecting != m_selecting)
+    {
+        m_selecting = selecting;
+        Q_EMIT selectingChanged();
+    }
 }
 
 int Library::rowCount(const QModelIndex& parent) const

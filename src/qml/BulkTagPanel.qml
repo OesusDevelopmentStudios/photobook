@@ -35,14 +35,23 @@ ColumnLayout {
 
         Controls.ToolButton {
             icon.name: "edit-select-none"
-            text: KI18n.i18nc("@action:button", "Clear Selection (Esc)")
+            text: KI18n.i18nc("@action:button", "Clear Selection")
             display: Controls.AbstractButton.IconOnly
+            enabled: panel.editor.imageCount > 0
             onClicked: panel.library.clearSelection()
 
             Controls.ToolTip.text: text
             Controls.ToolTip.visible: hovered
             Controls.ToolTip.delay: Kirigami.Units.toolTipDelay
         }
+    }
+
+    Controls.Label {
+        Layout.fillWidth: true
+        visible: panel.editor.imageCount === 0
+        text: KI18n.i18nc("@info", "Click images to select them. Shift+click selects a range.")
+        wrapMode: Text.Wrap
+        color: Kirigami.Theme.disabledTextColor
     }
 
     Controls.ScrollView {
@@ -121,6 +130,7 @@ ColumnLayout {
             icon.name: "dialog-ok-apply"
             text: KI18n.i18ncp("@action:button", "Apply to %1 Image", "Apply to %1 Images", panel.editor.imageCount)
             enabled: panel.editor.hasChanges && !panel.editor.applying && !panel.tooMany
+                     && panel.editor.imageCount > 0
             onClicked: panel.editor.apply()
         }
 

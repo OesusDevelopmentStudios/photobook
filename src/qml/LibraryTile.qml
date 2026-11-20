@@ -11,8 +11,8 @@ import org.kde.kirigami as Kirigami
 import org.kde.ki18n
 
 // One image in the library grid, its thumbnail cropped square. Hovered, it is highlighted and shows its
-// details; clicked, it opens; Ctrl+ and Shift+clicked, it is selected as in Dolphin; right-clicked, it asks for
-// its menu. Kept light, as many are made while scrolling: the details exist only while the tile is hovered, and
+// details; clicked, it opens, or while selecting it is selected or not; Ctrl+ and Shift+clicked, it is selected
+// as in Dolphin; right-clicked, it asks for its menu. Kept light, as many are made while scrolling: the details exist only while the tile is hovered, and
 // the menu is the grid's.
 Item {
     id: tile
@@ -25,6 +25,7 @@ Item {
     required property int imageWidth
     required property int imageHeight
     required property bool selected
+    property bool selecting: false  // images are being chosen for changing their tags
 
     // The size the grid's tiles were chosen at. The tile may stretch a little to fill its row, but the
     // thumbnail is decoded at this size, so stretching the window does not load every thumbnail again.
@@ -36,7 +37,7 @@ Item {
     readonly property real padding: Kirigami.Units.smallSpacing
 
     signal openRequested(int row)
-    signal selectionToggled(int row)                       // Ctrl+click
+    signal selectionToggled(int row)                       // Ctrl+click, or a click while selecting
     signal rangeSelected(int row, bool addToSelection)  // Shift+click; with Ctrl, added to the selection
     signal menuRequested(int row)                          // right-click
 
@@ -47,7 +48,7 @@ Item {
     // Taps, not the start of a scroll: the grid takes over a drag. Each handler takes only its modifiers.
     TapHandler {
         acceptedModifiers: Qt.NoModifier
-        onTapped: tile.openRequested(tile.index)
+        onTapped: tile.selecting ? tile.selectionToggled(tile.index) : tile.openRequested(tile.index)
     }
 
     TapHandler {

@@ -7,8 +7,8 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.ki18n
 
-// The search and the choices of how its results are shown, at the left of the library page. While images are
-// selected, the panel for their tags takes the place of those choices.
+// The search and the choices of how its results are shown, at the left of the library page. "Edit Tags" at the
+// bottom starts selecting images: then the panel for their tags takes the place of those choices, until "Done".
 Rectangle {
     id: sidebar
 
@@ -16,7 +16,7 @@ Rectangle {
     required property LibraryView libraryView
     required property BulkTagEditor bulkTagEditor
 
-    readonly property bool imagesSelected: library.selectedCount > 0
+    readonly property bool selecting: library.selecting
 
     // The page resizes the tiles, keeping its place in the grid.
     signal tileSizeRequested(int gridUnits)
@@ -71,7 +71,7 @@ Rectangle {
 
         ColumnLayout {
             Layout.fillWidth: true
-            visible: !sidebar.imagesSelected
+            visible: !sidebar.selecting
             spacing: Kirigami.Units.smallSpacing
 
             Kirigami.Heading {
@@ -155,14 +155,29 @@ Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.topMargin: Kirigami.Units.largeSpacing
-            visible: sidebar.imagesSelected
+            visible: sidebar.selecting
             editor: sidebar.bulkTagEditor
             library: sidebar.library
         }
 
         Item {
             Layout.fillHeight: true
-            visible: !sidebar.imagesSelected
+            visible: !sidebar.selecting
+        }
+
+        Controls.Button {
+            Layout.fillWidth: true
+            Layout.topMargin: Kirigami.Units.largeSpacing
+            icon.name: sidebar.selecting ? "dialog-ok" : "tag-edit"
+            text: sidebar.selecting ? KI18n.i18nc("@action:button Stop selecting images for their tags", "Done")
+                                    : KI18n.i18nc("@action:button", "Edit Tags")
+            onClicked: sidebar.selecting ? sidebar.library.stopSelecting() : sidebar.library.startSelecting()
+
+            Controls.ToolTip.text: sidebar.selecting
+                                   ? KI18n.i18nc("@info:tooltip", "Stop selecting images (Esc)")
+                                   : KI18n.i18nc("@info:tooltip", "Select images to change their tags at once")
+            Controls.ToolTip.visible: hovered
+            Controls.ToolTip.delay: Kirigami.Units.toolTipDelay
         }
     }
 }

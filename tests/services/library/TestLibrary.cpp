@@ -80,6 +80,10 @@ private Q_SLOTS:
     void keepsTheSelectionWhilePagesLoad();
     void emptiesTheSelectionForANewSearch();
     void tellsTheTilesWhoseSelectionChanged();
+    void startsAndStopsSelecting();
+    void startsSelectingWhenAnImageIsSelected();
+    void goesOnSelectingAfterANewSearch();
+    void stopsSelectingWhenLoggedOut();
 
 private:
     void logIn();
@@ -470,6 +474,64 @@ void TestLibrary::tellsTheTilesWhoseSelectionChanged()
     QCOMPARE(dataChanged.first().at(0).toModelIndex().row(), 1);
     QCOMPARE(dataChanged.first().at(1).toModelIndex().row(), 2);
     QCOMPARE(dataChanged.first().at(2).value<QList<int>>(), QList<int>{Library::SelectedRole});
+}
+
+// The sidebar's Edit Tags, then Done: the selection goes with it.
+void TestLibrary::startsAndStopsSelecting()
+{
+    logIn();
+    QTRY_COMPARE(m_library->count(), 2);
+    QSignalSpy selectingChanged(m_library.get(), &Library::selectingChanged);
+
+    m_library->startSelecting();
+    QVERIFY(m_library->isSelecting());
+    m_library->toggleSelected(0);
+
+    m_library->stopSelecting();
+
+    QVERIFY(!m_library->isSelecting());
+    QCOMPARE(m_library->selectedCount(), 0);
+    QCOMPARE(selectingChanged.count(), 2);
+}
+
+// Ctrl+click or Shift+click outside the mode: there is no selection without it.
+void TestLibrary::startsSelectingWhenAnImageIsSelected()
+{
+    logIn();
+    QTRY_COMPARE(m_library->count(), 2);
+
+    m_library->toggleSelected(0);
+    QVERIFY(m_library->isSelecting());
+
+    m_library->stopSelecting();
+    m_library->selectRange(1, false);
+
+    QVERIFY(m_library->isSelecting());
+    QCOMPARE(m_library->selectedImageIds(), QList<int>{2});
+}
+
+void TestLibrary::goesOnSelectingAfterANewSearch()
+{
+    logIn();
+    QTRY_COMPARE(m_library->count(), 2);
+    m_library->toggleSelected(0);
+
+    m_library->search(QStringLiteral("category:photo"));
+
+    QVERIFY(m_library->isSelecting());
+    QCOMPARE(m_library->selectedCount(), 0);
+}
+
+void TestLibrary::stopsSelectingWhenLoggedOut()
+{
+    logIn();
+    QTRY_COMPARE(m_library->count(), 2);
+    m_library->toggleSelected(0);
+
+    m_connection->logOut();
+
+    QVERIFY(!m_library->isSelecting());
+    QCOMPARE(m_library->selectedCount(), 0);
 }
 
 }  // namespace pictorio::library
