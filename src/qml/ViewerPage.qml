@@ -62,32 +62,42 @@ Kirigami.Page {
 
     actions: [
         Kirigami.Action {
+            id: previousAction
+
             icon.name: "go-previous"
             text: KI18n.i18nc("@action:intoolbar Previous image in the folder or the library", "Previous")
-            displayHint: Kirigami.DisplayHint.IconOnly
+            displayHint: toolbarPriority.displayHint(previousAction)
             shortcut: "Left"
             enabled: page.canStep && page.navigator.canGoToPrevious
             onTriggered: page.navigator.goToPrevious()
         },
         Kirigami.Action {
+            id: nextAction
+
             icon.name: "go-next"
             text: KI18n.i18nc("@action:intoolbar Next image in the folder or the library", "Next")
-            displayHint: Kirigami.DisplayHint.IconOnly
+            displayHint: toolbarPriority.displayHint(nextAction)
             shortcut: "Right"
             enabled: page.canStep && page.navigator.canGoToNext
             onTriggered: page.navigator.goToNext()
         },
         // Library images play in the library's order, so there is no order to choose.
         Kirigami.Action {
+            id: librarySlideshowAction
+
             icon.name: "media-playback-start"
             text: KI18n.i18nc("@action:intoolbar", "Slideshow")
+            displayHint: toolbarPriority.displayHint(librarySlideshowAction)
             visible: page.navigator.browsingLibrary
             enabled: page.canStartSlideshow
             onTriggered: page.slideshow.start(page.slideshow.order)
         },
         Kirigami.Action {
+            id: folderSlideshowAction
+
             icon.name: "media-playback-start"
             text: KI18n.i18nc("@action:intoolbar", "Slideshow")
+            displayHint: toolbarPriority.displayHint(folderSlideshowAction)
             visible: !page.navigator.browsingLibrary
             enabled: page.canStartSlideshow
 
@@ -115,42 +125,54 @@ Kirigami.Page {
             }
         },
         Kirigami.Action {
+            id: zoomOutAction
+
             icon.name: "zoom-out"
             text: KI18n.i18nc("@action:intoolbar", "Zoom Out")
-            displayHint: Kirigami.DisplayHint.IconOnly
+            displayHint: toolbarPriority.displayHint(zoomOutAction)
             shortcut: StandardKey.ZoomOut
             enabled: page.viewTransform.canZoomOut
             onTriggered: page.zoomAroundCenter(() => page.viewTransform.zoomOut())
         },
         Kirigami.Action {
+            id: zoomInAction
+
             icon.name: "zoom-in"
             text: KI18n.i18nc("@action:intoolbar", "Zoom In")
-            displayHint: Kirigami.DisplayHint.IconOnly
+            displayHint: toolbarPriority.displayHint(zoomInAction)
             shortcut: StandardKey.ZoomIn
             enabled: page.viewTransform.canZoomIn
             onTriggered: page.zoomAroundCenter(() => page.viewTransform.zoomIn())
         },
         Kirigami.Action {
+            id: fitAction
+
             icon.name: "zoom-fit-best"
             text: KI18n.i18nc("@action:intoolbar Zoom so that the whole image is visible", "Fit")
+            displayHint: toolbarPriority.displayHint(fitAction)
             shortcut: "F"
             enabled: page.viewer.hasImage && !page.viewTransform.fitToWindow
             onTriggered: page.viewTransform.fitToWindow = true
         },
         Kirigami.Action {
+            id: actualSizeAction
+
             icon.name: "zoom-original"
             text: KI18n.i18nc("@action:intoolbar Zoom to 100 %", "Actual Size")
+            displayHint: toolbarPriority.displayHint(actualSizeAction)
             shortcut: "Ctrl+0"
             enabled: page.viewer.hasImage && page.viewTransform.scale !== 1
             onTriggered: page.zoomAroundCenter(() => page.viewTransform.showActualSize())
         },
         // While the image is turned, if its type can be saved turned without losing quality; the server
-        // follows the same rule for library images. Kept in the toolbar: it stands for a change not saved yet.
-        // Left of the rotate buttons, so that they stay where they are when it appears.
+        // follows the same rule for library images. Left of the rotate buttons, so that they stay where they are
+        // when it appears.
         Kirigami.Action {
+            id: saveRotationAction
+
             icon.name: "document-save"
             text: KI18n.i18nc("@action:intoolbar", "Save Rotation")
-            displayHint: Kirigami.DisplayHint.KeepVisible
+            displayHint: toolbarPriority.displayHint(saveRotationAction)
             shortcut: StandardKey.Save
             visible: page.viewer.hasImage && page.viewTransform.rotationAngle !== 0
                      && page.imageActions.canSaveRotation(page.viewer.mimeType)
@@ -162,7 +184,7 @@ Kirigami.Page {
 
             icon.name: "object-rotate-left"
             text: KI18n.i18nc("@action:intoolbar", "Rotate Left")
-            displayHint: Kirigami.DisplayHint.IconOnly
+            displayHint: toolbarPriority.displayHint(rotateLeftAction)
             shortcut: "Ctrl+L"
             enabled: page.viewer.hasImage
             onTriggered: page.viewTransform.rotateCounterclockwise()
@@ -172,7 +194,7 @@ Kirigami.Page {
 
             icon.name: "object-rotate-right"
             text: KI18n.i18nc("@action:intoolbar", "Rotate Right")
-            displayHint: Kirigami.DisplayHint.IconOnly
+            displayHint: toolbarPriority.displayHint(rotateRightAction)
             shortcut: "Ctrl+R"
             enabled: page.viewer.hasImage
             onTriggered: page.viewTransform.rotateClockwise()
@@ -204,6 +226,7 @@ Kirigami.Page {
 
             icon.name: "cloud-upload"
             text: KI18n.i18nc("@action:intoolbar", "Import to Server")
+            displayHint: toolbarPriority.displayHint(importAction)
             visible: page.connection.state === Connection.State.LoggedIn && page.viewer.hasImage
                      && !page.viewer.fromLibrary
             enabled: !page.uploader.running
@@ -236,6 +259,79 @@ Kirigami.Page {
             onTriggered: page.serverPageRequested()
         }
     ]
+
+    // A narrow window first collapses the toolbar's labels, then moves whole groups into the overflow menu, the
+    // least important first: the image navigation stays longest.
+    ToolbarPriority {
+        id: toolbarPriority
+
+        groups: [
+            [{action: previousAction, labelled: false}, {action: nextAction, labelled: false}],
+            [{action: rotateLeftAction, labelled: false}, {action: rotateRightAction, labelled: false}],
+            [{action: saveRotationAction, labelled: true}],
+            [{action: librarySlideshowAction, labelled: true}, {action: folderSlideshowAction, labelled: true}],
+            [
+                {action: zoomOutAction, labelled: false},
+                {action: zoomInAction, labelled: false},
+                {action: fitAction, labelled: true},
+                {action: actualSizeAction, labelled: true},
+                {action: importAction, labelled: true}
+            ]
+        ]
+        allActions: page.actions
+        // A little to spare: Kirigami's buttons may differ from the probes by a few pixels, e.g. a menu arrow.
+        availableWidth: page.toolbarWidth - Kirigami.Units.gridUnit
+        iconButtonWidth: iconButtonProbe.implicitWidth
+        labelOverhead: labelledButtonProbe.implicitWidth - probeMetrics.advanceWidth(labelledButtonProbe.text)
+        font: labelledButtonProbe.font
+    }
+
+    // The width Kirigami's page header gives its toolbar: all that the title leaves. The header is Kirigami's
+    // own, so its toolbar is found among its children.
+    readonly property real toolbarWidth: {
+        const toolBar = findToolBar(globalToolBarItem);
+        return toolBar ? toolBar.width : width;
+    }
+
+    function findToolBar(item: Item): Kirigami.ActionToolBar {
+        if (!item) {
+            return null;
+        }
+        if (item instanceof Kirigami.ActionToolBar) {
+            return item as Kirigami.ActionToolBar;
+        }
+        for (const child of item.children) {
+            const found = findToolBar(child);
+            if (found) {
+                return found;
+            }
+        }
+        return null;
+    }
+
+    // Buttons as Kirigami's toolbar makes them, to measure: flat tool buttons, with an icon only or with a label
+    Controls.ToolButton {
+        id: iconButtonProbe
+
+        visible: false
+        display: Controls.AbstractButton.IconOnly
+        icon.name: "zoom-in"
+    }
+
+    Controls.ToolButton {
+        id: labelledButtonProbe
+
+        visible: false
+        display: Controls.AbstractButton.TextBesideIcon
+        icon.name: "zoom-fit-best"
+        text: "Fit"
+    }
+
+    FontMetrics {
+        id: probeMetrics
+
+        font: labelledButtonProbe.font
+    }
 
     // Runs zoomAction while keeping the image point under viewportPoint where it is on screen.
     function zoomAround(viewportPoint: point, zoomAction: var) {

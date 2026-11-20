@@ -58,6 +58,7 @@ set(qmlFiles
     qml/WelcomePage.qml
     qml/ConnectPage.qml
     qml/LocalServerPage.qml
+    qml/ToolbarPriority.qml
     qml/SettingsPage.qml
     qml/HiddenFilterSettings.qml
     qml/LibraryPage.qml
