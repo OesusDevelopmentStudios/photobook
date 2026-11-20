@@ -30,6 +30,7 @@ Kirigami.Page {
     signal imageOpenRequested(int row)
     signal imageCopyRequested(int row)
     signal imageFolderRequested(int row)  // the image's, in the file manager
+    signal stopSelectingRequested()       // Done or Esc; the window asks first about tag changes not applied
 
     readonly property int connectionState: connection.state
     readonly property bool loggedIn: connectionState === Connection.State.LoggedIn
@@ -117,7 +118,7 @@ Kirigami.Page {
     Kirigami.Action {
         shortcut: "Escape"
         enabled: page.loggedIn && page.isCurrentPage && page.library.selecting
-        onTriggered: page.library.stopSelecting()
+        onTriggered: page.stopSelectingRequested()
     }
 
     Kirigami.Action {
@@ -222,6 +223,7 @@ Kirigami.Page {
             libraryView: page.libraryView
             bulkTagEditor: page.bulkTagEditor
             onTileSizeRequested: gridUnits => page.resizeTiles(() => page.libraryView.tileSize = gridUnits)
+            onStopSelectingRequested: page.stopSelectingRequested()
         }
 
         Kirigami.Separator {

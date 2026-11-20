@@ -63,8 +63,9 @@ Kirigami.ApplicationWindow {
         pageStack.replace(libraryPage);
     }
 
-    // Unsaved changes, to an image's tags or to the hidden filters, would be lost on leaving their page: the user
-    // saves or drops them first, or stays. The editor is the tag editor or the hidden filter editor.
+    // Unsaved changes, to an image's tags or to the hidden filters, would be lost on leaving their page, and tag
+    // changes for many images on leaving the selection: the user saves (applies) or drops them first, or stays.
+    // The editor is the tag editor, the hidden filter editor or the bulk tag editor.
     property var editorToSettle: null
     property var actionAfterChanges: null
 
@@ -151,16 +152,43 @@ Kirigami.ApplicationWindow {
         id: unsavedChangesDialog
 
         readonly property bool filters: root.editorToSettle === root.appManager.hiddenFilterEditor
+        readonly property bool bulk: root.editorToSettle === root.appManager.bulkTagEditor
+        // With no image selected, bulk changes have nothing to apply to.
+        readonly property bool canApply: bulk && root.appManager.bulkTagEditor.imageCount > 0
 
         title: filters ? KI18n.i18nc("@title:window", "Unsaved Hidden Filters")
-                       : KI18n.i18nc("@title:window", "Unsaved Tags")
-        subtitle: filters ? KI18n.i18nc("@info", "Save the changes to your hidden filters?")
-                          : KI18n.i18nc("@info", "Save the changes to this image's tags?")
-        standardButtons: Kirigami.Dialog.Save | Kirigami.Dialog.Discard | Kirigami.Dialog.Cancel
+                       : bulk ? KI18n.i18nc("@title:window", "Tag Changes Not Applied")
+                              : KI18n.i18nc("@title:window", "Unsaved Tags")
+        subtitle: {
+            if (filters) {
+                return KI18n.i18nc("@info", "Save the changes to your hidden filters?");
+            }
+
+            if (!bulk) {
+                return KI18n.i18nc("@info", "Save the changes to this image's tags?");
+            }
+
+            return canApply ? KI18n.i18ncp("@info", "Apply the tag changes to the selected image?",
+                                           "Apply the tag changes to the %1 selected images?",
+                                           root.appManager.bulkTagEditor.imageCount)
+                            : KI18n.i18nc("@info", "No image is selected to apply the tag changes to.");
+        }
+        standardButtons: {
+            const keep = bulk ? (canApply ? Kirigami.Dialog.Apply : Kirigami.Dialog.NoButton) : Kirigami.Dialog.Save;
+            return keep | Kirigami.Dialog.Discard | Kirigami.Dialog.Cancel;
+        }
 
         onAccepted: root.editorToSettle.save()  // the action follows once saved
+        onApplied: {
+            root.editorToSettle.apply();  // the action follows once applied
+            close();
+        }
         onDiscarded: {
-            root.editorToSettle.cancel();
+            if (bulk) {
+                root.editorToSettle.clear();
+            } else {
+                root.editorToSettle.cancel();
+            }
             close();
             root.runActionAfterChanges();
         }
@@ -180,8 +208,13 @@ Kirigami.ApplicationWindow {
     // Saved: on with what the user wanted. Refused: the user stays, with the reason shown by the editor's page.
     Connections {
         target: root.editorToSettle
+        ignoreUnknownSignals: true  // the bulk tag editor applies; the others save
 
         function onSaved() {
+            root.runActionAfterChanges();
+        }
+
+        function onApplied() {
             root.runActionAfterChanges();
         }
 
@@ -283,6 +316,8 @@ Kirigami.ApplicationWindow {
             }
             onImageCopyRequested: row => root.appManager.copyLibraryImage(row)
             onImageFolderRequested: row => root.appManager.openLibraryImageFolder(row)
+            onStopSelectingRequested: root.afterChangesSettled(root.appManager.bulkTagEditor,
+                                                               () => root.appManager.library.stopSelecting())
             Component.onCompleted: root.addUploadStatus(this)
         }
     }

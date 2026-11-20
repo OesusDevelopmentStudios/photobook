@@ -20,6 +20,7 @@ Rectangle {
 
     // The page resizes the tiles, keeping its place in the grid.
     signal tileSizeRequested(int gridUnits)
+    signal stopSelectingRequested()  // "Done"; the window asks first about tag changes not applied
 
     function focusSearch() {
         searchField.forceActiveFocus();
@@ -171,7 +172,7 @@ Rectangle {
             icon.name: sidebar.selecting ? "dialog-ok" : "tag-edit"
             text: sidebar.selecting ? KI18n.i18nc("@action:button Stop selecting images for their tags", "Done")
                                     : KI18n.i18nc("@action:button", "Edit Tags")
-            onClicked: sidebar.selecting ? sidebar.library.stopSelecting() : sidebar.library.startSelecting()
+            onClicked: sidebar.selecting ? sidebar.stopSelectingRequested() : sidebar.library.startSelecting()
 
             Controls.ToolTip.text: sidebar.selecting
                                    ? KI18n.i18nc("@info:tooltip", "Stop selecting images (Esc)")
