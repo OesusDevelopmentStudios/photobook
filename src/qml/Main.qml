@@ -80,6 +80,12 @@ Kirigami.ApplicationWindow {
         unsavedChangesDialog.open();
     }
 
+    // Leaving the library, e.g. for the settings: tag changes not applied to the selected images are settled first.
+    // The selection stays, for coming back.
+    function leaveLibrary(action) {
+        afterChangesSettled(appManager.bulkTagEditor, action);
+    }
+
     // On top of the current page, so going back returns to it; also while an upload runs.
     function showUploadPage() {
         pageStack.push(uploadPage);
@@ -101,7 +107,7 @@ Kirigami.ApplicationWindow {
             progress: uploadStatusAction.uploader.filesInRun > 0
                       ? uploadStatusAction.uploader.filesDoneInRun / uploadStatusAction.uploader.filesInRun : 0
         }
-        onTriggered: root.showUploadPage()
+        onTriggered: root.leaveLibrary(root.showUploadPage)  // on another page, nothing to settle
     }
 
     function addUploadStatus(page: Kirigami.Page) {
@@ -117,7 +123,8 @@ Kirigami.ApplicationWindow {
 
     // Unsaved changes first; once they are settled, closing again comes back here for the next, or a running upload.
     onClosing: close => {
-        const unsaved = [appManager.tagEditor, appManager.hiddenFilterEditor].find(editor => editor.hasChanges);
+        const unsaved = [appManager.tagEditor, appManager.hiddenFilterEditor, appManager.bulkTagEditor].find(
+            editor => editor.hasChanges);
         if (unsaved) {
             close.accepted = false;
             afterChangesSettled(unsaved, () => root.close());
@@ -306,10 +313,10 @@ Kirigami.ApplicationWindow {
             navigator: root.appManager.navigator
             connection: root.appManager.connection
             imageActions: root.appManager.imageActions
-            onOpenImageRequested: openImageDialog.open()
-            onOpenFolderRequested: openFolderDialog.open()
-            onServerPageRequested: root.showServerPage()
-            onUploadRequested: root.showUploadPage()
+            onOpenImageRequested: root.leaveLibrary(() => openImageDialog.open())
+            onOpenFolderRequested: root.leaveLibrary(() => openFolderDialog.open())
+            onServerPageRequested: root.leaveLibrary(root.showServerPage)
+            onUploadRequested: root.leaveLibrary(root.showUploadPage)
             onImageOpenRequested: row => {
                 root.appManager.openLibraryImage(row);
                 root.showViewer();
