@@ -27,13 +27,15 @@ Kirigami.ApplicationWindow {
     pageStack.globalToolBar.style: appManager.slideshow.running ? Kirigami.ApplicationHeaderStyle.None
                                                                 : Kirigami.ApplicationHeaderStyle.Auto
 
-    // Started with an image or a folder: the viewer. Without: the library if a server login is remembered,
-    // otherwise the welcome page.
+    // Started with an image or a folder: the viewer. Without: the library while the kept login is restored,
+    // otherwise the welcome page. Restoring has begun by now; if nothing was kept, the welcome page follows.
     pageStack.initialPage: {
         if (openedAtStart) {
             return viewerPage;
         }
-        return appManager.connection.state === Connection.State.NoServer ? welcomePage : libraryPage;
+        const state = appManager.connection.state;
+        return state === Connection.State.RestoringLogin || state === Connection.State.LoggedIn ? libraryPage
+                                                                                               : welcomePage;
     }
 
     // Back only: going forward again is a click on the same image or page.
@@ -84,6 +86,12 @@ Kirigami.ApplicationWindow {
     // The selection stays, for coming back.
     function leaveLibrary(action) {
         afterChangesSettled(appManager.bulkTagEditor, action);
+    }
+
+    // Without a login: the welcome page alone, to choose a server again
+    function showWelcome() {
+        pageStack.clear();
+        pageStack.push(welcomePage);
     }
 
     // On top of the current page, so going back returns to it; also while an upload runs.
@@ -298,8 +306,21 @@ Kirigami.ApplicationWindow {
             onOpenImageRequested: openImageDialog.open()
             onOpenFolderRequested: openFolderDialog.open()
             onServerPageRequested: root.showServerPage()
+            onLocalServerRequested: root.pageStack.push(localServerPage)
             onLibraryRequested: root.showLibrary()
             Component.onCompleted: root.addUploadStatus(this)
+        }
+    }
+
+    Component {
+        id: localServerPage
+
+        // The connect page checks the local address at once; the user logs in there.
+        LocalServerPage {
+            onConnectRequested: address => {
+                root.appManager.connection.checkServer(address);
+                root.pageStack.push(connectPage);
+            }
         }
     }
 
@@ -381,18 +402,19 @@ Kirigami.ApplicationWindow {
         }
     }
 
-    // Logging in leads from the connect page to the library; logging out turns the settings page into the
-    // connect page.
+    // Logging in leads from the connect page to the library. Logging out, or a kept login the server refuses
+    // (or none kept), leads to the welcome page. A server that does not answer keeps the library, to try again.
     Connections {
         target: root.appManager.connection
 
         function onStateChanged() {
             const currentPage = root.pageStack.currentItem;
-            const loggedIn = root.appManager.connection.state === Connection.State.LoggedIn;
-            if (loggedIn && currentPage instanceof ConnectPage) {
+            const state = root.appManager.connection.state;
+            const withoutLogin = state === Connection.State.ServerFound || state === Connection.State.NoServer;
+            if (state === Connection.State.LoggedIn && currentPage instanceof ConnectPage) {
                 root.showLibrary();
-            } else if (!loggedIn && currentPage instanceof SettingsPage) {
-                root.pageStack.replace(connectPage);
+            } else if (withoutLogin && (currentPage instanceof SettingsPage || currentPage instanceof LibraryPage)) {
+                root.showWelcome();
             }
         }
     }

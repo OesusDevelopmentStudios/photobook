@@ -57,6 +57,7 @@ set(qmlFiles
     qml/SlideshowControls.qml
     qml/WelcomePage.qml
     qml/ConnectPage.qml
+    qml/LocalServerPage.qml
     qml/SettingsPage.qml
     qml/HiddenFilterSettings.qml
     qml/LibraryPage.qml

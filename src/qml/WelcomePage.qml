@@ -7,7 +7,8 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.ki18n
 
-// Shown when the app starts without an image: open an image or a folder, or connect to a server.
+// Shown when the app starts without an image: open an image or a folder, or connect to a server, one
+// elsewhere or one to set up on this computer.
 Kirigami.Page {
     id: page
 
@@ -16,6 +17,7 @@ Kirigami.Page {
     signal openImageRequested()
     signal openFolderRequested()
     signal serverPageRequested()
+    signal localServerRequested()
     signal libraryRequested()
 
     readonly property bool loggedIn: connection.state === Connection.State.LoggedIn
@@ -74,8 +76,17 @@ Kirigami.Page {
             Layout.preferredWidth: Kirigami.Units.gridUnit * 14
             icon.name: page.loggedIn ? "view-preview" : "network-server"
             text: page.loggedIn ? KI18n.i18nc("@action:button", "Library")
-                                : KI18n.i18nc("@action:button", "Connect to Server…")
+                                : KI18n.i18nc("@action:button", "Use a Remote Server…")
             onClicked: page.loggedIn ? page.libraryRequested() : page.serverPageRequested()
+        }
+
+        Controls.Button {
+            Layout.alignment: Qt.AlignHCenter
+            Layout.preferredWidth: Kirigami.Units.gridUnit * 14
+            visible: !page.loggedIn
+            icon.name: "computer"
+            text: KI18n.i18nc("@action:button", "Use a Local Server…")
+            onClicked: page.localServerRequested()
         }
     }
 }
