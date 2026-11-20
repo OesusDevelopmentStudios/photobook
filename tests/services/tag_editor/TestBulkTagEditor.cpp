@@ -91,10 +91,10 @@ QVariantMap rowOf(const BulkTagEditor& editor, const QString& namespaceName)
     return {};
 }
 
-// What the rows show of each tag: {tag: {change, count}}
-QHash<QString, QPair<TagEditor::Change, int>> tagsShown(const BulkTagEditor& editor)
+// What the rows show of each tag: {tag: change}
+QHash<QString, TagEditor::Change> tagsShown(const BulkTagEditor& editor)
 {
-    QHash<QString, QPair<TagEditor::Change, int>> shown;
+    QHash<QString, TagEditor::Change> shown;
     const QAbstractListModel* rows = editor.namespaceRows();
     const int tagsRole = rows->roleNames().key("tags");
     for (int row = 0; row < rows->rowCount(); ++row)
@@ -103,8 +103,7 @@ QHash<QString, QPair<TagEditor::Change, int>> tagsShown(const BulkTagEditor& edi
         {
             const QVariantMap tag = entry.toMap();
             shown.insert(tag.value(QStringLiteral("tag")).toString(),
-                         {static_cast<TagEditor::Change>(tag.value(QStringLiteral("change")).toInt()),
-                          tag.value(QStringLiteral("count")).toInt()});
+                         static_cast<TagEditor::Change>(tag.value(QStringLiteral("change")).toInt()));
         }
     }
 
@@ -128,7 +127,9 @@ private Q_SLOTS:
     void initTestCase();
     void init();
 
-    void countsTheImagesThatHaveEachTag();
+    void showsOnlyTheTagsAllImagesShare();
+    void showsTheValueAllImagesShare();
+    void keepsAPendingRemovalInView();
     void collectsChangesUntilApplied();
     void appliesToAllImagesInOneChange();
     void setsAValueForAll();
@@ -143,6 +144,7 @@ private Q_SLOTS:
     void keepsTheChangesWhenTheServerRefuses();
 
 private:
+    void selectImages(const QList<Image>& images);
     void selectThreeImages();
 
     std::unique_ptr<QTemporaryDir> m_folder;
@@ -214,27 +216,63 @@ void TestBulkTagEditor::init()
 }
 
 // The fake server answers at once, so the namespaces are in when this returns.
-void TestBulkTagEditor::selectThreeImages()
+void TestBulkTagEditor::selectImages(const QList<Image>& images)
 {
-    m_editor->setImages(threeImages());
+    m_editor->setImages(images);
     QTRY_VERIFY(!rowOf(*m_editor, QStringLiteral("weather")).isEmpty());
-    QCOMPARE(m_editor->imageCount(), 3);
+    QCOMPARE(m_editor->imageCount(), images.size());
 }
 
-void TestBulkTagEditor::countsTheImagesThatHaveEachTag()
+void TestBulkTagEditor::selectThreeImages()
 {
-    selectThreeImages();
+    selectImages(threeImages());
+}
 
-    const QHash<QString, QPair<TagEditor::Change, int>> shown = tagsShown(*m_editor);
-    QCOMPARE(shown.value(QStringLiteral("general:beach")), qMakePair(TagEditor::Change::Kept, 2));
-    QCOMPARE(shown.value(QStringLiteral("general:summer")).second, 1);
-    QCOMPARE(shown.value(QStringLiteral("category:photo")).second, 2);
-    const QVariantMap category = rowOf(*m_editor, QStringLiteral("category"));
+// A tag of a single image would look as if all had it.
+void TestBulkTagEditor::showsOnlyTheTagsAllImagesShare()
+{
+    selectImages(threeImages().mid(0, 2));  // both have beach; only the first has general:photo
+
+    QCOMPARE(tagsShown(*m_editor),
+             (QHash<QString, TagEditor::Change>{{QStringLiteral("general:beach"), TagEditor::Change::Kept},
+                                                {QStringLiteral("category:photo"), TagEditor::Change::Kept}}));
+
+    selectThreeImages();  // nothing shared
+
+    QVERIFY(tagsShown(*m_editor).isEmpty());
+}
+
+// Category and rating are kept as is: the dropdown shows the value all share, or "keep as is" if they differ.
+void TestBulkTagEditor::showsTheValueAllImagesShare()
+{
+    selectImages(threeImages().mid(0, 2));
+
+    QVariantMap category = rowOf(*m_editor, QStringLiteral("category"));
     QVERIFY(category.value(QStringLiteral("dropdown")).toBool());
     QVERIFY(category.value(QStringLiteral("keepable")).toBool());
-    QVERIFY(!category.value(QStringLiteral("changed")).toBool());  // kept as is
+    QVERIFY(!category.value(QStringLiteral("changed")).toBool());
+    QCOMPARE(category.value(QStringLiteral("value")).toString(), QStringLiteral("photo"));
+
+    selectThreeImages();
+
+    category = rowOf(*m_editor, QStringLiteral("category"));
+    QVERIFY(!category.value(QStringLiteral("changed")).toBool());
+    QCOMPARE(category.value(QStringLiteral("value")).toString(), QString());
     QCOMPARE(category.value(QStringLiteral("options")).toStringList(),
-             QStringList({QStringLiteral("artwork"), QStringLiteral("photo")}));
+             QStringList({QStringLiteral("artwork"), QStringLiteral("photo")}));  // of any image
+}
+
+// Changes stay when the selection changes: a removal stays in view, to be undone, also once not all share the tag.
+void TestBulkTagEditor::keepsAPendingRemovalInView()
+{
+    selectImages(threeImages().mid(0, 2));
+    QVERIFY(m_editor->removeTag(QStringLiteral("general:beach")));
+
+    selectThreeImages();
+
+    QCOMPARE(tagsShown(*m_editor).value(QStringLiteral("general:beach")), TagEditor::Change::Removed);
+    QVERIFY(m_editor->restoreTag(QStringLiteral("general:beach")));
+    QVERIFY(!tagsShown(*m_editor).contains(QStringLiteral("general:beach")));
 }
 
 void TestBulkTagEditor::collectsChangesUntilApplied()
@@ -246,9 +284,9 @@ void TestBulkTagEditor::collectsChangesUntilApplied()
 
     QVERIFY(m_editor->hasChanges());
     QVERIFY(m_server->requestsTo("POST", bulkUrl).isEmpty());
-    const QHash<QString, QPair<TagEditor::Change, int>> shown = tagsShown(*m_editor);
-    QCOMPARE(shown.value(QStringLiteral("general:sunset")).first, TagEditor::Change::Added);
-    QCOMPARE(shown.value(QStringLiteral("general:beach")).first, TagEditor::Change::Removed);
+    const QHash<QString, TagEditor::Change> shown = tagsShown(*m_editor);
+    QCOMPARE(shown.value(QStringLiteral("general:sunset")), TagEditor::Change::Added);
+    QCOMPARE(shown.value(QStringLiteral("general:beach")), TagEditor::Change::Removed);
 }
 
 // One request for all, then each image again, as the server answers only how many changed
@@ -273,19 +311,20 @@ void TestBulkTagEditor::appliesToAllImagesInOneChange()
              QJsonArray{QStringLiteral("general:beach")});
     QVERIFY(imageUpdated.first().first().value<Image>().tags.contains(QStringLiteral("general:sunset")));
     QVERIFY(!m_editor->hasChanges());
-    QCOMPARE(tagsShown(*m_editor).value(QStringLiteral("general:sunset")).second, 3);  // the images as they are now
+    // The images as they are now: all have it
+    QCOMPARE(tagsShown(*m_editor).value(QStringLiteral("general:sunset")), TagEditor::Change::Kept);
 }
 
 void TestBulkTagEditor::setsAValueForAll()
 {
-    selectThreeImages();
+    selectImages(threeImages().mid(0, 2));  // both photos
 
     QVERIFY(m_editor->setSingleValue(QStringLiteral("category"), QStringLiteral("artwork")));
 
     const QVariantMap category = rowOf(*m_editor, QStringLiteral("category"));
     QCOMPARE(category.value(QStringLiteral("value")).toString(), QStringLiteral("artwork"));
     QVERIFY(category.value(QStringLiteral("changed")).toBool());
-    QCOMPARE(tagsShown(*m_editor).value(QStringLiteral("category:photo")).first, TagEditor::Change::Removed);
+    QCOMPARE(tagsShown(*m_editor).value(QStringLiteral("category:photo")), TagEditor::Change::Removed);
 }
 
 void TestBulkTagEditor::removesAValueFromAll()

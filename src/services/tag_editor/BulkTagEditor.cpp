@@ -24,13 +24,12 @@ namespace
 using pictorio::tag_editor::TagName;
 using Change = pictorio::tag_editor::TagRowsEditor::Change;
 
-QVariantMap tagEntry(const TagName& tag, Change change, int count)
+QVariantMap tagEntry(const TagName& tag, Change change)
 {
     return {
         {QStringLiteral("tag"), tag.text()},
         {QStringLiteral("name"), tag.name},
         {QStringLiteral("change"), static_cast<int>(change)},
-        {QStringLiteral("count"), count},  // selected images that have it
     };
 }
 
@@ -403,22 +402,37 @@ void BulkTagEditor::updateRows()
     QList<NamespaceRows::Row> rows;
     for (const Namespaces::Info& info : m_namespaces->all())
     {
-        // The tags any selected image has in the namespace, and those to be added, by name. In a single-value
-        // namespace an added tag replaces the others.
+        // The tags all selected images share in the namespace, those to be removed, and those to be added, by
+        // name. A tag only some have is not shown, unless its removal is pending, e.g. from an earlier selection.
+        // In a single-value namespace an added tag replaces the others.
         const bool addingHere = withoutNamespace(m_additions, info.name).size() < m_additions.size();
         const bool replacing = addingHere && singleValue.contains(info.name);
         std::map<QString, Change> changes;
+        QStringList presentNames;  // of any selected image, for the dropdown
         for (const server_client::Image& image : m_images)
         {
             for (const QString& text : image.tags)
             {
-                if (tagFromServer(text).namespaceName == info.name)
+                const TagName tag = tagFromServer(text);
+                if (tag.namespaceName != info.name)
+                {
+                    continue;
+                }
+
+                if (!presentNames.contains(tag.name))
+                {
+                    presentNames.append(tag.name);
+                }
+
+                if (countWith(text) == imageCount() || m_removals.contains(text))
                 {
                     const bool replaced = replacing && !m_additions.contains(text);
                     changes[text] = m_removals.contains(text) || replaced ? Change::Removed : Change::Kept;
                 }
             }
         }
+
+        presentNames.sort();
 
         QString addedValue;
         for (const QString& text : m_additions)
@@ -431,16 +445,21 @@ void BulkTagEditor::updateRows()
         }
 
         QVariantList tags;
-        QStringList presentNames;
+        QString sharedValue;  // a single-value namespace's, if all have it and it stays
+        bool anyPresent = false;
         bool allRemoved = true;
         for (const auto& [text, change] : changes)
         {
             const TagName tag = tagFromServer(text);
-            const int count = countWith(text);
-            tags.append(tagEntry(tag, change, count));
-            if (count > 0)
+            tags.append(tagEntry(tag, change));
+            if (change == Change::Kept)
             {
-                presentNames.append(tag.name);
+                sharedValue = tag.name;
+            }
+
+            if (change != Change::Added)
+            {
+                anyPresent = true;
                 allRemoved = allRemoved && change == Change::Removed;
             }
         }
@@ -462,9 +481,9 @@ void BulkTagEditor::updateRows()
                 }
             }
 
-            // A value for all, none for all, or kept as is
-            row.value = addedValue;
-            row.changed = !addedValue.isEmpty() || (!presentNames.isEmpty() && allRemoved);
+            // A value for all, none for all, or kept as is: then the value all share, if they do
+            row.changed = !addedValue.isEmpty() || (anyPresent && allRemoved);
+            row.value = row.changed ? addedValue : sharedValue;
         }
 
         rows.append(row);

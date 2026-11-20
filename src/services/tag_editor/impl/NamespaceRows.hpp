@@ -27,9 +27,9 @@ public:
         bool fixedValues = false;  // only `options` may be chosen, e.g. the ratings
         bool keepable = false;     // the dropdown offers "keep as is" first, for many images at once
         QStringList options;       // for a dropdown: the names to choose from
-        QString value;             // for a dropdown: the name after the changes; empty: none
+        QString value;             // for a dropdown: the name after the changes, or the shared one; empty: none
         bool changed = false;      // for a dropdown: the value differs from the image's, or is not kept as is
-        QVariantList tags;         // {"tag", "name", "change", and for many images "count"} of each tag
+        QVariantList tags;         // {"tag", "name", "change"} of each tag
 
         bool operator==(const Row&) const = default;
     };

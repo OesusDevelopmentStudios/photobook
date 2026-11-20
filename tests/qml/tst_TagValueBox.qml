@@ -71,6 +71,14 @@ Item {
             compare(valueBox.editor.calls, ["setSingleValue category", "keepValue category"]);
         }
 
+        // Kept as is, but all images share a value: that value is shown
+        function test_showsTheValueManyImagesShare() {
+            const valueBox = box({keepable: true, value: "artwork", changed: false});
+
+            compare(valueBox.currentText, "artwork");
+            compare(valueBox.font.bold, false);  // not a change
+        }
+
         // The ratings: only the server's values, nothing typed
         function test_ratingsAreFixed() {
             verify(!box({fixedValues: true}).editable);

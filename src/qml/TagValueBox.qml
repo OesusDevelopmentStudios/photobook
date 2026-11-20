@@ -6,8 +6,8 @@ import QtQuick.Controls as Controls
 import org.kde.kirigami as Kirigami
 import org.kde.ki18n
 
-// The dropdown of category or rating: "–" for none, then the values; for many images "Keep as is" first. The
-// ratings are fixed (an admin sets them on the server); category also takes a new value typed in, confirmed
+// The dropdown of category or rating: "–" for none, then the values; for many images "Keep as is" first, shown
+// as the value they all share if they do. The ratings are fixed (an admin sets them on the server); category also takes a new value typed in, confirmed
 // with Enter. A value typed but not confirmed counts as a change. A changed value is bold.
 Controls.ComboBox {
     id: box
@@ -27,7 +27,7 @@ Controls.ComboBox {
 
     // The editor's value, also after it refused a choice
     function showValue() {
-        if (keepable && !changed) {
+        if (keepable && !changed && value.length === 0) {
             currentIndex = 0;
         } else if (value.length === 0) {
             currentIndex = fixedEntries.length - 1;

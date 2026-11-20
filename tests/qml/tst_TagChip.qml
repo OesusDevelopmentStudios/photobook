@@ -28,11 +28,8 @@ Item {
             }
         }
 
-        function chipFor(change: int, count: int): TagChip {
+        function chipFor(change: int): TagChip {
             const tag = {tag: "general:beach", name: "beach", change: change};
-            if (count > 0) {
-                tag.count = count;
-            }
             return createTemporaryObject(chipComponent, root, {modelData: tag});
         }
 
@@ -44,7 +41,7 @@ Item {
 
         // Once failed: a property named "removed" hid the Chip's removed() signal, and ✕ did nothing.
         function test_removesAKeptTag() {
-            const chip = chipFor(TagRowsEditor.Change.Kept, 0);
+            const chip = chipFor(TagRowsEditor.Change.Kept);
 
             clickRemove(chip);
 
@@ -52,7 +49,7 @@ Item {
         }
 
         function test_dropsAnAddedTag() {
-            const chip = chipFor(TagRowsEditor.Change.Added, 0);
+            const chip = chipFor(TagRowsEditor.Change.Added);
             verify(chip.isAdded);
 
             clickRemove(chip);
@@ -61,18 +58,12 @@ Item {
         }
 
         function test_keepsARemovedTagWhenClicked() {
-            const chip = chipFor(TagRowsEditor.Change.Removed, 0);
+            const chip = chipFor(TagRowsEditor.Change.Removed);
             verify(!chip.indicator.visible, "no ✕ on a removed tag");
 
             mouseClick(chip);
 
             compare(chip.editor.calls, ["restoreTag general:beach"]);
-        }
-
-        // For many images: how many have the tag
-        function test_showsTheCount() {
-            compare(chipFor(TagRowsEditor.Change.Kept, 7).text, "beach (7)");
-            compare(chipFor(TagRowsEditor.Change.Kept, 0).text, "beach");
         }
     }
 }

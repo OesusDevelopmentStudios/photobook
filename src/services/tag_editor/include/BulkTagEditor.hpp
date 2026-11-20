@@ -25,11 +25,11 @@ class Namespaces;
 class NamespaceRows;
 
 // Changing the tags of the images selected in the library grid, all at once, laid out like the single-image
-// editor: a row per namespace, with how many selected images have each tag. Category and rating start at
-// "keep as is". Changes are collected and sent together with apply(), as one change for all images; clear()
-// drops them. They stay when the selection changes, and apply to the images selected then. A change that
-// would leave any selected image restricted is refused at once. After applying, each image is asked for
-// again, as the server answers only how many changed.
+// editor: a row per namespace with the tags all selected images share; a tag only some have is not shown.
+// Category and rating start at "keep as is", showing the value all share if they do. Changes are collected and
+// sent together with apply(), as one change for all images; clear() drops them. They stay when the selection
+// changes, and apply to the images selected then. A change that would leave any selected image restricted is
+// refused at once. After applying, each image is asked for again, as the server answers only how many changed.
 class BulkTagEditor : public TagRowsEditor
 {
     Q_OBJECT
