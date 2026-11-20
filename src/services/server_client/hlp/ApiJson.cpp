@@ -90,6 +90,7 @@ Image imageFieldsFrom(JsonReader& reader)
     image.importedAt = reader.dateTime(QStringLiteral("imported_at"));
     image.updatedAt = reader.dateTime(QStringLiteral("updated_at"));
     image.tags = reader.stringList(QStringLiteral("tags"));
+    image.revision = reader.integer(QStringLiteral("revision"));
     return image;
 }
 

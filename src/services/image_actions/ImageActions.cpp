@@ -109,6 +109,31 @@ void ImageActions::saveLocalRotation(const QString& filePath, int clockwiseDegre
     Q_EMIT rotationSaved();
 }
 
+void ImageActions::saveLibraryRotation(int imageId, int clockwiseDegrees)
+{
+    server_client::ServerClient* client = m_connection->client();
+    if (m_busy || client == nullptr)
+    {
+        return;
+    }
+
+    setBusy(true);
+    client->rotateImage(imageId, clockwiseDegrees)
+        .then(this, [this](const server_client::Result<server_client::Image>& image) {
+            setBusy(false);
+            if (!image.has_value())
+            {
+                Q_EMIT failed(i18nc("@info %1 is the reason",
+                                    "The rotation could not be saved: %1",
+                                    image.error().detail.isEmpty() ? image.error().title : image.error().detail));
+                return;
+            }
+
+            Q_EMIT libraryRotationSaved(*image);
+            Q_EMIT rotationSaved();
+        });
+}
+
 bool ImageActions::isBusy() const
 {
     return m_busy;

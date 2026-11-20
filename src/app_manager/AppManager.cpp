@@ -123,6 +123,20 @@ AppManager::AppManager(QObject* parent)
             &image_actions::ImageActions::rotationSaved,
             m_viewer.get(),
             &viewer::Viewer::reloadImage);
+    // A library image's from its new address, which its revision changed; the grid gets its new thumbnail.
+    connect(m_imageActions.get(),
+            &image_actions::ImageActions::libraryRotationSaved,
+            this,
+            [this](const server_client::Image& image) {
+                m_library->replaceImage(image);
+                if (m_libraryImageOnScreen.has_value() && m_libraryImageOnScreen->id == image.id &&
+                    m_connection->client() != nullptr)
+                {
+                    m_libraryImageOnScreen = image;
+                    m_viewer->openServerImage(m_connection->client()->imageFileUrl(image.id, image.revision),
+                                              detailsOf(image));
+                }
+            });
 
     // Every newly opened image starts fitted to the window and not rotated.
     connect(m_viewer.get(), &viewer::Viewer::currentImageChanged, m_viewTransform.get(), [this]() {
@@ -270,10 +284,20 @@ void AppManager::openCurrentImageFolder()
 
 void AppManager::saveCurrentRotation()
 {
+    const int angle = m_viewTransform->rotationAngle();
     const QUrl image = m_viewer->imageSource();
-    if (image.isLocalFile() && m_viewTransform->rotationAngle() != 0)
+    if (angle == 0)
     {
-        m_imageActions->saveLocalRotation(image.toLocalFile(), m_viewTransform->rotationAngle());
+        return;
+    }
+
+    if (image.isLocalFile())
+    {
+        m_imageActions->saveLocalRotation(image.toLocalFile(), angle);
+    }
+    else if (m_libraryImageOnScreen.has_value())
+    {
+        m_imageActions->saveLibraryRotation(m_libraryImageOnScreen->id, angle);
     }
 }
 
@@ -311,7 +335,7 @@ void AppManager::showLibraryImage(int row)
         return;
     }
 
-    m_viewer->openServerImage(m_connection->client()->imageFileUrl(image->id), detailsOf(*image));
+    m_viewer->openServerImage(m_connection->client()->imageFileUrl(image->id, image->revision), detailsOf(*image));
 }
 
 }  // namespace pictorio::app_manager

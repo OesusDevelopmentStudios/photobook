@@ -307,9 +307,11 @@ QVariant Library::data(const QModelIndex& index, int role) const
     case Qt::DisplayRole:
         return image.originalFilename;
     case ThumbnailUrlRole:
-        return isLoggedIn() ? m_connection->client()->thumbnailUrl(image.id, ThumbnailSize::Small) : QUrl();
+        return isLoggedIn() ? m_connection->client()->thumbnailUrl(image.id, ThumbnailSize::Small, image.revision)
+                            : QUrl();
     case LargeThumbnailUrlRole:
-        return isLoggedIn() ? m_connection->client()->thumbnailUrl(image.id, ThumbnailSize::Large) : QUrl();
+        return isLoggedIn() ? m_connection->client()->thumbnailUrl(image.id, ThumbnailSize::Large, image.revision)
+                            : QUrl();
     case TakenAtRole:
         return image.takenAt;
     case WidthRole:

@@ -12,6 +12,7 @@
 #include <QGuiApplication>
 #include <QImage>
 #include <QImageReader>
+#include <QJsonDocument>
 #include <QMimeData>
 #include <QSignalSpy>
 #include <QTemporaryDir>
@@ -136,6 +137,8 @@ private Q_SLOTS:
     void savesARotationInTheOrientationTag();
     void savesARotationOfAPngInItsPixels();
     void savesNoRotationOfAWebp();
+    void savesTheRotationOfALibraryImageOnTheServer();
+    void reportsARotationTheServerRefuses();
 
 private:
     QString writtenFile(const QString& name, const QByteArray& content) const;
@@ -379,6 +382,43 @@ void TestImageActions::savesNoRotationOfAWebp()
     QCOMPARE(file.readAll(), content);
     QVERIFY(m_actions->canSaveRotation(QStringLiteral("image/jpeg")));
     QVERIFY(m_actions->canSaveRotation(QStringLiteral("image/png")));
+}
+
+void TestImageActions::savesTheRotationOfALibraryImageOnTheServer()
+{
+    const QString rotationUrl = serverUrl + QStringLiteral("/api/v1/images/7/rotation");
+    QJsonObject turned = fakes::imageJson(7);
+    turned.insert(QStringLiteral("revision"), 1);
+    m_server->answer("POST", rotationUrl, fakes::jsonResponse(200, turned));
+    m_server->holdAnswers = true;
+    QSignalSpy librarySaved(m_actions.get(), &ImageActions::libraryRotationSaved);
+    QSignalSpy saved(m_actions.get(), &ImageActions::rotationSaved);
+
+    m_actions->saveLibraryRotation(7, 270);
+
+    QVERIFY(m_actions->isBusy());
+    QTRY_COMPARE(m_server->requestsTo("POST", rotationUrl).size(), 1);
+    m_server->releaseAnswers();
+    QTRY_COMPARE(saved.size(), 1);
+    QCOMPARE(librarySaved.size(), 1);
+    QCOMPARE(librarySaved.first().first().value<server_client::Image>().revision, 1);
+    QVERIFY(!m_actions->isBusy());
+    const QJsonObject body = QJsonDocument::fromJson(m_server->requestsTo("POST", rotationUrl).first().body).object();
+    QCOMPARE(body.value(QStringLiteral("degrees")).toInt(), 270);
+}
+
+void TestImageActions::reportsARotationTheServerRefuses()
+{
+    m_server->answer(
+        "POST", serverUrl + QStringLiteral("/api/v1/images/7/rotation"), fakes::problem(422, "rotation_not_supported"));
+    QSignalSpy failed(m_actions.get(), &ImageActions::failed);
+    QSignalSpy saved(m_actions.get(), &ImageActions::rotationSaved);
+
+    m_actions->saveLibraryRotation(7, 90);
+
+    QTRY_COMPARE(failed.size(), 1);
+    QCOMPARE(saved.size(), 0);
+    QVERIFY(!m_actions->isBusy());
 }
 
 }  // namespace pictorio::image_actions

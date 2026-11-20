@@ -144,6 +144,19 @@ Kirigami.Page {
             enabled: page.viewer.hasImage && page.viewTransform.scale !== 1
             onTriggered: page.zoomAroundCenter(() => page.viewTransform.showActualSize())
         },
+        // While the image is turned, if its type can be saved turned without losing quality; the server
+        // follows the same rule for library images. Kept in the toolbar: it stands for a change not saved yet.
+        // Left of the rotate buttons, so that they stay where they are when it appears.
+        Kirigami.Action {
+            icon.name: "document-save"
+            text: KI18n.i18nc("@action:intoolbar", "Save Rotation")
+            displayHint: Kirigami.DisplayHint.KeepVisible
+            shortcut: StandardKey.Save
+            visible: page.viewer.hasImage && page.viewTransform.rotationAngle !== 0
+                     && page.imageActions.canSaveRotation(page.viewer.mimeType)
+            enabled: !page.imageActions.busy
+            onTriggered: page.saveRotationRequested()
+        },
         Kirigami.Action {
             id: rotateLeftAction
 
@@ -163,15 +176,6 @@ Kirigami.Page {
             shortcut: "Ctrl+R"
             enabled: page.viewer.hasImage
             onTriggered: page.viewTransform.rotateClockwise()
-        },
-        // While the image is turned, if its type can be saved turned without losing quality
-        Kirigami.Action {
-            icon.name: "document-save"
-            text: KI18n.i18nc("@action:intoolbar", "Save Rotation")
-            shortcut: StandardKey.Save
-            visible: page.viewer.hasImage && !page.viewer.fromLibrary && page.viewTransform.rotationAngle !== 0
-                     && page.imageActions.canSaveRotation(page.viewer.mimeType)
-            onTriggered: page.saveRotationRequested()
         },
         // In the menu; Ctrl+C reaches it unless a text field, e.g. while editing tags, takes it first.
         Kirigami.Action {

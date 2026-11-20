@@ -111,6 +111,7 @@ struct Image
     QDateTime importedAt;  // UTC
     QDateTime updatedAt;
     QStringList tags;  // sorted by namespace, then name, e.g. "category:photo"
+    int revision = 0;  // grows when the file changes, e.g. a saved rotation; part of the file's and thumbnails' URLs
 };
 
 enum class SortBy

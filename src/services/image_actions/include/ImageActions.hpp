@@ -24,7 +24,7 @@ class ImageActions : public QObject
 {
     Q_OBJECT
 
-    Q_PROPERTY(bool busy READ isBusy NOTIFY busyChanged)  // a library image is being downloaded
+    Q_PROPERTY(bool busy READ isBusy NOTIFY busyChanged)  // waiting for the server: a download, or a rotation
 
 public:
     // The connection is not owned and must outlive the actions.
@@ -46,13 +46,16 @@ public:
     Q_INVOKABLE bool canSaveRotation(const QString& mimeType) const;
     // Turns the image in the file clockwise by 90, 180 or 270 degrees from how it is shown now
     void saveLocalRotation(const QString& filePath, int clockwiseDegrees);
+    // The same for a library image, done by the server: libraryRotationSaved() with the image as it is then
+    void saveLibraryRotation(int imageId, int clockwiseDegrees);
 
     bool isBusy() const;
 
 Q_SIGNALS:
     void busyChanged();
     void copied();
-    void rotationSaved();
+    void rotationSaved();  // after either kind; a library image's comes after libraryRotationSaved()
+    void libraryRotationSaved(const server_client::Image& image);
     void failed(const QString& message);
 
 private:

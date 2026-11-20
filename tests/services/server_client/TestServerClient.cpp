@@ -79,8 +79,16 @@ QByteArray beachImageJson()
         "storage_path":"photo/sample_artist/2025/beach_aaaaaaaa.jpg","mime_type":"image/jpeg","width":4000,
         "height":3000,"file_size":5000000000,"taken_at":"2025-07-14T18:03:12","taken_at_source":"exif",
         "imported_at":"2026-11-15T19:22:03.724229Z","updated_at":"2026-11-15T19:22:04Z",
-        "tags":["category:photo","general:summer"],"links":{"self":"/api/v1/images/5",
+        "tags":["category:photo","general:summer"],"revision":0,"links":{"self":"/api/v1/images/5",
         "file":"/api/v1/images/5/file","thumbnail":"/api/v1/images/5/thumbnail"}})";
+}
+
+// As the server sends it once the file changed
+QByteArray withRevision(const QByteArray& imageJson, int revision)
+{
+    QJsonObject image = QJsonDocument::fromJson(imageJson).object();
+    image.insert(QStringLiteral("revision"), revision);
+    return QJsonDocument(image).toJson(QJsonDocument::Compact);
 }
 
 // A query parameter as the server reads it, which turns "+" into a space
@@ -159,6 +167,8 @@ private Q_SLOTS:
     void changesTheTagsOfAnImage();
     void changesTheTagsOfManyImages();
     void downloadsTheFileAndTheThumbnail();
+    void rotatesAnImage();
+    void givesAChangedFileANewAddress();
 
     void suggestsTags();
     void readsTheNamespaces();
@@ -609,20 +619,44 @@ void TestServerClient::changesTheTagsOfManyImages()
     QCOMPARE(updated.value(), 3);
 }
 
+void TestServerClient::rotatesAnImage()
+{
+    m_transport->nextResponse = answer(200, withRevision(beachImageJson(), 1));
+
+    const Result<Image> image = valueOf(m_client->rotateImage(5, 90));
+
+    const HttpRequest request = m_transport->lastRequest();
+    QCOMPARE(request.method, QByteArray("POST"));
+    QCOMPARE(request.url.path(), QStringLiteral("/api/v1/images/5/rotation"));
+    QCOMPARE(jsonBodyOf(request), QJsonObject({{QStringLiteral("degrees"), 90}}));
+    QVERIFY(image.has_value());
+    QCOMPARE(image->revision, 1);
+}
+
+// The server ignores rev; a new address keeps caches from showing the file as it was
+void TestServerClient::givesAChangedFileANewAddress()
+{
+    QCOMPARE(serverSideValue(m_client->imageFileUrl(5, 2), "rev"), QStringLiteral("2"));
+    QCOMPARE(serverSideValue(m_client->thumbnailUrl(5, ThumbnailSize::Small, 2), "rev"), QStringLiteral("2"));
+    QCOMPARE(serverSideValue(m_client->thumbnailUrl(5, ThumbnailSize::Small, 2), "size"), QStringLiteral("256"));
+    QVERIFY(!m_client->thumbnailUrl(5, ThumbnailSize::Small, 0).query().contains(QStringLiteral("rev")));
+}
+
 void TestServerClient::downloadsTheFileAndTheThumbnail()
 {
     m_transport->nextResponse = answer(200, "jpeg bytes");
     const Result<QByteArray> file = valueOf(m_client->imageFile(5));
     QCOMPARE(m_transport->lastRequest().url.path(), QStringLiteral("/api/v1/images/5/file"));
     QCOMPARE(file.value(), QByteArray("jpeg bytes"));
-    QCOMPARE(m_client->imageFileUrl(5), m_transport->lastRequest().url);  // where views load it
+    QCOMPARE(m_client->imageFileUrl(5, 0), m_transport->lastRequest().url);  // where views load it
 
     m_transport->nextResponse = answer(200, "webp bytes");
     const Result<QByteArray> thumbnail = valueOf(m_client->thumbnail(5, ThumbnailSize::Large));
     QCOMPARE(m_transport->lastRequest().url.path(), QStringLiteral("/api/v1/images/5/thumbnail"));
     QCOMPARE(serverSideValue(m_transport->lastRequest().url, "size"), QStringLiteral("1024"));
     QCOMPARE(thumbnail.value(), QByteArray("webp bytes"));
-    QCOMPARE(m_client->thumbnailUrl(5, ThumbnailSize::Large), m_transport->lastRequest().url);  // where views load it
+    QCOMPARE(m_client->thumbnailUrl(5, ThumbnailSize::Large, 0),
+             m_transport->lastRequest().url);  // where views load it
 
     m_transport->nextResponse =
         answer(404, R"({"type":"t","title":"Image not found","status":404,"code":"not_found"})");

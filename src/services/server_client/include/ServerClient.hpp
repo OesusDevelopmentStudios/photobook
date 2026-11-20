@@ -73,17 +73,24 @@ public:
     // POST /images/bulk-tags: all or nothing; gives how many images were changed
     virtual QFuture<Result<int>> changeTagsOfImages(const QList<int>& imageIds, const TagChanges& changes) = 0;
 
+    // POST /images/{id}/rotation: turned clockwise by 90, 180 or 270 degrees, saved into the file; the image as
+    // the server has it then, with its next revision. A type that cannot be turned without losing quality
+    // gives rotation_not_supported.
+    virtual QFuture<Result<Image>> rotateImage(int imageId, int clockwiseDegrees) = 0;
+
     // GET /images/{id}/file: the original file
     virtual QFuture<Result<QByteArray>> imageFile(int imageId) = 0;
 
-    // Where the original file is, for a view that loads it itself; it must send the token too.
-    virtual QUrl imageFileUrl(int imageId) const = 0;
+    // Where the file is, for a view that loads it itself; it must send the token too. The image's revision
+    // makes a changed file a new address, so no cache shows the old one.
+    virtual QUrl imageFileUrl(int imageId, int revision) const = 0;
 
     // GET /images/{id}/thumbnail: a WebP image
     virtual QFuture<Result<QByteArray>> thumbnail(int imageId, ThumbnailSize size) = 0;
 
-    // Where the thumbnail is, for a view that loads it itself; it must send the token too.
-    virtual QUrl thumbnailUrl(int imageId, ThumbnailSize size) const = 0;
+    // Where the thumbnail is, for a view that loads it itself; it must send the token too. With the image's
+    // revision, as for the file.
+    virtual QUrl thumbnailUrl(int imageId, ThumbnailSize size, int revision) const = 0;
 
     // GET /tags: tags starting with prefix, most used first. The prefix may name a namespace ("author:sam");
     // namespaceName limits the search to one. The user's restricted tags are never suggested.

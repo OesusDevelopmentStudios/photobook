@@ -123,6 +123,17 @@ QUrlQuery thumbnailQuery(ThumbnailSize size)
     return parameters;
 }
 
+// The server ignores it; it makes a changed file a new address. Revision 0 keeps the address it always had.
+QUrlQuery withRevision(QUrlQuery parameters, int revision)
+{
+    if (revision > 0)
+    {
+        parameters.addQueryItem(QStringLiteral("rev"), QString::number(revision));
+    }
+
+    return parameters;
+}
+
 QJsonObject tagChangesJson(const TagChanges& changes)
 {
     return {
@@ -323,9 +334,16 @@ QFuture<Result<QByteArray>> RestServerClient::imageFile(int imageId)
     });
 }
 
-QUrl RestServerClient::imageFileUrl(int imageId) const
+QFuture<Result<Image>> RestServerClient::rotateImage(int imageId, int clockwiseDegrees)
 {
-    return endpointUrl(imageFilePath(imageId), {});
+    const QJsonObject body{{QStringLiteral("degrees"), clockwiseDegrees}};
+    return send("POST", QStringLiteral("/images/%1/rotation").arg(imageId), body)
+        .then([](const HttpResponse& response) { return jsonAnswer(response, statusOk, imageFrom); });
+}
+
+QUrl RestServerClient::imageFileUrl(int imageId, int revision) const
+{
+    return endpointUrl(imageFilePath(imageId), withRevision({}, revision));
 }
 
 QFuture<Result<QByteArray>> RestServerClient::thumbnail(int imageId, ThumbnailSize size)
@@ -334,9 +352,9 @@ QFuture<Result<QByteArray>> RestServerClient::thumbnail(int imageId, ThumbnailSi
         .then([](const HttpResponse& response) { return binaryAnswer(response, statusOk); });
 }
 
-QUrl RestServerClient::thumbnailUrl(int imageId, ThumbnailSize size) const
+QUrl RestServerClient::thumbnailUrl(int imageId, ThumbnailSize size, int revision) const
 {
-    return endpointUrl(thumbnailPath(imageId), thumbnailQuery(size));
+    return endpointUrl(thumbnailPath(imageId), withRevision(thumbnailQuery(size), revision));
 }
 
 QFuture<Result<QList<TagCount>>> RestServerClient::tags(const QString& prefix, const QString& namespaceName, int limit)

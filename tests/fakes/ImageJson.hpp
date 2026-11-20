@@ -38,6 +38,7 @@ inline QJsonObject imageJson(int imageId)
         {QStringLiteral("imported_at"), moment},
         {QStringLiteral("updated_at"), moment},
         {QStringLiteral("tags"), QJsonArray()},
+        {QStringLiteral("revision"), 0},
         {QStringLiteral("links"), QJsonObject()},
     };
 }
