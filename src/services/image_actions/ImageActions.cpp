@@ -19,6 +19,8 @@
 
 #include <KLocalizedString>
 
+#include "hlp/FileRotation.hpp"
+
 namespace pictorio::image_actions
 {
 
@@ -88,6 +90,23 @@ void ImageActions::openContainingFolder(const QString& filePath)
             Q_EMIT failed(i18nc("@info %1 is the reason", "The folder could not be opened: %1", shown.error()));
         }
     });
+}
+
+bool ImageActions::canSaveRotation(const QString& mimeType) const
+{
+    return rotationSavingFor(mimeType) != RotationSaving::NotPossible;
+}
+
+void ImageActions::saveLocalRotation(const QString& filePath, int clockwiseDegrees)
+{
+    const QString mimeType = QMimeDatabase().mimeTypeForFile(filePath).name();
+    if (const std::expected<void, QString> saved = saveRotation(filePath, mimeType, clockwiseDegrees); !saved)
+    {
+        Q_EMIT failed(i18nc("@info %1 is the reason", "The rotation could not be saved: %1", saved.error()));
+        return;
+    }
+
+    Q_EMIT rotationSaved();
 }
 
 bool ImageActions::isBusy() const

@@ -118,6 +118,12 @@ AppManager::AppManager(QObject* parent)
         m_viewer->updateDetails(detailsOf(image));
     });
 
+    // A rotation saved into the file: the image is shown as the file now has it, no longer turned by the view.
+    connect(m_imageActions.get(),
+            &image_actions::ImageActions::rotationSaved,
+            m_viewer.get(),
+            &viewer::Viewer::reloadImage);
+
     // Every newly opened image starts fitted to the window and not rotated.
     connect(m_viewer.get(), &viewer::Viewer::currentImageChanged, m_viewTransform.get(), [this]() {
         m_viewTransform->showImage(m_viewer->imageDisplaySize());
@@ -259,6 +265,15 @@ void AppManager::openCurrentImageFolder()
     else if (m_libraryImageOnScreen.has_value())
     {
         openFolderOf(*m_libraryImageOnScreen);
+    }
+}
+
+void AppManager::saveCurrentRotation()
+{
+    const QUrl image = m_viewer->imageSource();
+    if (image.isLocalFile() && m_viewTransform->rotationAngle() != 0)
+    {
+        m_imageActions->saveLocalRotation(image.toLocalFile(), m_viewTransform->rotationAngle());
     }
 }
 

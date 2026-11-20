@@ -18,8 +18,8 @@ namespace pictorio::image_actions
 {
 
 // What can be done with an image besides looking at it: copying it to the clipboard, so it can be pasted into
-// other apps, and showing its file in the file manager. Copying is announced with copied(); a failure of
-// either with failed(), e.g. for a passive notification.
+// other apps, showing its file in the file manager, and saving a rotation into its file. Copying is announced
+// with copied(), saving with rotationSaved(); a failure of any with failed(), e.g. for a passive notification.
 class ImageActions : public QObject
 {
     Q_OBJECT
@@ -42,11 +42,17 @@ public:
     // Its folder in the file manager, with the file selected
     void openContainingFolder(const QString& filePath);
 
+    // Whether the rotation of an image of this type can be saved into its file without losing quality
+    Q_INVOKABLE bool canSaveRotation(const QString& mimeType) const;
+    // Turns the image in the file clockwise by 90, 180 or 270 degrees from how it is shown now
+    void saveLocalRotation(const QString& filePath, int clockwiseDegrees);
+
     bool isBusy() const;
 
 Q_SIGNALS:
     void busyChanged();
     void copied();
+    void rotationSaved();
     void failed(const QString& message);
 
 private:

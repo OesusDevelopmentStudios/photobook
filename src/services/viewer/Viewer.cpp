@@ -76,6 +76,17 @@ void Viewer::openServerImage(const QUrl& fileUrl, const ImageDetails& details)
     Q_EMIT detailsChanged();
 }
 
+void Viewer::reloadImage()
+{
+    if (!hasImage() || m_currentImage->fromLibrary)
+    {
+        return;
+    }
+
+    openImage(m_currentImage->source.toLocalFile());
+    Q_EMIT imageFileChanged();
+}
+
 void Viewer::updateDetails(const ImageDetails& details)
 {
     if (hasImage() && m_currentImage->fromLibrary)

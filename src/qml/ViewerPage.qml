@@ -32,6 +32,7 @@ Kirigami.Page {
     signal uploadFolderRequested()  // the images of its folder, without subfolders
     signal copyImageRequested()
     signal openFolderRequested()  // the image's, in the file manager
+    signal saveRotationRequested()  // the view's rotation, into the file
     signal leaveRequested()  // back, while there are unsaved tag changes; the window asks first
 
     onBackRequested: event => {
@@ -162,6 +163,15 @@ Kirigami.Page {
             shortcut: "Ctrl+R"
             enabled: page.viewer.hasImage
             onTriggered: page.viewTransform.rotateClockwise()
+        },
+        // While the image is turned, if its type can be saved turned without losing quality
+        Kirigami.Action {
+            icon.name: "document-save"
+            text: KI18n.i18nc("@action:intoolbar", "Save Rotation")
+            shortcut: StandardKey.Save
+            visible: page.viewer.hasImage && !page.viewer.fromLibrary && page.viewTransform.rotationAngle !== 0
+                     && page.imageActions.canSaveRotation(page.viewer.mimeType)
+            onTriggered: page.saveRotationRequested()
         },
         // In the menu; Ctrl+C reaches it unless a text field, e.g. while editing tags, takes it first.
         Kirigami.Action {
@@ -368,11 +378,22 @@ Kirigami.Page {
         visible: importAction.visible
     }
 
+    // The file changed under the same address: a new image item reads it again.
+    Connections {
+        target: page.viewer
+
+        function onImageFileChanged() {
+            imageLoader.active = false;
+            imageLoader.active = true;
+        }
+    }
+
     Component {
         id: stillImage
 
         Image {
             source: page.viewer.imageSource
+            cache: false  // a file can change under the same address, e.g. a rotation saved into it
             autoTransform: true  // apply the EXIF orientation
             asynchronous: true
             smooth: true

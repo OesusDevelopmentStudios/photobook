@@ -87,6 +87,8 @@ public:
     // The file on screen in the file manager, selected in its folder: a local file, or a library image when the
     // server runs on this computer
     Q_INVOKABLE void openCurrentImageFolder();
+    // The view's rotation of the local image on screen, into its file
+    Q_INVOKABLE void saveCurrentRotation();
     // As the two above, for an image of the library grid by its row, without opening it
     Q_INVOKABLE void copyLibraryImage(int row);
     Q_INVOKABLE void openLibraryImageFolder(int row);

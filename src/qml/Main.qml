@@ -289,6 +289,7 @@ Kirigami.ApplicationWindow {
             }
             onCopyImageRequested: root.appManager.copyCurrentImage()
             onOpenFolderRequested: root.appManager.openCurrentImageFolder()
+            onSaveRotationRequested: root.appManager.saveCurrentRotation()
             onUploadFolderRequested: {
                 root.appManager.uploadCurrentFolder();  // listed in the background, while the page opens
                 root.showUploadPage();
@@ -387,6 +388,10 @@ Kirigami.ApplicationWindow {
 
         function onCopied() {
             root.showPassiveNotification(KI18n.i18nc("@info", "Image copied"));
+        }
+
+        function onRotationSaved() {
+            root.showPassiveNotification(KI18n.i18nc("@info", "Rotation saved"));
         }
 
         function onFailed(message: string) {

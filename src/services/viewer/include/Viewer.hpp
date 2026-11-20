@@ -76,6 +76,9 @@ public:
     // An image in the server's library, loaded from fileUrl by the page. The MIME type tells whether it may be
     // animated.
     void openServerImage(const QUrl& fileUrl, const ImageDetails& details);
+    // The local file on screen read again, e.g. after a rotation was saved into it: its size and details anew,
+    // and imageFileChanged() for the page, which must load the picture again instead of taking it from its cache.
+    void reloadImage();
     // New details of the library image on screen, e.g. after its tags changed. The image itself stays, so
     // the view keeps its zoom.
     void updateDetails(const ImageDetails& details);
@@ -99,6 +102,7 @@ public:
 
 Q_SIGNALS:
     void currentImageChanged();  // also changes the details
+    void imageFileChanged();     // the same file, changed
     void detailsChanged();
 
 private:

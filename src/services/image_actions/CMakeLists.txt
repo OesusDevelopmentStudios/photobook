@@ -8,6 +8,8 @@ add_library(pictorio_image_actions STATIC
     include/FileManager.hpp
     impl/KioFileManager.hpp
     impl/KioFileManager.cpp
+    hlp/FileRotation.hpp
+    hlp/FileRotation.cpp
     ImageActions.cpp
     ImageActionsFactory.cpp
 )
@@ -27,7 +29,11 @@ target_link_libraries(pictorio_image_actions
         Qt6::Gui  # the clipboard
         KF6::I18n
         KF6::KIOGui  # shows a file in the file manager
+        LibExiv2::LibExiv2  # writes the EXIF orientation when a rotation is saved
 )
+
+# exiv2 reports errors with exceptions, which KDE's compiler settings turn off by default.
+kde_target_enable_exceptions(pictorio_image_actions PRIVATE)
 
 # ImageActions is exposed to QML (app_manager/QmlForeignTypes.hpp); QML tools read its properties from these metatypes.
 qt_extract_metatypes(pictorio_image_actions)

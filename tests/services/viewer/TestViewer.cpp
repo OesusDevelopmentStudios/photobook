@@ -88,6 +88,7 @@ private Q_SLOTS:
     void showsErrorWhenImageCannotBeOpened();
     void clearsErrorWhenNextImageOpens();
     void notifiesOncePerOpen();
+    void readsTheFileAgain();
 
     void opensServerImage();
     void mayAnimateServerImages_data();
@@ -138,6 +139,26 @@ void TestViewer::opensImage()
     QCOMPARE(m_viewer->imageDisplaySize(), QSize(4000, 3000));
     QVERIFY(!m_viewer->imageAnimated());
     QVERIFY(m_viewer->errorMessage().isEmpty());
+}
+
+// After a rotation was saved into the file: a portrait now
+void TestViewer::readsTheFileAgain()
+{
+    m_imageLoader->nextResult = landscapePhoto();
+    m_viewer->openImage(QStringLiteral("/photos/beach.jpg"));
+    ImageInfo turned = landscapePhoto();
+    turned.displaySize = QSize(3000, 4000);
+    m_imageLoader->nextResult = turned;
+    QSignalSpy fileChanged(m_viewer.get(), &Viewer::imageFileChanged);
+    QSignalSpy imageChanged(m_viewer.get(), &Viewer::currentImageChanged);
+
+    m_viewer->reloadImage();
+
+    QCOMPARE(m_viewer->imageDisplaySize(), QSize(3000, 4000));
+    QCOMPARE(m_viewer->imageSource(), QUrl(QStringLiteral("file:///photos/beach.jpg")));
+    QCOMPARE(imageChanged.size(), 1);  // the view starts anew: fitted, not rotated
+    QCOMPARE(fileChanged.size(), 1);
+    QCOMPARE(m_imageLoader->requestedPaths.size(), 2);
 }
 
 void TestViewer::reportsAnimatedImage()

@@ -11,10 +11,14 @@
 #include <QFile>
 #include <QGuiApplication>
 #include <QImage>
+#include <QImageReader>
 #include <QMimeData>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
+#include <QTransform>
+
+#include <exiv2/exiv2.hpp>
 
 #include "Connection.hpp"
 #include "ImageActions.hpp"
@@ -49,6 +53,52 @@ QByteArray encodedImage(const char* format, const QSize& size = QSize(4, 3))
     return bytes;
 }
 
+// Four differently coloured quarters, so that every turn and mirror shows
+QImage quarteredImage()
+{
+    QImage image(QSize(64, 32), QImage::Format_RGB32);
+    image.fill(Qt::red);
+    for (int y = 0; y < image.height(); ++y)
+    {
+        for (int x = 0; x < image.width(); ++x)
+        {
+            const bool right = x >= image.width() / 2;
+            const bool bottom = y >= image.height() / 2;
+            image.setPixelColor(x, y, right ? (bottom ? Qt::blue : Qt::green) : (bottom ? Qt::yellow : Qt::red));
+        }
+    }
+
+    return image;
+}
+
+void setOrientationTag(const QString& filePath, int orientation)
+{
+    const auto image = Exiv2::ImageFactory::open(QFile::encodeName(filePath).toStdString());
+    image->readMetadata();
+    image->exifData()["Exif.Image.Orientation"] = static_cast<std::uint16_t>(orientation);
+    image->writeMetadata();
+}
+
+// The image as the viewer shows it: with its EXIF orientation applied
+QImage shownImage(const QString& filePath)
+{
+    QImageReader reader(filePath);
+    reader.setAutoTransform(true);
+    return reader.read().convertToFormat(QImage::Format_RGB32);
+}
+
+QImage storedImage(const QString& filePath)
+{
+    QImageReader reader(filePath);
+    reader.setAutoTransform(false);
+    return reader.read().convertToFormat(QImage::Format_RGB32);
+}
+
+QImage turned(const QImage& image, int clockwiseDegrees)
+{
+    return image.transformed(QTransform().rotate(clockwiseDegrees));
+}
+
 const QMimeData* clipboard()
 {
     return QGuiApplication::clipboard()->mimeData();
@@ -81,6 +131,11 @@ private Q_SLOTS:
     void showsAFileInItsFolder();
     void reportsAFileThatIsGone();
     void reportsAFileManagerThatDoesNotOpen();
+
+    void savesARotationInTheOrientationTag_data();
+    void savesARotationInTheOrientationTag();
+    void savesARotationOfAPngInItsPixels();
+    void savesNoRotationOfAWebp();
 
 private:
     QString writtenFile(const QString& name, const QByteArray& content) const;
@@ -251,6 +306,79 @@ QString TestImageActions::writtenFile(const QString& name, const QByteArray& con
     }
 
     return filePath;
+}
+
+// JPEG and TIFF: whatever the orientation was, the image is shown turned as it was on screen, and the pixels
+// as stored stay the same. Qt reads the tags here, so this also checks the table of orientations.
+void TestImageActions::savesARotationInTheOrientationTag_data()
+{
+    QTest::addColumn<QByteArray>("format");
+    QTest::addColumn<int>("orientation");
+    QTest::addColumn<int>("degrees");
+
+    for (const QByteArray& format : {QByteArray("JPEG"), QByteArray("TIFF")})
+    {
+        for (int orientation = 1; orientation <= 8; ++orientation)
+        {
+            for (int degrees : {90, 180, 270})
+            {
+                QTest::addRow("%s, orientation %d, %d°", format.constData(), orientation, degrees)
+                    << format << orientation << degrees;
+            }
+        }
+    }
+}
+
+void TestImageActions::savesARotationInTheOrientationTag()
+{
+    QFETCH(QByteArray, format);
+    QFETCH(int, orientation);
+    QFETCH(int, degrees);
+    const QString filePath = m_folder->filePath(QStringLiteral("beach.") + QString::fromLatin1(format.toLower()));
+    QVERIFY(quarteredImage().save(filePath, format.constData(), 100));
+    setOrientationTag(filePath, orientation);
+    const QImage shownBefore = shownImage(filePath);
+    const QImage storedBefore = storedImage(filePath);
+    QSignalSpy saved(m_actions.get(), &ImageActions::rotationSaved);
+
+    m_actions->saveLocalRotation(filePath, degrees);
+
+    QCOMPARE(saved.size(), 1);
+    QCOMPARE(shownImage(filePath), turned(shownBefore, degrees));
+    QCOMPARE(storedImage(filePath), storedBefore);  // no quality lost
+}
+
+void TestImageActions::savesARotationOfAPngInItsPixels()
+{
+    const QString filePath = m_folder->filePath(QStringLiteral("beach.png"));
+    QVERIFY(quarteredImage().save(filePath, "PNG"));
+    QSignalSpy saved(m_actions.get(), &ImageActions::rotationSaved);
+
+    m_actions->saveLocalRotation(filePath, 90);
+
+    QCOMPARE(saved.size(), 1);
+    QCOMPARE(storedImage(filePath), turned(quarteredImage(), 90));  // lossless
+    QCOMPARE(QImageReader(filePath).format(), QByteArray("png"));
+}
+
+// Qt ignores a WebP's orientation tag, and WebP is usually lossy: the file stays as it is.
+void TestImageActions::savesNoRotationOfAWebp()
+{
+    const QString filePath = writtenFile(QStringLiteral("beach.webp"), encodedImage("WEBP"));
+    QFile file(filePath);
+    QVERIFY(file.open(QIODevice::ReadOnly));
+    const QByteArray content = file.readAll();
+    file.close();
+    QSignalSpy failed(m_actions.get(), &ImageActions::failed);
+
+    QVERIFY(!m_actions->canSaveRotation(QStringLiteral("image/webp")));
+    m_actions->saveLocalRotation(filePath, 90);
+
+    QCOMPARE(failed.size(), 1);
+    QVERIFY(file.open(QIODevice::ReadOnly));
+    QCOMPARE(file.readAll(), content);
+    QVERIFY(m_actions->canSaveRotation(QStringLiteral("image/jpeg")));
+    QVERIFY(m_actions->canSaveRotation(QStringLiteral("image/png")));
 }
 
 }  // namespace pictorio::image_actions
