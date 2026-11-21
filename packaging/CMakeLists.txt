@@ -14,6 +14,6 @@ install(FILES io.github.oesusdevelopmentstudios.photobook.metainfo.xml
     DESTINATION ${KDE_INSTALL_METAINFODIR}
 )
 
-install(FILES icons/io.github.oesusdevelopmentstudios.photobook.svg
+install(FILES icons/io.github.oesusdevelopmentstudios.photobook.png
     DESTINATION ${KDE_INSTALL_ICONDIR}/hicolor/scalable/apps
 )

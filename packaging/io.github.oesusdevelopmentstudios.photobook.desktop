@@ -11,6 +11,6 @@ Exec=photobook %F
 Terminal=false
 Categories=Qt;KDE;Graphics;Viewer;Photography;
 Keywords=image;photo;picture;viewer;slideshow;gallery;
-# Folders (opened at their first image, as Gwenview does), and the image types the app opens.
+# Image types the app opens.
 # tests/packaging/TestDesktopFile.cpp checks each image type.
 MimeType=inode/directory;image/jpeg;image/png;image/gif;image/webp;image/bmp;image/tiff;image/avif;image/heif;image/jxl;
