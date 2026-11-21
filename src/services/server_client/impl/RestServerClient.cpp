@@ -84,23 +84,6 @@ QString sortName(SortBy sortBy)
     return QStringLiteral("taken_at");
 }
 
-QString jobStatusName(JobStatus status)
-{
-    switch (status)
-    {
-    case JobStatus::Running:
-        return QStringLiteral("running");
-    case JobStatus::Done:
-        return QStringLiteral("done");
-    case JobStatus::Failed:
-        return QStringLiteral("failed");
-    case JobStatus::Queued:
-        break;
-    }
-
-    return QStringLiteral("queued");
-}
-
 QString booleanValue(bool value)
 {
     return value ? QStringLiteral("true") : QStringLiteral("false");
@@ -206,18 +189,6 @@ RestServerClient::logIn(const QString& username, const QString& password, const 
 QFuture<Result<CurrentUser>> RestServerClient::currentUser()
 {
     return send("GET", QStringLiteral("/auth/me")).then([](const HttpResponse& response) {
-        return jsonAnswer(response, statusOk, currentUserFrom);
-    });
-}
-
-QFuture<Result<CurrentUser>> RestServerClient::changeOwnPassword(const QString& currentPassword,
-                                                                 const QString& newPassword)
-{
-    const QJsonObject body{
-        {QStringLiteral("current_password"), currentPassword},
-        {QStringLiteral("new_password"), newPassword},
-    };
-    return send("PATCH", QStringLiteral("/auth/me"), body).then([](const HttpResponse& response) {
         return jsonAnswer(response, statusOk, currentUserFrom);
     });
 }
@@ -391,26 +362,6 @@ QFuture<Result<Preferences>> RestServerClient::setPreferences(const Preferences&
     const QJsonObject body{{QStringLiteral("hidden_filters"), QJsonArray::fromStringList(preferences.hiddenFilters)}};
     return send("PUT", QStringLiteral("/preferences"), body).then([](const HttpResponse& response) {
         return jsonAnswer(response, statusOk, preferencesFrom);
-    });
-}
-
-QFuture<Result<QList<Job>>> RestServerClient::jobs(std::optional<JobStatus> status)
-{
-    QUrlQuery parameters;
-    if (status.has_value())
-    {
-        parameters.addQueryItem(QStringLiteral("status"), jobStatusName(*status));
-    }
-
-    return send("GET", QStringLiteral("/jobs"), std::nullopt, parameters).then([](const HttpResponse& response) {
-        return jsonAnswer(response, statusOk, jobsFrom);
-    });
-}
-
-QFuture<Result<Job>> RestServerClient::job(int jobId)
-{
-    return send("GET", QStringLiteral("/jobs/%1").arg(jobId)).then([](const HttpResponse& response) {
-        return jsonAnswer(response, statusOk, jobFrom);
     });
 }
 

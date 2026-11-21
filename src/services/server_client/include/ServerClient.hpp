@@ -43,10 +43,6 @@ public:
     // GET /auth/me
     virtual QFuture<Result<CurrentUser>> currentUser() = 0;
 
-    // PATCH /auth/me: the user's other devices are logged out, this one stays logged in
-    virtual QFuture<Result<CurrentUser>> changeOwnPassword(const QString& currentPassword,
-                                                           const QString& newPassword) = 0;
-
     // GET /auth/tokens
     virtual QFuture<Result<QList<DeviceToken>>> devices() = 0;
 
@@ -105,12 +101,6 @@ public:
 
     // PUT /preferences: replaces them all
     virtual QFuture<Result<Preferences>> setPreferences(const Preferences& preferences) = 0;
-
-    // GET /jobs: the user's latest jobs, newest first; all of them, or those with the given status
-    virtual QFuture<Result<QList<Job>>> jobs(std::optional<JobStatus> status = std::nullopt) = 0;
-
-    // GET /jobs/{id}
-    virtual QFuture<Result<Job>> job(int jobId) = 0;
 };
 
 }  // namespace pictorio::server_client

@@ -30,10 +30,7 @@ public:
     QDateTime dateTime(const QString& key);
     std::optional<QDateTime> optionalDateTime(const QString& key);  // null: nothing
     QDateTime wallClockTime(const QString& key);                    // a time without time zone, kept as it is
-    // For fields that may be null: null gives nothing; anything else is read as above.
-    std::optional<int> optionalInteger(const QString& key);
-    QString optionalString(const QString& key);      // null: empty
-    QJsonObject optionalObject(const QString& key);  // null: empty
+    QString optionalString(const QString& key);                     // null: empty
     QStringList stringList(const QString& key);
     std::optional<QStringList> optionalStringList(const QString& key);  // null: nothing
     QJsonObject object(const QString& key);

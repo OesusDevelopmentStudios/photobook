@@ -30,7 +30,6 @@ public:
     QFuture<Result<LocalLibrary>> localLibrary(const QString& machineId) override;
     QFuture<Result<Login>> logIn(const QString& username, const QString& password, const QString& deviceName) override;
     QFuture<Result<CurrentUser>> currentUser() override;
-    QFuture<Result<CurrentUser>> changeOwnPassword(const QString& currentPassword, const QString& newPassword) override;
     QFuture<Result<QList<DeviceToken>>> devices() override;
     QFuture<Result<void>> revokeDevice(int tokenId) override;
 
@@ -49,8 +48,6 @@ public:
     QFuture<Result<QList<Namespace>>> namespaces() override;
     QFuture<Result<Preferences>> preferences() override;
     QFuture<Result<Preferences>> setPreferences(const Preferences& preferences) override;
-    QFuture<Result<QList<Job>>> jobs(std::optional<JobStatus> status) override;
-    QFuture<Result<Job>> job(int jobId) override;
 
 private:
     QFuture<HttpResponse> send(const QByteArray& method,

@@ -200,28 +200,4 @@ struct Preferences
     QStringList hiddenFilters;  // search terms hidden unless searched for, e.g. "rating:nsfw"
 };
 
-enum class JobStatus
-{
-    Queued,
-    Running,
-    Done,
-    Failed,
-};
-
-// A long task on the server, e.g. a folder import
-struct Job
-{
-    int id = 0;
-    QString kind;  // e.g. "folder_import"; kept as text, so a newer server's kinds do not break the app
-    JobStatus status = JobStatus::Queued;
-    QJsonObject params;
-    int progressDone = 0;
-    std::optional<int> progressTotal;  // not known yet
-    QJsonObject result;                // counts of what was done, once done; empty before
-    QString error;                     // why it failed
-    std::optional<int> createdBy;
-    QDateTime createdAt;  // UTC
-    std::optional<QDateTime> finishedAt;
-};
-
 }  // namespace pictorio::server_client

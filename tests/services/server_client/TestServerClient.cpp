@@ -144,7 +144,6 @@ private Q_SLOTS:
     void asksWhereTheLibraryIsOnThisComputer();
     void logsInAndReadsTheToken();
     void readsTheCurrentUser();
-    void changesTheOwnPassword();
     void readsTheDevices();
     void revokesADevice();
 
@@ -173,8 +172,6 @@ private Q_SLOTS:
     void suggestsTags();
     void readsTheNamespaces();
     void readsAndReplacesThePreferences();
-    void readsTheJobs();
-    void readsOneJob();
     void namesTheItemThatIsWrong();
 
     void realTransportReadsAnAnswer();
@@ -296,22 +293,6 @@ void TestServerClient::readsTheCurrentUser()
     QCOMPARE(currentUser->restrictedTags, QStringList({QStringLiteral("rating:nsfw"), QStringLiteral("character:*")}));
 }
 
-void TestServerClient::changesTheOwnPassword()
-{
-    m_transport->nextResponse = answer(200, R"({"id":2,"username":"kid","role":"user","restricted_tags":[]})");
-
-    const Result<CurrentUser> currentUser =
-        valueOf(m_client->changeOwnPassword(QStringLiteral("old password"), QStringLiteral("new password")));
-
-    const HttpRequest request = m_transport->lastRequest();
-    QCOMPARE(request.method, QByteArray("PATCH"));
-    QCOMPARE(request.url.path(), QStringLiteral("/api/v1/auth/me"));
-    QCOMPARE(jsonBodyOf(request),
-             QJsonObject({{QStringLiteral("current_password"), QStringLiteral("old password")},
-                          {QStringLiteral("new_password"), QStringLiteral("new password")}}));
-    QVERIFY(currentUser.has_value());
-}
-
 void TestServerClient::readsTheDevices()
 {
     m_transport->nextResponse = answer(200, R"([
@@ -346,31 +327,29 @@ void TestServerClient::revokesADevice()
 
 void TestServerClient::turnsProblemDetailsIntoErrors()
 {
-    m_transport->nextResponse = answer(403, R"({"type":"https://pictorio.invalid/problems/wrong-password",
-        "title":"Wrong password","status":403,"code":"wrong_password","detail":"The current password is not right."})");
+    m_transport->nextResponse = answer(404, R"({"type":"https://pictorio.invalid/problems/not-found",
+        "title":"Image not found","status":404,"code":"not_found","detail":"One of the images does not exist."})");
 
-    const Result<CurrentUser> result =
-        valueOf(m_client->changeOwnPassword(QStringLiteral("typo"), QStringLiteral("new password")));
+    const Result<Image> result = valueOf(m_client->image(7));
 
     QVERIFY(!result.has_value());
-    QCOMPARE(result.error().httpStatus, 403);
-    QCOMPARE(result.error().code, QStringLiteral("wrong_password"));
-    QCOMPARE(result.error().title, QStringLiteral("Wrong password"));
-    QCOMPARE(result.error().detail, QStringLiteral("The current password is not right."));
+    QCOMPARE(result.error().httpStatus, 404);
+    QCOMPARE(result.error().code, QStringLiteral("not_found"));
+    QCOMPARE(result.error().title, QStringLiteral("Image not found"));
+    QCOMPARE(result.error().detail, QStringLiteral("One of the images does not exist."));
 }
 
 void TestServerClient::keepsFieldErrorsAndExtraFields()
 {
     m_transport->nextResponse = answer(422, R"({"type":"t","title":"Invalid request","status":422,
-        "code":"validation_error","errors":[{"field":"password","message":"8 to 1024 characters"}],"tag":"a|b"})");
+        "code":"validation_error","errors":[{"field":"query.limit","message":"1 to 500"}],"tag":"a|b"})");
 
-    const Result<CurrentUser> result =
-        valueOf(m_client->changeOwnPassword(QStringLiteral("old password"), QStringLiteral("short")));
+    const Result<ImagePage> result = valueOf(m_client->searchImages(ImageQuery{}));
 
     QVERIFY(!result.has_value());
     QCOMPARE(result.error().fieldErrors.size(), 1);
-    QCOMPARE(result.error().fieldErrors.at(0).field, QStringLiteral("password"));
-    QCOMPARE(result.error().fieldErrors.at(0).message, QStringLiteral("8 to 1024 characters"));
+    QCOMPARE(result.error().fieldErrors.at(0).field, QStringLiteral("query.limit"));
+    QCOMPARE(result.error().fieldErrors.at(0).message, QStringLiteral("1 to 500"));
     QCOMPARE(result.error().problem.value(QStringLiteral("tag")).toString(), QStringLiteral("a|b"));
 }
 
@@ -721,46 +700,6 @@ void TestServerClient::readsAndReplacesThePreferences()
              QJsonObject({{QStringLiteral("hidden_filters"),
                            QJsonArray({QStringLiteral("rating:nsfw"), QStringLiteral("category:refs")})}}));
     QCOMPARE(saved->hiddenFilters, changed.hiddenFilters);
-}
-
-void TestServerClient::readsTheJobs()
-{
-    m_transport->nextResponse = answer(200, R"([
-        {"id":2,"kind":"folder_import","status":"running","params":{"source_subdir":"holiday"},"progress_done":7,
-         "progress_total":null,"result":null,"error":null,"created_by":null,"created_at":"2026-11-15T16:20:00Z",
-         "finished_at":null}])");
-
-    const Result<QList<Job>> jobs = valueOf(m_client->jobs(JobStatus::Running));
-
-    QCOMPARE(m_transport->lastRequest().url.path(), QStringLiteral("/api/v1/jobs"));
-    QCOMPARE(serverSideValue(m_transport->lastRequest().url, "status"), QStringLiteral("running"));
-    QVERIFY(jobs.has_value());
-    const Job import = jobs->at(0);
-    QCOMPARE(import.kind, QStringLiteral("folder_import"));
-    QVERIFY(import.status == JobStatus::Running);
-    QCOMPARE(import.params.value(QStringLiteral("source_subdir")).toString(), QStringLiteral("holiday"));
-    QCOMPARE(import.progressDone, 7);
-    QVERIFY(!import.progressTotal.has_value());
-    QVERIFY(import.result.isEmpty() && import.error.isEmpty());
-    QVERIFY(!import.createdBy.has_value() && !import.finishedAt.has_value());
-}
-
-void TestServerClient::readsOneJob()
-{
-    m_transport->nextResponse = answer(200, R"({"id":2,"kind":"folder_import","status":"failed","params":{},
-        "progress_done":81,"progress_total":81,"result":{"imported":80},"error":"The disk is full.","created_by":1,
-        "created_at":"2026-11-15T16:20:00Z","finished_at":"2026-11-15T16:21:00Z"})");
-
-    const Result<Job> job = valueOf(m_client->job(2));
-
-    QCOMPARE(m_transport->lastRequest().url.path(), QStringLiteral("/api/v1/jobs/2"));
-    QVERIFY(job.has_value());
-    QVERIFY(job->status == JobStatus::Failed);
-    QCOMPARE(job->progressTotal.value(), 81);
-    QCOMPARE(job->result.value(QStringLiteral("imported")).toInt(), 80);
-    QCOMPARE(job->error, QStringLiteral("The disk is full."));
-    QCOMPARE(job->createdBy.value(), 1);
-    QCOMPARE(job->finishedAt.value(), QDateTime(QDate(2026, 11, 15), QTime(16, 21), QTimeZone::UTC));
 }
 
 void TestServerClient::namesTheItemThatIsWrong()

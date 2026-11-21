@@ -113,49 +113,6 @@ Namespace namespaceFrom(JsonReader& reader)
     return info;
 }
 
-JobStatus jobStatusFrom(JsonReader& reader)
-{
-    const QString status = reader.string(QStringLiteral("status"));
-    if (status == QLatin1String("running"))
-    {
-        return JobStatus::Running;
-    }
-
-    if (status == QLatin1String("done"))
-    {
-        return JobStatus::Done;
-    }
-
-    if (status == QLatin1String("failed"))
-    {
-        return JobStatus::Failed;
-    }
-
-    if (status != QLatin1String("queued") && reader.isValid())
-    {
-        reader.reject(QStringLiteral("status"), QStringLiteral("unknown status %1").arg(status));
-    }
-
-    return JobStatus::Queued;
-}
-
-Job jobFieldsFrom(JsonReader& reader)
-{
-    Job job;
-    job.id = reader.integer(QStringLiteral("id"));
-    job.kind = reader.string(QStringLiteral("kind"));
-    job.status = jobStatusFrom(reader);
-    job.params = reader.object(QStringLiteral("params"));
-    job.progressDone = reader.integer(QStringLiteral("progress_done"));
-    job.progressTotal = reader.optionalInteger(QStringLiteral("progress_total"));
-    job.result = reader.optionalObject(QStringLiteral("result"));
-    job.error = reader.optionalString(QStringLiteral("error"));
-    job.createdBy = reader.optionalInteger(QStringLiteral("created_by"));
-    job.createdAt = reader.dateTime(QStringLiteral("created_at"));
-    job.finishedAt = reader.optionalDateTime(QStringLiteral("finished_at"));
-    return job;
-}
-
 // The parsed value, or the reader's first error.
 template <typename T> Result<T> checked(const JsonReader& reader, T value)
 {
@@ -309,18 +266,6 @@ Result<Preferences> preferencesFrom(const QJsonValue& json)
     Preferences preferences;
     preferences.hiddenFilters = reader.stringList(QStringLiteral("hidden_filters"));
     return checked(reader, preferences);
-}
-
-Result<Job> jobFrom(const QJsonValue& json)
-{
-    JsonReader reader(json.toObject());
-    const Job job = jobFieldsFrom(reader);
-    return checked(reader, job);
-}
-
-Result<QList<Job>> jobsFrom(const QJsonValue& json)
-{
-    return listFrom(json, QString(), jobFieldsFrom);
 }
 
 }  // namespace pictorio::server_client
