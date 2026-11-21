@@ -10,7 +10,7 @@
 
 #include "utils/AppIdentity.hpp"
 
-namespace pictorio::utils
+namespace photobook::utils
 {
 
 // Checks that registerApplicationIdentity() hands the right identity to KDE and Qt. Mistakes here are
@@ -38,12 +38,12 @@ void TestAppIdentity::initTestCase()
 
 void TestAppIdentity::setsTranslationDomain()
 {
-    QCOMPARE(KLocalizedString::applicationDomain(), QByteArrayLiteral("pictorio"));
+    QCOMPARE(KLocalizedString::applicationDomain(), QByteArrayLiteral("photobook"));
 }
 
 void TestAppIdentity::registersComponentNameWithQt()
 {
-    QCOMPARE(QCoreApplication::applicationName(), QStringLiteral("pictorio"));
+    QCOMPARE(QCoreApplication::applicationName(), QStringLiteral("photobook"));
 }
 
 void TestAppIdentity::registersProjectVersion()
@@ -54,7 +54,7 @@ void TestAppIdentity::registersProjectVersion()
 void TestAppIdentity::usesApplicationIdAsDesktopFileName()
 {
     QCOMPARE(KAboutData::applicationData().desktopFileName(),
-             QStringLiteral("io.github.oesusdevelopmentstudios.pictorio"));
+             QStringLiteral("io.github.oesusdevelopmentstudios.photobook"));
 }
 
 void TestAppIdentity::usesOwnOrganizationDomain()
@@ -71,8 +71,8 @@ void TestAppIdentity::declaresGplVersion3OrLater()
     QCOMPARE(licenses.first().spdx(), QStringLiteral("GPL-3.0+"));
 }
 
-}  // namespace pictorio::utils
+}  // namespace photobook::utils
 
-QTEST_GUILESS_MAIN(pictorio::utils::TestAppIdentity)
+QTEST_GUILESS_MAIN(photobook::utils::TestAppIdentity)
 
 #include "TestAppIdentity.moc"

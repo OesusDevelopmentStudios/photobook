@@ -33,7 +33,7 @@ void shuffle(QStringList& filePaths, quint32 seed)
 
 }  // namespace
 
-namespace pictorio::folder_scanner
+namespace photobook::folder_scanner
 {
 
 QtFolderScanner::QtFolderScanner(std::unique_ptr<const image_loader::ImageLoader> imageLoader)
@@ -95,4 +95,4 @@ void QtFolderScanner::sortByDate(QStringList& imagePaths) const
     imagePaths = std::move(sortedPaths);
 }
 
-}  // namespace pictorio::folder_scanner
+}  // namespace photobook::folder_scanner

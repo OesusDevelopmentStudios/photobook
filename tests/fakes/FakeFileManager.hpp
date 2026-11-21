@@ -11,7 +11,7 @@
 
 #include "FileManager.hpp"
 
-namespace pictorio::fakes
+namespace photobook::fakes
 {
 
 // The files shown, and whether the file manager opens. Shared, so a test can look inside after handing the
@@ -45,4 +45,4 @@ private:
     std::shared_ptr<FileManagerWindows> m_windows;
 };
 
-}  // namespace pictorio::fakes
+}  // namespace photobook::fakes

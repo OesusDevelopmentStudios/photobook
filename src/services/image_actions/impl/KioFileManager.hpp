@@ -7,7 +7,7 @@
 
 #include "FileManager.hpp"
 
-namespace pictorio::image_actions
+namespace photobook::image_actions
 {
 
 // Through the org.freedesktop.FileManager1 D-Bus interface, which selects the file; where no file manager
@@ -18,4 +18,4 @@ public:
     QFuture<std::expected<void, QString>> showFile(const QString& filePath) override;
 };
 
-}  // namespace pictorio::image_actions
+}  // namespace photobook::image_actions

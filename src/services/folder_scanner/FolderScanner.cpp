@@ -13,7 +13,7 @@
 namespace
 {
 
-using pictorio::folder_scanner::isReadableImage;
+using photobook::folder_scanner::isReadableImage;
 
 // Without QDir::Hidden, hidden files and folders are left out; QDir::NoSymLinks leaves out links.
 void collectImages(const QString& folderPath,
@@ -41,7 +41,7 @@ void collectImages(const QString& folderPath,
 
 }  // namespace
 
-namespace pictorio::folder_scanner
+namespace photobook::folder_scanner
 {
 
 FolderScanner::~FolderScanner() = default;
@@ -54,4 +54,4 @@ QStringList findImages(const QString& folderPath, bool includeSubfolders)
     return imagePaths;
 }
 
-}  // namespace pictorio::folder_scanner
+}  // namespace photobook::folder_scanner

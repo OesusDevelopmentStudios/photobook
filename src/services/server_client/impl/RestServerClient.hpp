@@ -14,7 +14,7 @@
 #include "HttpTransport.hpp"
 #include "ServerClient.hpp"
 
-namespace pictorio::server_client
+namespace photobook::server_client
 {
 
 // Builds the requests of the REST API and reads its answers; the transport carries them.
@@ -63,4 +63,4 @@ private:
     std::shared_ptr<HttpTransport> m_transport;
 };
 
-}  // namespace pictorio::server_client
+}  // namespace photobook::server_client

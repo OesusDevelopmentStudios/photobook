@@ -12,7 +12,7 @@
 
 #include "TagSuggestions.hpp"
 
-namespace pictorio::tag_editor
+namespace photobook::tag_editor
 {
 
 // What an edit view's rows use, the same for one image and for many: a row per namespace, with its dropdown
@@ -25,7 +25,7 @@ class TagRowsEditor : public QObject
     Q_PROPERTY(bool hasChanges READ hasChanges NOTIFY hasChangesChanged)
     Q_PROPERTY(QAbstractListModel* namespaceRows READ namespaceRows CONSTANT)
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged)
-    Q_PROPERTY(pictorio::tag_editor::TagSuggestions* suggestions READ suggestions CONSTANT)
+    Q_PROPERTY(photobook::tag_editor::TagSuggestions* suggestions READ suggestions CONSTANT)
 
 public:
     enum class Change
@@ -81,4 +81,4 @@ private:
     bool m_hadChanges = false;
 };
 
-}  // namespace pictorio::tag_editor
+}  // namespace photobook::tag_editor

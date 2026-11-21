@@ -8,7 +8,7 @@
 #include <QCryptographicHash>
 #include <QFile>
 
-namespace pictorio::utils
+namespace photobook::utils
 {
 
 std::optional<QString> sha256Of(const QString& filePath)
@@ -28,4 +28,4 @@ std::optional<QString> sha256Of(const QString& filePath)
     return QString::fromLatin1(hash.result().toHex());
 }
 
-}  // namespace pictorio::utils
+}  // namespace photobook::utils

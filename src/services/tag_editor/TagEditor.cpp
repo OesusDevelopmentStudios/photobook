@@ -20,9 +20,9 @@
 namespace
 {
 
-using pictorio::tag_editor::TagEditor;
-using pictorio::tag_editor::tagFromServer;
-using pictorio::tag_editor::TagName;
+using photobook::tag_editor::TagEditor;
+using photobook::tag_editor::tagFromServer;
+using photobook::tag_editor::TagName;
 
 QVariantMap tagEntry(const TagName& tag, TagEditor::Change change)
 {
@@ -35,7 +35,7 @@ QVariantMap tagEntry(const TagName& tag, TagEditor::Change change)
 
 }  // namespace
 
-namespace pictorio::tag_editor
+namespace photobook::tag_editor
 {
 
 TagEditor::TagEditor(connection::Connection* connection, QObject* parent)
@@ -452,4 +452,4 @@ void TagEditor::setErrorMessage(const QString& message)
     }
 }
 
-}  // namespace pictorio::tag_editor
+}  // namespace photobook::tag_editor

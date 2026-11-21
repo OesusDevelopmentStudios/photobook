@@ -19,7 +19,7 @@ constexpr int knownValueCount = 50;
 
 }  // namespace
 
-namespace pictorio::tag_editor
+namespace photobook::tag_editor
 {
 
 bool Namespaces::Info::hasDropdown() const
@@ -151,4 +151,4 @@ void Namespaces::loadKnownValues()
     }
 }
 
-}  // namespace pictorio::tag_editor
+}  // namespace photobook::tag_editor

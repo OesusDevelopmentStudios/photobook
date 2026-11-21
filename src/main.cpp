@@ -19,8 +19,8 @@
 #include "utils/AppIdentity.hpp"
 #include "utils/CommandLine.hpp"
 
-// The user interface's QML module, a static library (see pictorio_ui in src/CMakeLists.txt)
-Q_IMPORT_QML_PLUGIN(io_github_oesusdevelopmentstudios_pictorioPlugin)
+// The user interface's QML module, a static library (see photobook_ui in src/CMakeLists.txt)
+Q_IMPORT_QML_PLUGIN(io_github_oesusdevelopmentstudios_photobookPlugin)
 
 namespace
 {
@@ -42,17 +42,17 @@ int main(int argc, char* argv[])
 {
     QApplication application(argc, argv);
 
-    pictorio::utils::registerApplicationIdentity();
+    photobook::utils::registerApplicationIdentity();
     selectQuickControlsStyle();
 
     QCommandLineParser commandLineParser;
-    pictorio::utils::addCommandLineOptions(commandLineParser);
+    photobook::utils::addCommandLineOptions(commandLineParser);
     commandLineParser.process(application);  // exits on --help, --version and errors
     KAboutData::applicationData().processCommandLine(&commandLineParser);
-    const pictorio::utils::CommandLineOptions commandLineOptions =
-        pictorio::utils::readCommandLineOptions(commandLineParser, QDir::currentPath());
+    const photobook::utils::CommandLineOptions commandLineOptions =
+        photobook::utils::readCommandLineOptions(commandLineParser, QDir::currentPath());
 
-    pictorio::app_manager::AppManager appManager;
+    photobook::app_manager::AppManager appManager;
     const bool openedAtStart = !commandLineOptions.imagePaths.isEmpty();
     if (openedAtStart)
     {
@@ -76,8 +76,8 @@ int main(int argc, char* argv[])
         {QStringLiteral("openedAtStart"), openedAtStart},
     });
 
-    // The QML module URI is the application ID (see pictorio_ui in src/CMakeLists.txt).
-    qmlEngine.loadFromModule(pictorio::utils::applicationId, QStringLiteral("Main"));
+    // The QML module URI is the application ID (see photobook_ui in src/CMakeLists.txt).
+    qmlEngine.loadFromModule(photobook::utils::applicationId, QStringLiteral("Main"));
 
     const bool mainWindowLoaded = !qmlEngine.rootObjects().isEmpty();
     if (!mainWindowLoaded)

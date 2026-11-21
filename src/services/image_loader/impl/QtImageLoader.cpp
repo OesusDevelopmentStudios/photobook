@@ -17,7 +17,7 @@
 namespace
 {
 
-using pictorio::image_loader::ImageLoadError;
+using photobook::image_loader::ImageLoadError;
 
 std::optional<ImageLoadError> findFileAccessProblem(const QFileInfo& fileInfo)
 {
@@ -65,7 +65,7 @@ QSize applyTransformationToSize(const QSize& storedSize, QImageIOHandler::Transf
 
 }  // namespace
 
-namespace pictorio::image_loader
+namespace photobook::image_loader
 {
 
 std::expected<ImageInfo, ImageLoadError> QtImageLoader::loadInfo(const QString& filePath) const
@@ -108,4 +108,4 @@ QDateTime QtImageLoader::readCaptureDate(const QString& filePath) const
     return readExifCaptureDate(filePath);
 }
 
-}  // namespace pictorio::image_loader
+}  // namespace photobook::image_loader

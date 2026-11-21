@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: 2026 OesusDevelopmentStudios
 
 # What can be done with an image besides looking at it, e.g. copying it (see include/ImageActions.hpp).
-add_library(pictorio_image_actions STATIC
+add_library(photobook_image_actions STATIC
     include/ImageActions.hpp
     include/ImageActionsFactory.hpp
     include/FileManager.hpp
@@ -14,16 +14,16 @@ add_library(pictorio_image_actions STATIC
     ImageActionsFactory.cpp
 )
 
-target_include_directories(pictorio_image_actions
+target_include_directories(photobook_image_actions
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-target_link_libraries(pictorio_image_actions
+target_link_libraries(photobook_image_actions
     PUBLIC
-        pictorio_connection
+        photobook_connection
         Qt6::Core
     PRIVATE
         Qt6::Gui  # the clipboard
@@ -33,7 +33,7 @@ target_link_libraries(pictorio_image_actions
 )
 
 # exiv2 reports errors with exceptions, which KDE's compiler settings turn off by default.
-kde_target_enable_exceptions(pictorio_image_actions PRIVATE)
+kde_target_enable_exceptions(photobook_image_actions PRIVATE)
 
 # ImageActions is exposed to QML (app_manager/QmlForeignTypes.hpp); QML tools read its properties from these metatypes.
-qt_extract_metatypes(pictorio_image_actions)
+qt_extract_metatypes(photobook_image_actions)

@@ -16,8 +16,8 @@
 namespace
 {
 
-using pictorio::server_client::HttpResponse;
-using pictorio::server_client::MultipartForm;
+using photobook::server_client::HttpResponse;
+using photobook::server_client::MultipartForm;
 
 // A request is given up when no data moves for this long; a long upload that keeps moving is fine.
 constexpr std::chrono::seconds transferTimeout{30};
@@ -56,7 +56,7 @@ QByteArray quotedName(const QString& name)
 
 }  // namespace
 
-namespace pictorio::server_client
+namespace photobook::server_client
 {
 
 QFuture<HttpResponse> QtHttpTransport::send(const HttpRequest& request)
@@ -115,4 +115,4 @@ QFuture<HttpResponse> QtHttpTransport::finished(QNetworkReply* reply)
     });
 }
 
-}  // namespace pictorio::server_client
+}  // namespace photobook::server_client

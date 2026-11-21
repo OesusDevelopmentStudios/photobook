@@ -11,8 +11,8 @@
 namespace
 {
 
-using pictorio::server_client::ApiError;
-using pictorio::server_client::FieldError;
+using photobook::server_client::ApiError;
+using photobook::server_client::FieldError;
 
 QList<FieldError> fieldErrorsIn(const QJsonObject& problem)
 {
@@ -29,7 +29,7 @@ QList<FieldError> fieldErrorsIn(const QJsonObject& problem)
 
 }  // namespace
 
-namespace pictorio::server_client
+namespace photobook::server_client
 {
 
 ApiError apiErrorFrom(const HttpResponse& response)
@@ -70,4 +70,4 @@ ApiError invalidResponse(const QString& reason)
     return error;
 }
 
-}  // namespace pictorio::server_client
+}  // namespace photobook::server_client

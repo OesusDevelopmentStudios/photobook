@@ -3,11 +3,11 @@
 
 [Desktop Entry]
 Type=Application
-Name=Pictorio
+Name=Photobook
 GenericName=Image Viewer
 Comment=View images and organise your photo library
-Icon=io.github.oesusdevelopmentstudios.pictorio
-Exec=pictorio %F
+Icon=io.github.oesusdevelopmentstudios.photobook
+Exec=photobook %F
 Terminal=false
 Categories=Qt;KDE;Graphics;Viewer;Photography;
 Keywords=image;photo;picture;viewer;slideshow;gallery;

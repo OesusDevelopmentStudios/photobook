@@ -32,7 +32,7 @@
 #include "fakes/FakeTrash.hpp"
 #include "fakes/ImageJson.hpp"
 
-namespace pictorio::tests
+namespace photobook::tests
 {
 
 // Real services for QML parts that need them, over fakes: a viewer showing a photo from a fake image loader,
@@ -43,12 +43,12 @@ class TestServices : public QObject
 {
     Q_OBJECT
 
-    Q_PROPERTY(pictorio::viewer::Viewer* viewer READ viewer CONSTANT)
-    Q_PROPERTY(pictorio::tag_editor::TagEditor* tagEditor READ tagEditor CONSTANT)
-    Q_PROPERTY(pictorio::tag_editor::UploadTagEditor* uploadTagEditor READ uploadTagEditor CONSTANT)
-    Q_PROPERTY(pictorio::uploader::Uploader* uploader READ uploader CONSTANT)
-    Q_PROPERTY(pictorio::connection::Connection* accountConnection READ accountConnection CONSTANT)
-    Q_PROPERTY(pictorio::tag_editor::HiddenFilterEditor* hiddenFilterEditor READ hiddenFilterEditor CONSTANT)
+    Q_PROPERTY(photobook::viewer::Viewer* viewer READ viewer CONSTANT)
+    Q_PROPERTY(photobook::tag_editor::TagEditor* tagEditor READ tagEditor CONSTANT)
+    Q_PROPERTY(photobook::tag_editor::UploadTagEditor* uploadTagEditor READ uploadTagEditor CONSTANT)
+    Q_PROPERTY(photobook::uploader::Uploader* uploader READ uploader CONSTANT)
+    Q_PROPERTY(photobook::connection::Connection* accountConnection READ accountConnection CONSTANT)
+    Q_PROPERTY(photobook::tag_editor::HiddenFilterEditor* hiddenFilterEditor READ hiddenFilterEditor CONSTANT)
     Q_PROPERTY(QUrl sampleFolder READ sampleFolder CONSTANT)  // holiday/beach.jpg, holiday/day2/sunset.jpg
 
     // Answers every file with the same landscape photo, without touching the disk.
@@ -73,7 +73,7 @@ class TestServices : public QObject
 
 public:
     TestServices()
-        : m_settings(settings::createSettings(m_folder.filePath(QStringLiteral("pictoriorc"))))
+        : m_settings(settings::createSettings(m_folder.filePath(QStringLiteral("photobookrc"))))
         , m_connection(std::make_unique<connection::Connection>(
               [server = std::make_shared<fakes::FakeServer>()](const QUrl& url) {
                   return server_client::createServerClient(url, server);
@@ -212,4 +212,4 @@ private:
     std::unique_ptr<tag_editor::HiddenFilterEditor> m_hiddenFilterEditor;
 };
 
-}  // namespace pictorio::tests
+}  // namespace photobook::tests

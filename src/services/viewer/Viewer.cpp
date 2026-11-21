@@ -11,7 +11,7 @@
 namespace
 {
 
-using pictorio::viewer::Viewer;
+using photobook::viewer::Viewer;
 
 // Formats whose files may hold an animation. Only the file itself can tell; a still one shows as well.
 bool mayBeAnimated(const QString& mimeType)
@@ -19,7 +19,7 @@ bool mayBeAnimated(const QString& mimeType)
     return mimeType == QLatin1String("image/gif") || mimeType == QLatin1String("image/webp");
 }
 
-Viewer::ImageDetails detailsOf(const pictorio::image_loader::ImageInfo& imageInfo)
+Viewer::ImageDetails detailsOf(const photobook::image_loader::ImageInfo& imageInfo)
 {
     const QFileInfo file(imageInfo.filePath);
     Viewer::ImageDetails details;
@@ -36,7 +36,7 @@ Viewer::ImageDetails detailsOf(const pictorio::image_loader::ImageInfo& imageInf
 
 }  // namespace
 
-namespace pictorio::viewer
+namespace photobook::viewer
 {
 
 Viewer::Viewer(std::unique_ptr<image_loader::ImageLoader> imageLoader, QObject* parent)
@@ -193,4 +193,4 @@ QVariantList Viewer::tagGroups() const
     return groups;
 }
 
-}  // namespace pictorio::viewer
+}  // namespace photobook::viewer

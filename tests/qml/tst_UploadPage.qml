@@ -3,8 +3,8 @@
 
 import QtQuick
 import QtTest
-import io.github.oesusdevelopmentstudios.pictorio
-import pictorio.tests
+import io.github.oesusdevelopmentstudios.photobook
+import photobook.tests
 
 // The connection is not logged in, so every file fails.
 Item {

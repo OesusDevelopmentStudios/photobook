@@ -31,14 +31,14 @@ Kirigami.Page {
             Layout.alignment: Qt.AlignHCenter
             implicitWidth: Kirigami.Units.iconSizes.enormous
             implicitHeight: Kirigami.Units.iconSizes.enormous
-            source: "io.github.oesusdevelopmentstudios.pictorio"
+            source: "io.github.oesusdevelopmentstudios.photobook"
         }
 
         Kirigami.Heading {
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.Wrap
-            text: KI18n.i18nc("@title", "Welcome to Pictorio")
+            text: KI18n.i18nc("@title", "Welcome to Photobook")
         }
 
         Controls.Label {

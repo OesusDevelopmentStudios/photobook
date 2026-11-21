@@ -16,7 +16,7 @@
 #include "FolderScanner.hpp"
 #include "Library.hpp"
 
-namespace pictorio::navigator
+namespace photobook::navigator
 {
 
 // The neighbours are a local folder's images, or the library's results. A folder is listed in the background:
@@ -99,4 +99,4 @@ private:
     int m_waitingForRow = -1;              // stepped past the loaded results; shown once its page is in
 };
 
-}  // namespace pictorio::navigator
+}  // namespace photobook::navigator

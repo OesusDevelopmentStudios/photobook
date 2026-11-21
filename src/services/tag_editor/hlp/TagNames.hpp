@@ -11,7 +11,7 @@
 #include <QSet>
 #include <QString>
 
-namespace pictorio::tag_editor
+namespace photobook::tag_editor
 {
 
 // The namespace of a tag written without one: "summer" is "general:summer"
@@ -45,4 +45,4 @@ QList<TagName> tagsAfterChange(const QList<TagName>& current,
                                const QList<TagName>& removals,
                                const QSet<QString>& singleValueNamespaces);
 
-}  // namespace pictorio::tag_editor
+}  // namespace photobook::tag_editor

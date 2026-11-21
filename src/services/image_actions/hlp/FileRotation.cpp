@@ -127,7 +127,7 @@ std::expected<void, QString> turnPixels(const QString& filePath, int clockwiseDe
 
 }  // namespace
 
-namespace pictorio::image_actions
+namespace photobook::image_actions
 {
 
 RotationSaving rotationSavingFor(const QString& mimeType)
@@ -166,4 +166,4 @@ std::expected<void, QString> saveRotation(const QString& filePath, const QString
         i18nc("@info", "The rotation of this type of image cannot be saved without losing quality."));
 }
 
-}  // namespace pictorio::image_actions
+}  // namespace photobook::image_actions

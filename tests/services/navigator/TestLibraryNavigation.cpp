@@ -19,7 +19,7 @@
 #include "fakes/FakeTokenStore.hpp"
 #include "fakes/ImageJson.hpp"
 
-namespace pictorio::navigator
+namespace photobook::navigator
 {
 
 namespace
@@ -83,7 +83,7 @@ void TestLibraryNavigation::init()
 {
     m_navigator.reset();  // before the library it browses
     m_folder = std::make_unique<QTemporaryDir>();
-    m_settings = settings::createSettings(m_folder->filePath(QStringLiteral("pictoriorc")));
+    m_settings = settings::createSettings(m_folder->filePath(QStringLiteral("photobookrc")));
     m_settings->setServerUrl(QUrl(serverUrl));
 
     m_server = std::make_shared<FakeServer>();
@@ -280,8 +280,8 @@ void TestLibraryNavigation::leavesTheLibraryForAFile()
     QCOMPARE(requested.count(), 0);  // the file stays on screen
 }
 
-}  // namespace pictorio::navigator
+}  // namespace photobook::navigator
 
-QTEST_GUILESS_MAIN(pictorio::navigator::TestLibraryNavigation)
+QTEST_GUILESS_MAIN(photobook::navigator::TestLibraryNavigation)
 
 #include "TestLibraryNavigation.moc"

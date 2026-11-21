@@ -11,7 +11,7 @@
 
 #include "Trash.hpp"
 
-namespace pictorio::fakes
+namespace photobook::fakes
 {
 
 // The files sent to the trash, and whether the trash takes them. Shared, so a test can look inside after
@@ -45,4 +45,4 @@ private:
     std::shared_ptr<TrashCan> m_can;
 };
 
-}  // namespace pictorio::fakes
+}  // namespace photobook::fakes

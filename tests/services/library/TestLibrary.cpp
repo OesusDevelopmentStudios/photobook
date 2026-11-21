@@ -22,7 +22,7 @@
 #include "fakes/FakeTokenStore.hpp"
 #include "fakes/ImageJson.hpp"
 
-namespace pictorio::library
+namespace photobook::library
 {
 
 namespace
@@ -112,7 +112,7 @@ private:
 void TestLibrary::init()
 {
     m_folder = std::make_unique<QTemporaryDir>();
-    m_settings = settings::createSettings(m_folder->filePath(QStringLiteral("pictoriorc")));
+    m_settings = settings::createSettings(m_folder->filePath(QStringLiteral("photobookrc")));
     m_settings->setServerUrl(QUrl(serverUrl));
     m_server = std::make_shared<FakeServer>();
     const QJsonObject kid{{QStringLiteral("id"), 2},
@@ -546,7 +546,7 @@ void TestLibrary::stopsSelectingWhenLoggedOut()
     QVERIFY(m_library->selectedImages().isEmpty());
 }
 
-}  // namespace pictorio::library
+}  // namespace photobook::library
 
-QTEST_GUILESS_MAIN(pictorio::library::TestLibrary)
+QTEST_GUILESS_MAIN(photobook::library::TestLibrary)
 #include "TestLibrary.moc"

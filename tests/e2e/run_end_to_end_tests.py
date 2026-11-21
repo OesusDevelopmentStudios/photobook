@@ -2,19 +2,19 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 OesusDevelopmentStudios
 
-"""Runs the end-to-end tests against a real pictorio-db server.
+"""Runs the end-to-end tests against a real photobook-db server.
 
-Starts the server from a pictorio-db source checkout on a temporary folder, creates its admin account the
+Starts the server from a photobook-db source checkout on a temporary folder, creates its admin account the
 way a browser does (/admin/setup with the setup code from the server's output) and the test accounts with
 the admin API, then runs the tests and removes everything again.
 
-    tests/e2e/run_end_to_end_tests.py                      # ../pictorio-db, the build in build/
-    tests/e2e/run_end_to_end_tests.py --server ../pictorio-db/.venv/bin/pictorio-db   # no new venv
+    tests/e2e/run_end_to_end_tests.py                      # ../photobook-db, the build in build/
+    tests/e2e/run_end_to_end_tests.py --server ../photobook-db/.venv/bin/photobook-db   # no new venv
     tests/e2e/run_end_to_end_tests.py -- some other test command
 
 The server reads a machine ID of its own from a file in the temporary folder, so that a test can be the app on
 the server's computer without the real machine ID. The tests learn the server's address, the accounts'
-password, the library folder and that file from the environment variables PICTORIO_E2E_*; without them they
+password, the library folder and that file from the environment variables PHOTOBOOK_E2E_*; without them they
 skip themselves.
 """
 
@@ -46,7 +46,7 @@ SERVER_START_TIMEOUT = 60  # seconds; the first start creates the database
 
 
 class ServerProcess:
-    """pictorio-db serve, with its output kept in a log file and searched for the setup code."""
+    """photobook-db serve, with its output kept in a log file and searched for the setup code."""
 
     def __init__(self, command: list[str], environment: dict[str, str], log_path: Path) -> None:
         self._log_path = log_path
@@ -96,11 +96,11 @@ class ServerProcess:
 
 def main() -> int:
     arguments = parse_arguments()
-    work_dir = Path(tempfile.mkdtemp(prefix="pictorio-e2e-", dir=arguments.temp_parent))
+    work_dir = Path(tempfile.mkdtemp(prefix="photobook-e2e-", dir=arguments.temp_parent))
     server: ServerProcess | None = None
     succeeded = False
     try:
-        server_command = arguments.server or install_server(arguments.pictorio_db, work_dir / "venv")
+        server_command = arguments.server or install_server(arguments.photobook_db, work_dir / "venv")
         library_dir = work_dir / "library"
         machine_id_file = work_dir / "machine-id"
         machine_id_file.write_text(secrets.token_hex(16) + "\n")
@@ -122,10 +122,10 @@ def main() -> int:
         test_environment = dict(os.environ)
         test_environment.update(
             {
-                "PICTORIO_E2E_SERVER_URL": server_url,
-                "PICTORIO_E2E_PASSWORD": password,
-                "PICTORIO_E2E_LIBRARY_DIR": str(library_dir),
-                "PICTORIO_E2E_MACHINE_ID_FILE": str(machine_id_file),
+                "PHOTOBOOK_E2E_SERVER_URL": server_url,
+                "PHOTOBOOK_E2E_PASSWORD": password,
+                "PHOTOBOOK_E2E_LIBRARY_DIR": str(library_dir),
+                "PHOTOBOOK_E2E_MACHINE_ID_FILE": str(machine_id_file),
             }
         )
         test_command = arguments.test_command or [
@@ -152,10 +152,10 @@ def main() -> int:
 
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--pictorio-db", type=Path, default=REPOSITORY.parent / "pictorio-db",
-                        help="the pictorio-db source checkout to install (default: next to this repository)")
+    parser.add_argument("--photobook-db", type=Path, default=REPOSITORY.parent / "photobook-db",
+                        help="the photobook-db source checkout to install (default: next to this repository)")
     parser.add_argument("--server", type=Path,
-                        help="an installed pictorio-db command to run instead of installing one")
+                        help="an installed photobook-db command to run instead of installing one")
     parser.add_argument("--build-dir", type=Path, default=REPOSITORY / "build",
                         help="the build whose tests run (default: build/)")
     parser.add_argument("--temp-parent", type=Path,
@@ -168,12 +168,12 @@ def parse_arguments() -> argparse.Namespace:
 # A virtual environment of its own, so the server's exact dependency versions never touch another Python.
 def install_server(source: Path, venv: Path) -> Path:
     if not (source / "pyproject.toml").is_file():
-        raise RuntimeError(f"No pictorio-db checkout at {source}; give its folder with --pictorio-db.")
+        raise RuntimeError(f"No photobook-db checkout at {source}; give its folder with --photobook-db.")
 
-    print(f"Installing pictorio-db from {source}…", flush=True)
+    print(f"Installing photobook-db from {source}…", flush=True)
     subprocess.run([sys.executable, "-m", "venv", str(venv)], check=True)
     subprocess.run([str(venv / "bin" / "pip"), "install", "--quiet", str(source)], check=True)
-    return venv / "bin" / "pictorio-db"
+    return venv / "bin" / "photobook-db"
 
 
 def free_port() -> int:
@@ -183,14 +183,14 @@ def free_port() -> int:
 
 
 def server_environment(data_dir: Path, library_dir: Path, machine_id_file: Path, port: int) -> dict[str, str]:
-    environment = {name: value for name, value in os.environ.items() if not name.startswith("PICTORIO_")}
+    environment = {name: value for name, value in os.environ.items() if not name.startswith("PHOTOBOOK_")}
     environment.update(
         {
-            "PICTORIO_DATA_DIR": str(data_dir),
-            "PICTORIO_LIBRARY_DIR": str(library_dir),
-            "PICTORIO_HOST_MACHINE_ID_FILE": str(machine_id_file),
-            "PICTORIO_HOST": "127.0.0.1",
-            "PICTORIO_PORT": str(port),
+            "PHOTOBOOK_DATA_DIR": str(data_dir),
+            "PHOTOBOOK_LIBRARY_DIR": str(library_dir),
+            "PHOTOBOOK_HOST_MACHINE_ID_FILE": str(machine_id_file),
+            "PHOTOBOOK_HOST": "127.0.0.1",
+            "PHOTOBOOK_PORT": str(port),
         }
     )
     return environment

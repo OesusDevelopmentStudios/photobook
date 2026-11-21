@@ -13,7 +13,7 @@
 #include <QSize>
 #include <QString>
 
-namespace pictorio::image_loader
+namespace photobook::image_loader
 {
 
 struct ImageInfo
@@ -50,4 +50,4 @@ public:
 
 QString describeError(ImageLoadError error);
 
-}  // namespace pictorio::image_loader
+}  // namespace photobook::image_loader

@@ -4,7 +4,7 @@
 import QtQuick
 import QtTest
 import org.kde.kirigami as Kirigami
-import io.github.oesusdevelopmentstudios.pictorio
+import io.github.oesusdevelopmentstudios.photobook
 
 // A toolbar growing narrower, as the viewer's: first the labels collapse one at a time, then whole groups go to
 // the overflow menu, the least important first, the image navigation last.

@@ -10,7 +10,7 @@
 
 #include "ApiTypes.hpp"
 
-namespace pictorio::tag_editor
+namespace photobook::tag_editor
 {
 
 // The same words whether the app or the server refuses a restricted tag
@@ -19,4 +19,4 @@ QString restrictedMessage(const QStringList& tags);
 // The server's refusal of a tag change as a sentence for the user
 QString describeError(const server_client::ApiError& error);
 
-}  // namespace pictorio::tag_editor
+}  // namespace photobook::tag_editor

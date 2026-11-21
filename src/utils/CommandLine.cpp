@@ -21,7 +21,7 @@ QString toLocalPath(const QString& argument, const QString& workingDirectory)
 
 }  // namespace
 
-namespace pictorio::utils
+namespace photobook::utils
 {
 
 void addCommandLineOptions(QCommandLineParser& parser)
@@ -46,4 +46,4 @@ CommandLineOptions readCommandLineOptions(const QCommandLineParser& parser, cons
     return options;
 }
 
-}  // namespace pictorio::utils
+}  // namespace photobook::utils

@@ -18,7 +18,7 @@
 #include "TagRowsEditor.hpp"
 #include "TagSuggestions.hpp"
 
-namespace pictorio::tag_editor
+namespace photobook::tag_editor
 {
 
 class Namespaces;
@@ -96,4 +96,4 @@ private:
     QString m_errorMessage;
 };
 
-}  // namespace pictorio::tag_editor
+}  // namespace photobook::tag_editor

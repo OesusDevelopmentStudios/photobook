@@ -1,4 +1,4 @@
-# Contributing to Pictorio
+# Contributing to Photobook
 
 Readability comes first. The code should be easy to understand and maintain for someone who has
 never seen it before.
@@ -12,7 +12,7 @@ never seen it before.
   ```sh
   clang-format -i <changed C++ files>
   cmake --build build && ctest --test-dir build --output-on-failure
-  cmake --build build --target pictorio_ui_qmllint
+  cmake --build build --target photobook_ui_qmllint
   ```
 
 ## Code layout
@@ -29,7 +29,7 @@ tests/                  mirrors src/: tests/utils/TestAppIdentity.cpp tests src/
 ├── fakes/              stand-ins for the server, keyring, trash and file manager, shared by the tests
 ├── packaging/          checks of the files in packaging/
 ├── qml/                QML tests, tst_<component>.qml, with C++ fakes such as FakeTagRowsEditor
-└── e2e/                end-to-end tests against a real pictorio-db server, TestEndToEnd<flow>.cpp
+└── e2e/                end-to-end tests against a real photobook-db server, TestEndToEnd<flow>.cpp
 ```
 
 **QML contains presentation only.** Decisions (sorting, paging, what to upload, when to delete) live in
@@ -38,21 +38,21 @@ a part showing the right state) is tested in `tests/qml/` with Qt Quick Test. Th
 application's QML module and run offscreen as part of `ctest`. Put the item under test in the file's
 visible root item, not in the `TestCase`, which is invisible: an invisible item gets no clicks.
 
-**End-to-end tests** (`tests/e2e/`) run the app's services against a real pictorio-db server. A plain
-`ctest` skips them. `tests/e2e/run_end_to_end_tests.py` installs the server from a pictorio-db checkout
+**End-to-end tests** (`tests/e2e/`) run the app's services against a real photobook-db server. A plain
+`ctest` skips them. `tests/e2e/run_end_to_end_tests.py` installs the server from a photobook-db checkout
 next to this repository into a temporary virtual environment, starts it on a temporary folder, creates
 the test accounts, runs the tests and removes everything again:
 
 ```sh
-tests/e2e/run_end_to_end_tests.py                    # needs ../pictorio-db and a build in build/
-tests/e2e/run_end_to_end_tests.py --server ../pictorio-db/.venv/bin/pictorio-db   # faster: no install
+tests/e2e/run_end_to_end_tests.py                    # needs ../photobook-db and a build in build/
+tests/e2e/run_end_to_end_tests.py --server ../photobook-db/.venv/bin/photobook-db   # faster: no install
 ```
 
 **CI** (`.github/workflows/ci.yml`) builds and runs all tests, the end-to-end ones too, inside the KDE SDK
-the Flatpak is built with, against pictorio-db at a fixed commit. The same runs locally, into `build-sdk/`:
+the Flatpak is built with, against photobook-db at a fixed commit. The same runs locally, into `build-sdk/`:
 
 ```sh
-tests/run_in_flatpak_sdk.sh    # needs flatpak-builder, the KDE SDK and ../pictorio-db
+tests/run_in_flatpak_sdk.sh    # needs flatpak-builder, the KDE SDK and ../photobook-db
 ```
 
 ### Service layout
@@ -68,7 +68,7 @@ services/<service_name>/                    folder: snake_case, e.g. image_loade
 └── <ServiceName>Factory.cpp
 ```
 
-- Code lives in `namespace pictorio::<service_name>`.
+- Code lives in `namespace photobook::<service_name>`.
 - Services never create each other. The app manager creates them through their factories and passes
   in their dependencies. Tests can then pass in fakes.
 - Each service is built as a static library, so the application and the tests link the same code.
@@ -88,7 +88,7 @@ columns, one argument per line when a call does not fit on one line.
 | Public fields of plain structs | `camelCase` | `ImageInfo::displaySize` |
 | C++ files | `PascalCase`, usually named after the main class (exception: `main.cpp`) | `QtImageLoader.hpp`, `AppIdentity.cpp` |
 | Folders | `snake_case` | `services/image_loader/` |
-| Namespaces | `pictorio::snake_case` | `pictorio::folder_scanner` |
+| Namespaces | `photobook::snake_case` | `photobook::folder_scanner` |
 | Test files | `Test<file under test>.cpp` | `TestAppIdentity.cpp` |
 
 - **Names are verbose.** No single-letter names, not even for loop counters: `imageIndex`, not `i`.
@@ -148,10 +148,10 @@ namespace
 // constants and helper functions used only in this file
 }  // namespace
 
-namespace pictorio::service_name
+namespace photobook::service_name
 {
 // service functions
-}  // namespace pictorio::service_name
+}  // namespace photobook::service_name
 ```
 
 Groups are separated by a blank line; clang-format sorts includes only within a group.
@@ -166,7 +166,7 @@ Groups are separated by a blank line; clang-format sorts includes only within a 
 
 #pragma once
 
-namespace pictorio::service_name
+namespace photobook::service_name
 {
 
 class Example
@@ -185,7 +185,7 @@ private:
     // member variables
 };
 
-}  // namespace pictorio::service_name
+}  // namespace photobook::service_name
 ```
 
 ## QML style

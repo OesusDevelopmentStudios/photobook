@@ -9,7 +9,7 @@
 
 #include "hlp/SearchTerm.hpp"
 
-namespace pictorio::tag_editor
+namespace photobook::tag_editor
 {
 
 QStringList restrictedTagsAmong(const QStringList& restrictedTerms,
@@ -32,4 +32,4 @@ QStringList restrictedTagsAmong(const QStringList& restrictedTerms,
     return offending;
 }
 
-}  // namespace pictorio::tag_editor
+}  // namespace photobook::tag_editor

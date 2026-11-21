@@ -5,7 +5,7 @@
 
 #include "ViewerFactory.hpp"
 
-namespace pictorio::viewer
+namespace photobook::viewer
 {
 
 std::unique_ptr<Viewer> createViewer(std::unique_ptr<image_loader::ImageLoader> imageLoader)
@@ -13,4 +13,4 @@ std::unique_ptr<Viewer> createViewer(std::unique_ptr<image_loader::ImageLoader> 
     return std::make_unique<Viewer>(std::move(imageLoader));
 }
 
-}  // namespace pictorio::viewer
+}  // namespace photobook::viewer

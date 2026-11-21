@@ -11,7 +11,7 @@
 
 #include "TokenStore.hpp"
 
-namespace pictorio::fakes
+namespace photobook::fakes
 {
 
 // The tokens by key, or no keyring at all on this system. Shared, so a test can look inside after
@@ -70,4 +70,4 @@ private:
     std::shared_ptr<Keyring> m_keyring;
 };
 
-}  // namespace pictorio::fakes
+}  // namespace photobook::fakes

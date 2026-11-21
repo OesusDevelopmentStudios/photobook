@@ -21,7 +21,7 @@ constexpr const char* tileSizeKey = "TileSize";
 
 }  // namespace
 
-namespace pictorio::settings
+namespace photobook::settings
 {
 
 KConfigSettings::KConfigSettings(KSharedConfigPtr config)
@@ -160,4 +160,4 @@ void KConfigSettings::writeLibraryEntry(const char* key, const QVariant& value)
     m_config->sync();
 }
 
-}  // namespace pictorio::settings
+}  // namespace photobook::settings

@@ -59,7 +59,7 @@ void initializeExiv2Once()
 
 }  // namespace
 
-namespace pictorio::image_loader
+namespace photobook::image_loader
 {
 
 QDateTime readExifCaptureDate(const QString& filePath)
@@ -78,4 +78,4 @@ QDateTime readExifCaptureDate(const QString& filePath)
     }
 }
 
-}  // namespace pictorio::image_loader
+}  // namespace photobook::image_loader

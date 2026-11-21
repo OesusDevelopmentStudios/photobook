@@ -9,10 +9,10 @@
 
 #include "Slideshow.hpp"
 
-namespace pictorio::slideshow
+namespace photobook::slideshow
 {
 
 // The navigator and the settings are not owned and must outlive the slideshow.
 std::unique_ptr<Slideshow> createSlideshow(navigator::Navigator* navigator, settings::Settings* settings);
 
-}  // namespace pictorio::slideshow
+}  // namespace photobook::slideshow

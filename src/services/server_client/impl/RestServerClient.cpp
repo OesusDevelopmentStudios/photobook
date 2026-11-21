@@ -16,7 +16,7 @@
 namespace
 {
 
-using namespace pictorio::server_client;
+using namespace photobook::server_client;
 
 const QString apiPath = QStringLiteral("/api/v1");
 
@@ -148,7 +148,7 @@ QByteArray uploadMetadataJson(const ImageUpload& upload)
 
 }  // namespace
 
-namespace pictorio::server_client
+namespace photobook::server_client
 {
 
 RestServerClient::RestServerClient(const QUrl& serverUrl, std::shared_ptr<HttpTransport> transport)
@@ -416,4 +416,4 @@ QUrl RestServerClient::endpointUrl(const QString& path, const QUrlQuery& query) 
     return url;
 }
 
-}  // namespace pictorio::server_client
+}  // namespace photobook::server_client

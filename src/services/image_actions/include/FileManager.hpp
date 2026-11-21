@@ -10,7 +10,7 @@
 #include <QFuture>
 #include <QString>
 
-namespace pictorio::image_actions
+namespace photobook::image_actions
 {
 
 class FileManager
@@ -22,4 +22,4 @@ public:
     virtual QFuture<std::expected<void, QString>> showFile(const QString& filePath) = 0;
 };
 
-}  // namespace pictorio::image_actions
+}  // namespace photobook::image_actions

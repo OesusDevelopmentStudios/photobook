@@ -10,10 +10,10 @@
 #include "FolderScanner.hpp"
 #include "ImageLoader.hpp"
 
-namespace pictorio::folder_scanner
+namespace photobook::folder_scanner
 {
 
 // The image loader provides the capture dates for SortOrder::Date.
 std::unique_ptr<FolderScanner> createFolderScanner(std::unique_ptr<const image_loader::ImageLoader> imageLoader);
 
-}  // namespace pictorio::folder_scanner
+}  // namespace photobook::folder_scanner

@@ -18,7 +18,7 @@
 #include "fakes/FakeTokenStore.hpp"
 #include "fakes/ImageJson.hpp"
 
-namespace pictorio::tag_editor
+namespace photobook::tag_editor
 {
 
 namespace
@@ -100,7 +100,7 @@ void TestTagSuggestions::init()
 {
     m_suggestions.reset();
     m_folder = std::make_unique<QTemporaryDir>();
-    m_settings = settings::createSettings(m_folder->filePath(QStringLiteral("pictoriorc")));
+    m_settings = settings::createSettings(m_folder->filePath(QStringLiteral("photobookrc")));
     m_settings->setServerUrl(QUrl(serverUrl));
     m_server = std::make_shared<FakeServer>();
     m_server->answer("GET",
@@ -236,8 +236,8 @@ void TestTagSuggestions::asksForOneNamespace()
     QCOMPARE(namespaceAsked, QStringLiteral("album"));
 }
 
-}  // namespace pictorio::tag_editor
+}  // namespace photobook::tag_editor
 
-QTEST_GUILESS_MAIN(pictorio::tag_editor::TestTagSuggestions)
+QTEST_GUILESS_MAIN(photobook::tag_editor::TestTagSuggestions)
 
 #include "TestTagSuggestions.moc"

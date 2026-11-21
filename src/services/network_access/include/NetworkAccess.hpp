@@ -13,7 +13,7 @@
 #include <QString>
 #include <QUrl>
 
-namespace pictorio::network_access
+namespace photobook::network_access
 {
 
 // The login, for images QML loads straight from the server. QML loads images on other threads, so this may be
@@ -43,4 +43,4 @@ QNetworkAccessManager* createNetworkAccessManager(std::shared_ptr<const ServerCr
 std::unique_ptr<QQmlNetworkAccessManagerFactory>
 createNetworkAccessFactory(std::shared_ptr<const ServerCredentials> credentials, const QString& cacheDirectory);
 
-}  // namespace pictorio::network_access
+}  // namespace photobook::network_access

@@ -15,7 +15,7 @@
 #include "impl/NamespaceRows.hpp"
 #include "impl/Namespaces.hpp"
 
-namespace pictorio::tag_editor
+namespace photobook::tag_editor
 {
 
 UploadTagEditor::UploadTagEditor(connection::Connection* connection, QObject* parent)
@@ -254,4 +254,4 @@ void UploadTagEditor::setErrorMessage(const QString& message)
     }
 }
 
-}  // namespace pictorio::tag_editor
+}  // namespace photobook::tag_editor

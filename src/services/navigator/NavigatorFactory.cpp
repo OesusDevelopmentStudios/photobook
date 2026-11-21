@@ -5,7 +5,7 @@
 
 #include "NavigatorFactory.hpp"
 
-namespace pictorio::navigator
+namespace photobook::navigator
 {
 
 std::unique_ptr<Navigator> createNavigator(std::unique_ptr<folder_scanner::FolderScanner> folderScanner)
@@ -13,4 +13,4 @@ std::unique_ptr<Navigator> createNavigator(std::unique_ptr<folder_scanner::Folde
     return std::make_unique<Navigator>(std::move(folderScanner));
 }
 
-}  // namespace pictorio::navigator
+}  // namespace photobook::navigator

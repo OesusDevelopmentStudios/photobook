@@ -8,7 +8,7 @@
 #include <KIO/OpenFileManagerWindowJob>
 #include <QUrl>
 
-namespace pictorio::image_actions
+namespace photobook::image_actions
 {
 
 QFuture<std::expected<void, QString>> KioFileManager::showFile(const QString& filePath)
@@ -25,4 +25,4 @@ QFuture<std::expected<void, QString>> KioFileManager::showFile(const QString& fi
     });
 }
 
-}  // namespace pictorio::image_actions
+}  // namespace photobook::image_actions

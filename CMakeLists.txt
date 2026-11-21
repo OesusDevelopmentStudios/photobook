@@ -3,7 +3,7 @@
 
 cmake_minimum_required(VERSION 3.25)
 
-project(pictorio VERSION 0.1.0 LANGUAGES CXX)
+project(photobook VERSION 0.1.0 LANGUAGES CXX)
 
 # C++23, no compiler-specific extensions. C++23 is well supported by the GCC in the KDE Flatpak SDK;
 # Set before KDECompilerSettings is included, so that ECM does not pick its own default.
@@ -31,8 +31,8 @@ include(FeatureSummary)
 
 # Warnings are errors during development. Packaging (e.g. Flatpak) turns this off, because a newer
 # compiler in the runtime can add new warnings and must not break a release build.
-option(PICTORIO_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" ON)
-if(PICTORIO_WARNINGS_AS_ERRORS)
+option(PHOTOBOOK_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" ON)
+if(PHOTOBOOK_WARNINGS_AS_ERRORS)
     add_compile_options(-Werror)
 endif()
 
@@ -41,7 +41,7 @@ find_package(Qt6 ${QT_MIN_VERSION} REQUIRED COMPONENTS
     Concurrent
     DBus         # the Trash portal, in a Flatpak
     Gui
-    Network      # talking to the pictorio-db server
+    Network      # talking to the photobook-db server
     Qml
     Quick
     QuickControls2

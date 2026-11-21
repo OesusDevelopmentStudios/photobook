@@ -9,7 +9,7 @@
 
 #include "Settings.hpp"
 
-namespace pictorio::library_view
+namespace photobook::library_view
 {
 
 // The library page's layout, kept between runs
@@ -58,4 +58,4 @@ private:
     qreal m_partialSteps = 0;  // from a touchpad, not yet a whole step
 };
 
-}  // namespace pictorio::library_view
+}  // namespace photobook::library_view

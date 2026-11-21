@@ -42,7 +42,7 @@ bool belongsToServer(const QUrl& url, const QUrl& serverUrl)
 class NetworkAccessFactory : public QQmlNetworkAccessManagerFactory
 {
 public:
-    NetworkAccessFactory(std::shared_ptr<const pictorio::network_access::ServerCredentials> credentials,
+    NetworkAccessFactory(std::shared_ptr<const photobook::network_access::ServerCredentials> credentials,
                          const QString& cacheDirectory)
         : m_credentials(std::move(credentials))
         , m_cacheDirectory(cacheDirectory)
@@ -50,17 +50,17 @@ public:
 
     QNetworkAccessManager* create(QObject* parent) override
     {
-        return pictorio::network_access::createNetworkAccessManager(m_credentials, m_cacheDirectory, parent);
+        return photobook::network_access::createNetworkAccessManager(m_credentials, m_cacheDirectory, parent);
     }
 
 private:
-    std::shared_ptr<const pictorio::network_access::ServerCredentials> m_credentials;
+    std::shared_ptr<const photobook::network_access::ServerCredentials> m_credentials;
     QString m_cacheDirectory;
 };
 
 }  // namespace
 
-namespace pictorio::network_access
+namespace photobook::network_access
 {
 
 void ServerCredentials::setLogin(const QUrl& serverUrl, const QString& token)
@@ -104,4 +104,4 @@ createNetworkAccessFactory(std::shared_ptr<const ServerCredentials> credentials,
     return std::make_unique<NetworkAccessFactory>(std::move(credentials), cacheDirectory);
 }
 
-}  // namespace pictorio::network_access
+}  // namespace photobook::network_access

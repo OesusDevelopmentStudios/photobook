@@ -7,7 +7,7 @@
 
 #include "impl/QtImageLoader.hpp"
 
-namespace pictorio::image_loader
+namespace photobook::image_loader
 {
 
 std::unique_ptr<ImageLoader> createImageLoader()
@@ -15,4 +15,4 @@ std::unique_ptr<ImageLoader> createImageLoader()
     return std::make_unique<QtImageLoader>();
 }
 
-}  // namespace pictorio::image_loader
+}  // namespace photobook::image_loader

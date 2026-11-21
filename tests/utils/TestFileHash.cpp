@@ -12,7 +12,7 @@
 #include <QTemporaryDir>
 #include <QTest>
 
-namespace pictorio::utils
+namespace photobook::utils
 {
 
 class TestFileHash : public QObject
@@ -90,8 +90,8 @@ void TestFileHash::givesNothingForAMissingFile()
     QCOMPARE(sha256Of(m_folder->filePath(QStringLiteral("missing.jpg"))), std::nullopt);
 }
 
-}  // namespace pictorio::utils
+}  // namespace photobook::utils
 
-QTEST_GUILESS_MAIN(pictorio::utils::TestFileHash)
+QTEST_GUILESS_MAIN(photobook::utils::TestFileHash)
 
 #include "TestFileHash.moc"

@@ -15,9 +15,9 @@
 namespace
 {
 
-using pictorio::folder_scanner::Sorting;
-using pictorio::folder_scanner::SortOrder;
-using pictorio::slideshow::Slideshow;
+using photobook::folder_scanner::Sorting;
+using photobook::folder_scanner::SortOrder;
+using photobook::slideshow::Slideshow;
 
 Sorting sortingFor(Slideshow::Order order)
 {
@@ -57,7 +57,7 @@ Slideshow::Order orderNamed(const QString& name)
 
 }  // namespace
 
-namespace pictorio::slideshow
+namespace photobook::slideshow
 {
 
 Slideshow::Slideshow(navigator::Navigator* navigator, settings::Settings* settings, QObject* parent)
@@ -190,4 +190,4 @@ void Slideshow::restartIntervalIfShowing()
     }
 }
 
-}  // namespace pictorio::slideshow
+}  // namespace photobook::slideshow

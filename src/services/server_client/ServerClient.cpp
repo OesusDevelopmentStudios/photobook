@@ -5,9 +5,9 @@
 
 #include "ServerClient.hpp"
 
-namespace pictorio::server_client
+namespace photobook::server_client
 {
 
 ServerClient::~ServerClient() = default;
 
-}  // namespace pictorio::server_client
+}  // namespace photobook::server_client

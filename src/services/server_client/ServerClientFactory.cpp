@@ -8,7 +8,7 @@
 #include "impl/QtHttpTransport.hpp"
 #include "impl/RestServerClient.hpp"
 
-namespace pictorio::server_client
+namespace photobook::server_client
 {
 
 std::unique_ptr<ServerClient> createServerClient(const QUrl& serverUrl)
@@ -21,4 +21,4 @@ std::unique_ptr<ServerClient> createServerClient(const QUrl& serverUrl, std::sha
     return std::make_unique<RestServerClient>(serverUrl, std::move(transport));
 }
 
-}  // namespace pictorio::server_client
+}  // namespace photobook::server_client

@@ -20,7 +20,7 @@
 #include "fakes/FakeTokenStore.hpp"
 #include "fakes/ImageJson.hpp"
 
-namespace pictorio::tag_editor
+namespace photobook::tag_editor
 {
 
 namespace
@@ -103,7 +103,7 @@ private:
 
 void TestHiddenFilterEditor::initTestCase()
 {
-    KLocalizedString::setApplicationDomain("pictorio");
+    KLocalizedString::setApplicationDomain("photobook");
 }
 
 // Logged in from the last run, the filters and namespaces loaded
@@ -111,7 +111,7 @@ void TestHiddenFilterEditor::init()
 {
     m_editor.reset();
     m_folder = std::make_unique<QTemporaryDir>();
-    m_settings = settings::createSettings(m_folder->filePath(QStringLiteral("pictoriorc")));
+    m_settings = settings::createSettings(m_folder->filePath(QStringLiteral("photobookrc")));
     m_settings->setServerUrl(QUrl(serverUrl));
     m_server = std::make_shared<FakeServer>();
     m_server->answer("GET",
@@ -376,8 +376,8 @@ void TestHiddenFilterEditor::loadDropsUnsavedChanges()
     QTRY_COMPARE(shownFilters(*m_editor), QStringList({QStringLiteral("general:spoiler")}));
 }
 
-}  // namespace pictorio::tag_editor
+}  // namespace photobook::tag_editor
 
-QTEST_GUILESS_MAIN(pictorio::tag_editor::TestHiddenFilterEditor)
+QTEST_GUILESS_MAIN(photobook::tag_editor::TestHiddenFilterEditor)
 
 #include "TestHiddenFilterEditor.moc"

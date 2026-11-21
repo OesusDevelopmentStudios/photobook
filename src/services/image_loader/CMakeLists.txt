@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: 2026 OesusDevelopmentStudios
 
 # Reads size, orientation and type of an image file (see include/ImageLoader.hpp).
-add_library(pictorio_image_loader STATIC
+add_library(photobook_image_loader STATIC
     include/ImageLoader.hpp
     include/ImageLoaderFactory.hpp
     impl/QtImageLoader.hpp
@@ -14,14 +14,14 @@ add_library(pictorio_image_loader STATIC
 )
 
 # Users of the service see only include/; impl/ stays private to the service.
-target_include_directories(pictorio_image_loader
+target_include_directories(photobook_image_loader
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-target_link_libraries(pictorio_image_loader
+target_link_libraries(photobook_image_loader
     PUBLIC
         Qt6::Gui        # QImageIOHandler, QSize in the public header
     PRIVATE
@@ -30,4 +30,4 @@ target_link_libraries(pictorio_image_loader
 )
 
 # exiv2 reports errors with exceptions, which KDE's compiler settings turn off by default.
-kde_target_enable_exceptions(pictorio_image_loader PRIVATE)
+kde_target_enable_exceptions(photobook_image_loader PRIVATE)

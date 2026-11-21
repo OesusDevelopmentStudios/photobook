@@ -14,7 +14,7 @@
 #include "Connection.hpp"
 #include "FileManager.hpp"
 
-namespace pictorio::image_actions
+namespace photobook::image_actions
 {
 
 // Copying is announced with copied(), saving with rotationSaved(); a failure of any with failed().
@@ -64,4 +64,4 @@ private:
     bool m_busy = false;
 };
 
-}  // namespace pictorio::image_actions
+}  // namespace photobook::image_actions

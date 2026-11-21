@@ -3,8 +3,8 @@
 
 import QtQuick
 import QtTest
-import io.github.oesusdevelopmentstudios.pictorio
-import pictorio.tests
+import io.github.oesusdevelopmentstudios.photobook
+import photobook.tests
 
 // The server has "rating:nsfw" and "category:refs" saved and keeps what is saved; the page loads them on opening.
 Item {

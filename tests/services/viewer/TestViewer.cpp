@@ -16,9 +16,9 @@
 namespace
 {
 
-using pictorio::image_loader::ImageInfo;
-using pictorio::image_loader::ImageLoader;
-using pictorio::image_loader::ImageLoadError;
+using photobook::image_loader::ImageInfo;
+using photobook::image_loader::ImageLoader;
+using photobook::image_loader::ImageLoadError;
 
 class FakeImageLoader : public ImageLoader
 {
@@ -50,15 +50,15 @@ ImageInfo landscapePhoto()
 const QUrl serverFileUrl(QStringLiteral("https://photos.example.org/api/v1/images/5/file"));
 
 // As the library gives it: portrait, with tags sorted by namespace
-pictorio::viewer::Viewer::ImageDetails libraryPhoto()
+photobook::viewer::Viewer::ImageDetails libraryPhoto()
 {
-    pictorio::viewer::Viewer::ImageDetails details;
+    photobook::viewer::Viewer::ImageDetails details;
     details.fileName = QStringLiteral("beach.jpg");
     details.displaySize = QSize(3000, 4000);
     details.mimeType = QStringLiteral("image/jpeg");
     details.fileSize = 3100000;
     details.takenAt = QDateTime(QDate(2025, 7, 14), QTime(18, 3));
-    details.takenAtSource = pictorio::viewer::Viewer::TakenAtSource::FileDate;
+    details.takenAtSource = photobook::viewer::Viewer::TakenAtSource::FileDate;
     details.importedAt = QDateTime(QDate(2026, 11, 15), QTime(19, 22), QTimeZone::UTC);
     details.location = QStringLiteral("photo/sample_artist/2025/beach_aaaaaaaa.jpg");
     details.tags = QStringList{QStringLiteral("author:sample_artist"),
@@ -70,7 +70,7 @@ pictorio::viewer::Viewer::ImageDetails libraryPhoto()
 
 }  // namespace
 
-namespace pictorio::viewer
+namespace photobook::viewer
 {
 
 class TestViewer : public QObject
@@ -108,7 +108,7 @@ private:
 
 void TestViewer::initTestCase()
 {
-    KLocalizedString::setApplicationDomain("pictorio");
+    KLocalizedString::setApplicationDomain("photobook");
 }
 
 void TestViewer::init()
@@ -338,8 +338,8 @@ void TestViewer::updatesTheDetailsWithoutReopening()
     QCOMPARE(m_viewer->tagGroups().size(), 1);
 }
 
-}  // namespace pictorio::viewer
+}  // namespace photobook::viewer
 
-QTEST_GUILESS_MAIN(pictorio::viewer::TestViewer)
+QTEST_GUILESS_MAIN(photobook::viewer::TestViewer)
 
 #include "TestViewer.moc"

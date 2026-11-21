@@ -13,7 +13,7 @@
 #include <QString>
 #include <QStringList>
 
-namespace pictorio::server_client
+namespace photobook::server_client
 {
 
 // Reads the fields of a JSON object that the API promises. The first field that is missing or has the
@@ -48,4 +48,4 @@ private:
     QString m_error;
 };
 
-}  // namespace pictorio::server_client
+}  // namespace photobook::server_client

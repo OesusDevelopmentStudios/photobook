@@ -2,20 +2,20 @@
 # SPDX-FileCopyrightText: 2026 OesusDevelopmentStudios
 
 # Headers are listed so that AUTOMOC finds the Q_OBJECT classes in include/.
-add_library(pictorio_view_transform STATIC
+add_library(photobook_view_transform STATIC
     include/ViewTransform.hpp
     include/ViewTransformFactory.hpp
     ViewTransform.cpp
     ViewTransformFactory.cpp
 )
 
-target_include_directories(pictorio_view_transform PUBLIC
+target_include_directories(photobook_view_transform PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
-target_link_libraries(pictorio_view_transform PUBLIC
+target_link_libraries(photobook_view_transform PUBLIC
     Qt6::Core
 )
 
 # ViewTransform is exposed to QML (app_manager/QmlForeignTypes.hpp); QML tools read its properties from these metatypes.
-qt_extract_metatypes(pictorio_view_transform)
+qt_extract_metatypes(photobook_view_transform)

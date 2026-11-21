@@ -7,7 +7,7 @@
 
 #include <QNetworkRequest>
 
-namespace pictorio::network_access
+namespace photobook::network_access
 {
 
 AuthorizingNetworkAccessManager::AuthorizingNetworkAccessManager(std::shared_ptr<const ServerCredentials> credentials,
@@ -37,4 +37,4 @@ QNetworkReply* AuthorizingNetworkAccessManager::createRequest(Operation operatio
     return QNetworkAccessManager::createRequest(operation, serverRequest, outgoingData);
 }
 
-}  // namespace pictorio::network_access
+}  // namespace photobook::network_access

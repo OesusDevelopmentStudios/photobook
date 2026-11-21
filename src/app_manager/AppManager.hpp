@@ -29,7 +29,7 @@
 #include "ViewTransform.hpp"
 #include "Viewer.hpp"
 
-namespace pictorio::app_manager
+namespace photobook::app_manager
 {
 
 // Creates the services through their factories and makes them available to QML. Owns no logic.
@@ -39,19 +39,19 @@ class AppManager : public QObject
     QML_ELEMENT
     QML_UNCREATABLE("Created in main.cpp")
 
-    Q_PROPERTY(pictorio::viewer::Viewer* viewer READ viewer CONSTANT)
-    Q_PROPERTY(pictorio::view_transform::ViewTransform* viewTransform READ viewTransform CONSTANT)
-    Q_PROPERTY(pictorio::navigator::Navigator* navigator READ navigator CONSTANT)
-    Q_PROPERTY(pictorio::slideshow::Slideshow* slideshow READ slideshow CONSTANT)
-    Q_PROPERTY(pictorio::connection::Connection* connection READ connection CONSTANT)
-    Q_PROPERTY(pictorio::library::Library* library READ library CONSTANT)
-    Q_PROPERTY(pictorio::library_view::LibraryView* libraryView READ libraryView CONSTANT)
-    Q_PROPERTY(pictorio::tag_editor::TagEditor* tagEditor READ tagEditor CONSTANT)
-    Q_PROPERTY(pictorio::tag_editor::BulkTagEditor* bulkTagEditor READ bulkTagEditor CONSTANT)
-    Q_PROPERTY(pictorio::tag_editor::UploadTagEditor* uploadTagEditor READ uploadTagEditor CONSTANT)
-    Q_PROPERTY(pictorio::tag_editor::HiddenFilterEditor* hiddenFilterEditor READ hiddenFilterEditor CONSTANT)
-    Q_PROPERTY(pictorio::image_actions::ImageActions* imageActions READ imageActions CONSTANT)
-    Q_PROPERTY(pictorio::uploader::Uploader* uploader READ uploader CONSTANT)
+    Q_PROPERTY(photobook::viewer::Viewer* viewer READ viewer CONSTANT)
+    Q_PROPERTY(photobook::view_transform::ViewTransform* viewTransform READ viewTransform CONSTANT)
+    Q_PROPERTY(photobook::navigator::Navigator* navigator READ navigator CONSTANT)
+    Q_PROPERTY(photobook::slideshow::Slideshow* slideshow READ slideshow CONSTANT)
+    Q_PROPERTY(photobook::connection::Connection* connection READ connection CONSTANT)
+    Q_PROPERTY(photobook::library::Library* library READ library CONSTANT)
+    Q_PROPERTY(photobook::library_view::LibraryView* libraryView READ libraryView CONSTANT)
+    Q_PROPERTY(photobook::tag_editor::TagEditor* tagEditor READ tagEditor CONSTANT)
+    Q_PROPERTY(photobook::tag_editor::BulkTagEditor* bulkTagEditor READ bulkTagEditor CONSTANT)
+    Q_PROPERTY(photobook::tag_editor::UploadTagEditor* uploadTagEditor READ uploadTagEditor CONSTANT)
+    Q_PROPERTY(photobook::tag_editor::HiddenFilterEditor* hiddenFilterEditor READ hiddenFilterEditor CONSTANT)
+    Q_PROPERTY(photobook::image_actions::ImageActions* imageActions READ imageActions CONSTANT)
+    Q_PROPERTY(photobook::uploader::Uploader* uploader READ uploader CONSTANT)
 
 public:
     explicit AppManager(QObject* parent = nullptr);
@@ -114,4 +114,4 @@ private:
     std::unique_ptr<QQmlNetworkAccessManagerFactory> m_networkAccessFactory;
 };
 
-}  // namespace pictorio::app_manager
+}  // namespace photobook::app_manager

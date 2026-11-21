@@ -7,7 +7,7 @@
 
 #include "TokenStore.hpp"
 
-namespace pictorio::token_store
+namespace photobook::token_store
 {
 
 class KeychainTokenStore : public TokenStore
@@ -23,4 +23,4 @@ private:
     QString m_serviceName;
 };
 
-}  // namespace pictorio::token_store
+}  // namespace photobook::token_store

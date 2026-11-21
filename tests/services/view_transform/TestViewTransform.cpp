@@ -23,7 +23,7 @@ constexpr qreal largeImageFitScale = 0.2;
 
 }  // namespace
 
-namespace pictorio::view_transform
+namespace photobook::view_transform
 {
 
 class TestViewTransform : public QObject
@@ -279,8 +279,8 @@ void TestViewTransform::notifiesChanges()
     QCOMPARE(changeSpy.count(), 2);
 }
 
-}  // namespace pictorio::view_transform
+}  // namespace photobook::view_transform
 
-QTEST_GUILESS_MAIN(pictorio::view_transform::TestViewTransform)
+QTEST_GUILESS_MAIN(photobook::view_transform::TestViewTransform)
 
 #include "TestViewTransform.moc"

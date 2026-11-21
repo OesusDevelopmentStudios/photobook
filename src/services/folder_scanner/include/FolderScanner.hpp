@@ -9,7 +9,7 @@
 #include <QStringList>
 #include <QtTypes>
 
-namespace pictorio::folder_scanner
+namespace photobook::folder_scanner
 {
 
 enum class SortOrder
@@ -44,4 +44,4 @@ public:
 // Reads only the file system: thread-safe.
 QStringList findImages(const QString& folderPath, bool includeSubfolders);
 
-}  // namespace pictorio::folder_scanner
+}  // namespace photobook::folder_scanner

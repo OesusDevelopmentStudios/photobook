@@ -7,7 +7,7 @@
 
 #include <algorithm>
 
-namespace pictorio::tag_editor
+namespace photobook::tag_editor
 {
 
 TagRowsEditor::~TagRowsEditor() = default;
@@ -92,4 +92,4 @@ void TagRowsEditor::announceHasChanges()
     }
 }
 
-}  // namespace pictorio::tag_editor
+}  // namespace photobook::tag_editor

@@ -13,7 +13,7 @@ constexpr int askedCount = 20;
 
 }  // namespace
 
-namespace pictorio::tag_editor
+namespace photobook::tag_editor
 {
 
 TagSuggestions::TagSuggestions(connection::Connection* connection, QObject* parent)
@@ -162,4 +162,4 @@ void TagSuggestions::setSuggestions(const QList<server_client::TagCount>& sugges
     Q_EMIT countChanged();
 }
 
-}  // namespace pictorio::tag_editor
+}  // namespace photobook::tag_editor

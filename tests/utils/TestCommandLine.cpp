@@ -9,7 +9,7 @@
 
 #include "utils/AppIdentity.hpp"
 
-namespace pictorio::utils
+namespace photobook::utils
 {
 
 class TestCommandLine : public QObject
@@ -39,7 +39,7 @@ CommandLineOptions TestCommandLine::parse(const QStringList& arguments)
 {
     QCommandLineParser parser;
     addCommandLineOptions(parser);
-    if (!parser.parse(QStringList{QStringLiteral("pictorio")} + arguments))
+    if (!parser.parse(QStringList{QStringLiteral("photobook")} + arguments))
     {
         qFatal("Cannot parse command line: %s", qPrintable(parser.errorText()));
     }
@@ -96,11 +96,11 @@ void TestCommandLine::offersAboutOptions()
     addCommandLineOptions(parser);
 
     // parse() fails on unknown options
-    QVERIFY2(parser.parse({QStringLiteral("pictorio"), option}), qPrintable(parser.errorText()));
+    QVERIFY2(parser.parse({QStringLiteral("photobook"), option}), qPrintable(parser.errorText()));
 }
 
-}  // namespace pictorio::utils
+}  // namespace photobook::utils
 
-QTEST_GUILESS_MAIN(pictorio::utils::TestCommandLine)
+QTEST_GUILESS_MAIN(photobook::utils::TestCommandLine)
 
 #include "TestCommandLine.moc"

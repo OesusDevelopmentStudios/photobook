@@ -9,10 +9,10 @@
 
 #include "Connection.hpp"
 
-namespace pictorio::connection
+namespace photobook::connection
 {
 
 // The settings are not owned and must outlive the connection.
 std::unique_ptr<Connection> createConnection(settings::Settings* settings);
 
-}  // namespace pictorio::connection
+}  // namespace photobook::connection

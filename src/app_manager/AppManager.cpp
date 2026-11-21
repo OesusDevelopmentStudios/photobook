@@ -26,8 +26,8 @@
 namespace
 {
 
-using pictorio::server_client::TakenAtSource;
-using pictorio::viewer::Viewer;
+using photobook::server_client::TakenAtSource;
+using photobook::viewer::Viewer;
 
 Viewer::TakenAtSource takenAtSourceFor(TakenAtSource source)
 {
@@ -44,7 +44,7 @@ Viewer::TakenAtSource takenAtSourceFor(TakenAtSource source)
     return Viewer::TakenAtSource::ImportTime;
 }
 
-Viewer::ImageDetails detailsOf(const pictorio::server_client::Image& image)
+Viewer::ImageDetails detailsOf(const photobook::server_client::Image& image)
 {
     Viewer::ImageDetails details;
     details.fileName = image.originalFilename;
@@ -61,7 +61,7 @@ Viewer::ImageDetails detailsOf(const pictorio::server_client::Image& image)
 
 }  // namespace
 
-namespace pictorio::app_manager
+namespace photobook::app_manager
 {
 
 AppManager::AppManager(QObject* parent)
@@ -332,4 +332,4 @@ void AppManager::showLibraryImage(int row)
     m_viewer->openServerImage(m_connection->client()->imageFileUrl(image->id, image->revision), detailsOf(*image));
 }
 
-}  // namespace pictorio::app_manager
+}  // namespace photobook::app_manager

@@ -24,7 +24,7 @@ QString normalizedPath(const QString& filePath)
 
 }  // namespace
 
-namespace pictorio::navigator
+namespace photobook::navigator
 {
 
 Navigator::Navigator(std::unique_ptr<folder_scanner::FolderScanner> folderScanner, QObject* parent)
@@ -316,4 +316,4 @@ int Navigator::loadedLibraryRows() const
     return m_library->count();
 }
 
-}  // namespace pictorio::navigator
+}  // namespace photobook::navigator

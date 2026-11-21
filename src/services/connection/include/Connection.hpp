@@ -16,7 +16,7 @@
 #include "Settings.hpp"
 #include "TokenStore.hpp"
 
-namespace pictorio::connection
+namespace photobook::connection
 {
 
 // The pages show its state; the services that talk to the server use client().
@@ -38,7 +38,7 @@ public:
     enum class State
     {
         NoServer,        // no server chosen yet, or the address did not work
-        CheckingServer,  // asking the address whether it is a pictorio-db server
+        CheckingServer,  // asking the address whether it is a photobook-db server
         ServerFound,     // the server is known; the user can log in
         LoggingIn,
         RestoringLogin,  // at start: checking the login kept from the last run
@@ -71,7 +71,7 @@ public:
 
     State state() const;
     QString serverAddress() const;
-    QString serverDescription() const;  // e.g. "pictorio-db 0.1.0"
+    QString serverDescription() const;  // e.g. "photobook-db 0.1.0"
     bool isPlainHttp() const;           // passwords and images travel unencrypted
     QString username() const;
     QStringList restrictedTags() const;  // what the logged-in user may not see or use
@@ -126,4 +126,4 @@ private:
     QString m_localLibraryDir;
 };
 
-}  // namespace pictorio::connection
+}  // namespace photobook::connection

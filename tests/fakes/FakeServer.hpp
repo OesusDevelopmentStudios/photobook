@@ -14,7 +14,7 @@
 
 #include "HttpTransport.hpp"
 
-namespace pictorio::fakes
+namespace photobook::fakes
 {
 
 inline server_client::HttpResponse response(int status, const QByteArray& body)
@@ -136,4 +136,4 @@ private:
     QList<QPair<std::shared_ptr<QPromise<server_client::HttpResponse>>, server_client::HttpResponse>> m_heldAnswers;
 };
 
-}  // namespace pictorio::fakes
+}  // namespace photobook::fakes

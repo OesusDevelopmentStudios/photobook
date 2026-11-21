@@ -13,7 +13,7 @@
 #include "LibraryViewFactory.hpp"
 #include "SettingsFactory.hpp"
 
-namespace pictorio::library_view
+namespace photobook::library_view
 {
 
 // The settings are in a temporary config file, never the user's real one.
@@ -51,7 +51,7 @@ void TestLibraryView::init()
     m_libraryView.reset();  // before the settings it uses
     m_folder = std::make_unique<QTemporaryDir>();
     QVERIFY(m_folder->isValid());
-    m_settings = settings::createSettings(m_folder->filePath(QStringLiteral("pictoriorc")));
+    m_settings = settings::createSettings(m_folder->filePath(QStringLiteral("photobookrc")));
     recreateLibraryView();
 }
 
@@ -155,8 +155,8 @@ void TestLibraryView::usesTheLargeThumbnailAboveTheSmallOnesSize()
     QVERIFY(m_libraryView->needsLargeThumbnail(256.5));
 }
 
-}  // namespace pictorio::library_view
+}  // namespace photobook::library_view
 
-QTEST_GUILESS_MAIN(pictorio::library_view::TestLibraryView)
+QTEST_GUILESS_MAIN(photobook::library_view::TestLibraryView)
 
 #include "TestLibraryView.moc"

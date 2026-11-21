@@ -5,7 +5,7 @@
 
 #include "SlideshowFactory.hpp"
 
-namespace pictorio::slideshow
+namespace photobook::slideshow
 {
 
 std::unique_ptr<Slideshow> createSlideshow(navigator::Navigator* navigator, settings::Settings* settings)
@@ -13,4 +13,4 @@ std::unique_ptr<Slideshow> createSlideshow(navigator::Navigator* navigator, sett
     return std::make_unique<Slideshow>(navigator, settings);
 }
 
-}  // namespace pictorio::slideshow
+}  // namespace photobook::slideshow

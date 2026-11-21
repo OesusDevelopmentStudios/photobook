@@ -5,7 +5,7 @@
 
 #include "TagEditorFactory.hpp"
 
-namespace pictorio::tag_editor
+namespace photobook::tag_editor
 {
 
 std::unique_ptr<TagEditor> createTagEditor(connection::Connection* connection)
@@ -28,4 +28,4 @@ std::unique_ptr<HiddenFilterEditor> createHiddenFilterEditor(connection::Connect
     return std::make_unique<HiddenFilterEditor>(connection);
 }
 
-}  // namespace pictorio::tag_editor
+}  // namespace photobook::tag_editor

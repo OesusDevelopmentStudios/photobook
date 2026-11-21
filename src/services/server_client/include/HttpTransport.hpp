@@ -14,7 +14,7 @@
 #include <QString>
 #include <QUrl>
 
-namespace pictorio::server_client
+namespace photobook::server_client
 {
 
 // A multipart/form-data body: text fields, and one file read from disk while it is sent.
@@ -55,4 +55,4 @@ public:
     virtual QFuture<HttpResponse> send(const HttpRequest& request) = 0;
 };
 
-}  // namespace pictorio::server_client
+}  // namespace photobook::server_client

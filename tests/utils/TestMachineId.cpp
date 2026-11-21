@@ -9,16 +9,16 @@
 #include <QTemporaryDir>
 #include <QTest>
 
-namespace pictorio::utils
+namespace photobook::utils
 {
 
 namespace
 {
 
 const QString machineId = QStringLiteral("0123456789abcdef0123456789abcdef");
-// printf pictorio-db | openssl dgst -sha256 -hmac 0123456789abcdef0123456789abcdef; the server's tests use the
+// printf photobook-db | openssl dgst -sha256 -hmac 0123456789abcdef0123456789abcdef; the server's tests use the
 // same pair, so app and server compute alike.
-const QString expectedId = QStringLiteral("9d623a361e613d33fd9937381c885a2ef999fa19c152bbbcadbf789bee807420");
+const QString expectedId = QStringLiteral("68ca712866a854762ce8a71933440d7105df0c2debd2692ae766bbc0888bb323");
 
 }  // namespace
 
@@ -60,8 +60,8 @@ void TestMachineId::hasNoIdWithoutAMachineId()
     QVERIFY(thisComputersAppSpecificId(empty.fileName()).isEmpty());
 }
 
-}  // namespace pictorio::utils
+}  // namespace photobook::utils
 
-QTEST_GUILESS_MAIN(pictorio::utils::TestMachineId)
+QTEST_GUILESS_MAIN(photobook::utils::TestMachineId)
 
 #include "TestMachineId.moc"

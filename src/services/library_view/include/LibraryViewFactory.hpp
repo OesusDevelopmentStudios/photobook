@@ -9,10 +9,10 @@
 
 #include "LibraryView.hpp"
 
-namespace pictorio::library_view
+namespace photobook::library_view
 {
 
 // The settings are not owned and must outlive the library view.
 std::unique_ptr<LibraryView> createLibraryView(settings::Settings* settings);
 
-}  // namespace pictorio::library_view
+}  // namespace photobook::library_view

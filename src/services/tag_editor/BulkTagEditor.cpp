@@ -21,8 +21,8 @@
 namespace
 {
 
-using pictorio::tag_editor::TagName;
-using Change = pictorio::tag_editor::TagRowsEditor::Change;
+using photobook::tag_editor::TagName;
+using Change = photobook::tag_editor::TagRowsEditor::Change;
 
 QVariantMap tagEntry(const TagName& tag, Change change)
 {
@@ -35,7 +35,7 @@ QVariantMap tagEntry(const TagName& tag, Change change)
 
 }  // namespace
 
-namespace pictorio::tag_editor
+namespace photobook::tag_editor
 {
 
 BulkTagEditor::BulkTagEditor(connection::Connection* connection, QObject* parent)
@@ -521,4 +521,4 @@ void BulkTagEditor::setErrorMessage(const QString& message)
     }
 }
 
-}  // namespace pictorio::tag_editor
+}  // namespace photobook::tag_editor

@@ -8,15 +8,15 @@
 #include <QByteArray>
 #include <QString>
 
-namespace pictorio::utils
+namespace photobook::utils
 {
 
 // Reverse-DNS application ID. Used as the Flatpak app ID, the .desktop file name (the window manager
 // uses it to find the app icon) and the URI of the user interface's QML module.
-inline const QString applicationId = QStringLiteral("io.github.oesusdevelopmentstudios.pictorio");
+inline const QString applicationId = QStringLiteral("io.github.oesusdevelopmentstudios.photobook");
 
-// Short internal name: translation catalogue (pictorio.mo) and config file (pictoriorc).
-inline const QString applicationComponentName = QStringLiteral("pictorio");
+// Short internal name: translation catalogue (photobook.mo) and config file (photobookrc).
+inline const QString applicationComponentName = QStringLiteral("photobook");
 
 // Used for D-Bus names. KAboutData defaults to kde.org, which would be wrong for a project outside KDE.
 inline const QByteArray organizationDomain = QByteArrayLiteral("oesusdevelopmentstudios.github.io");
@@ -24,4 +24,4 @@ inline const QByteArray organizationDomain = QByteArrayLiteral("oesusdevelopment
 // Call once, right after the QCoreApplication is created and before any i18n() call.
 void registerApplicationIdentity();
 
-}  // namespace pictorio::utils
+}  // namespace photobook::utils

@@ -9,9 +9,9 @@
 
 #include "TokenStore.hpp"
 
-namespace pictorio::token_store
+namespace photobook::token_store
 {
 
 std::unique_ptr<TokenStore> createTokenStore();
 
-}  // namespace pictorio::token_store
+}  // namespace photobook::token_store

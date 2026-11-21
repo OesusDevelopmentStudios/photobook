@@ -19,7 +19,7 @@
 #include "e2e/EndToEndServer.hpp"
 #include "utils/MachineId.hpp"
 
-namespace pictorio::e2e
+namespace photobook::e2e
 {
 
 namespace
@@ -58,7 +58,7 @@ private:
 
 void TestEndToEndLocalLibrary::initTestCase()
 {
-    KLocalizedString::setApplicationDomain("pictorio");
+    KLocalizedString::setApplicationDomain("photobook");
     m_server = EndToEndServer::fromEnvironment();
     if (!m_server.has_value())
     {
@@ -124,7 +124,7 @@ void TestEndToEndLocalLibrary::learnsNothingOnAnotherComputer()
 
 QString TestEndToEndLocalLibrary::settingsFile() const
 {
-    return m_folder->filePath(QStringLiteral("pictoriorc"));
+    return m_folder->filePath(QStringLiteral("photobookrc"));
 }
 
 QString TestEndToEndLocalLibrary::thisComputersId() const
@@ -132,8 +132,8 @@ QString TestEndToEndLocalLibrary::thisComputersId() const
     return utils::thisComputersAppSpecificId(m_server->machineIdFile);
 }
 
-}  // namespace pictorio::e2e
+}  // namespace photobook::e2e
 
-QTEST_GUILESS_MAIN(pictorio::e2e::TestEndToEndLocalLibrary)
+QTEST_GUILESS_MAIN(photobook::e2e::TestEndToEndLocalLibrary)
 
 #include "TestEndToEndLocalLibrary.moc"

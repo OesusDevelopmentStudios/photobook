@@ -16,7 +16,7 @@
 #include "fakes/FakeServer.hpp"
 #include "fakes/FakeTokenStore.hpp"
 
-namespace pictorio::connection
+namespace photobook::connection
 {
 
 namespace
@@ -32,7 +32,7 @@ using server_client::HttpRequest;
 const QString serverUrl = QStringLiteral("https://photos.example.org");
 const QString localUrl = serverUrl + QStringLiteral("/api/v1/server/local");
 
-const QByteArray serverInfoJson = R"({"name":"pictorio-db","version":"0.1.0","api_version":1,"setup_required":false})";
+const QByteArray serverInfoJson = R"({"name":"photobook-db","version":"0.1.0","api_version":1,"setup_required":false})";
 const QByteArray loginJson = R"({"token_id":3,"token":"pk_new","user":{"id":2,"username":"kid","role":"user"}})";
 const QByteArray currentUserJson = R"({"id":2,"username":"kid","role":"user","restricted_tags":["rating:nsfw"]})";
 const QByteArray devicesJson = R"([{"token_id":3,"device_name":"laptop","created_at":"2026-11-15T19:22:03Z",
@@ -50,7 +50,7 @@ private Q_SLOTS:
     void findsTheServer();
     void triesPlainHttpWhenHttpsDoesNotAnswer();
     void asksForAnAddress();
-    void refusesWhatIsNotAPictorioServer();
+    void refusesWhatIsNotAPhotobookServer();
     void pointsToTheSetupPageOfANewServer();
 
     void logsInAndKeepsTheLogin();
@@ -84,7 +84,7 @@ private:
 void TestConnection::init()
 {
     m_folder = std::make_unique<QTemporaryDir>();
-    m_settings = settings::createSettings(m_folder->filePath(QStringLiteral("pictoriorc")));
+    m_settings = settings::createSettings(m_folder->filePath(QStringLiteral("photobookrc")));
     m_server = std::make_shared<FakeServer>();
     m_server->answer("GET", serverUrl + QStringLiteral("/api/v1/server/info"), response(200, serverInfoJson));
     m_server->answer("POST", serverUrl + QStringLiteral("/api/v1/auth/tokens"), response(201, loginJson));
@@ -124,7 +124,7 @@ void TestConnection::findsTheServer()
     QTRY_COMPARE(connection->state(), Connection::State::ServerFound);
     QCOMPARE(states, QList<Connection::State>({Connection::State::CheckingServer, Connection::State::ServerFound}));
     QCOMPARE(connection->serverAddress(), serverUrl);
-    QCOMPARE(connection->serverDescription(), QStringLiteral("pictorio-db 0.1.0"));
+    QCOMPARE(connection->serverDescription(), QStringLiteral("photobook-db 0.1.0"));
     QVERIFY(!connection->isPlainHttp());
     QVERIFY(connection->errorMessage().isEmpty());
 }
@@ -154,7 +154,7 @@ void TestConnection::asksForAnAddress()
     QVERIFY(m_server->requests.isEmpty());
 }
 
-void TestConnection::refusesWhatIsNotAPictorioServer()
+void TestConnection::refusesWhatIsNotAPhotobookServer()
 {
     m_server->answer(
         "GET", QStringLiteral("https://example.org/api/v1/server/info"), response(404, "<html>Not Found</html>"));
@@ -163,7 +163,7 @@ void TestConnection::refusesWhatIsNotAPictorioServer()
     connection->checkServer(QStringLiteral("https://example.org"));
 
     QTRY_COMPARE(connection->state(), Connection::State::NoServer);
-    QVERIFY(connection->errorMessage().contains(QStringLiteral("is not a pictorio-db server")));
+    QVERIFY(connection->errorMessage().contains(QStringLiteral("is not a photobook-db server")));
 }
 
 void TestConnection::pointsToTheSetupPageOfANewServer()
@@ -171,7 +171,7 @@ void TestConnection::pointsToTheSetupPageOfANewServer()
     m_server->answer(
         "GET",
         serverUrl + QStringLiteral("/api/v1/server/info"),
-        response(200, R"({"name":"pictorio-db","version":"0.1.0","api_version":1,"setup_required":true})"));
+        response(200, R"({"name":"photobook-db","version":"0.1.0","api_version":1,"setup_required":true})"));
     const auto connection = createConnection();
 
     connection->checkServer(serverUrl);
@@ -295,13 +295,13 @@ void TestConnection::logsOutAndEndsThisDevicesLogin()
 
 void TestConnection::learnsWhereTheLibraryIsWhenTheServerRunsHere()
 {
-    m_server->answer("GET", localUrl, response(200, R"({"library_dir":"/home/kid/Pictures/pictorio-library"})"));
+    m_server->answer("GET", localUrl, response(200, R"({"library_dir":"/home/kid/Pictures/photobook-library"})"));
     const auto connection = createConnection(QStringLiteral("9d623a36"));
     QSignalSpy changed(connection.get(), &Connection::localLibraryDirChanged);
 
     logInAsKid(*connection);
 
-    QTRY_COMPARE(connection->localLibraryDir(), QStringLiteral("/home/kid/Pictures/pictorio-library"));
+    QTRY_COMPARE(connection->localLibraryDir(), QStringLiteral("/home/kid/Pictures/photobook-library"));
     QCOMPARE(changed.size(), 1);
     const QUrl asked = m_server->requestsTo("GET", localUrl).first().url;
     QCOMPARE(QUrlQuery(asked).queryItemValue(QStringLiteral("machine")), QStringLiteral("9d623a36"));
@@ -309,14 +309,14 @@ void TestConnection::learnsWhereTheLibraryIsWhenTheServerRunsHere()
 
 void TestConnection::learnsItWhenTheLoginIsRestored()
 {
-    m_server->answer("GET", localUrl, response(200, R"({"library_dir":"/home/kid/Pictures/pictorio-library"})"));
+    m_server->answer("GET", localUrl, response(200, R"({"library_dir":"/home/kid/Pictures/photobook-library"})"));
     m_settings->setServerUrl(QUrl(serverUrl));
     m_keyring->tokens.insert(serverUrl, QStringLiteral("pk_kept"));
     const auto connection = createConnection(QStringLiteral("9d623a36"));
 
     connection->restoreLogin();
 
-    QTRY_COMPARE(connection->localLibraryDir(), QStringLiteral("/home/kid/Pictures/pictorio-library"));
+    QTRY_COMPARE(connection->localLibraryDir(), QStringLiteral("/home/kid/Pictures/photobook-library"));
 }
 
 void TestConnection::knowsNoFolderOfAServerElsewhere()
@@ -345,7 +345,7 @@ void TestConnection::doesNotAskWithoutAMachineId()
 
 void TestConnection::forgetsTheFolderOnLogout()
 {
-    m_server->answer("GET", localUrl, response(200, R"({"library_dir":"/home/kid/Pictures/pictorio-library"})"));
+    m_server->answer("GET", localUrl, response(200, R"({"library_dir":"/home/kid/Pictures/photobook-library"})"));
     const auto connection = createConnection(QStringLiteral("9d623a36"));
     logInAsKid(*connection);
     QTRY_VERIFY(!connection->localLibraryDir().isEmpty());
@@ -355,7 +355,7 @@ void TestConnection::forgetsTheFolderOnLogout()
     QVERIFY(connection->localLibraryDir().isEmpty());
 }
 
-}  // namespace pictorio::connection
+}  // namespace photobook::connection
 
-QTEST_GUILESS_MAIN(pictorio::connection::TestConnection)
+QTEST_GUILESS_MAIN(photobook::connection::TestConnection)
 #include "TestConnection.moc"

@@ -12,7 +12,7 @@
 namespace
 {
 
-using pictorio::token_store::StoreResult;
+using photobook::token_store::StoreResult;
 
 // The job's outcome once it has finished. Jobs delete themselves after their finished signal, so this runs
 // while the job still exists.
@@ -28,7 +28,7 @@ template <typename Read> auto whenFinished(QKeychain::Job* job, Read readOutcome
 
 }  // namespace
 
-namespace pictorio::token_store
+namespace photobook::token_store
 {
 
 KeychainTokenStore::KeychainTokenStore(const QString& serviceName)
@@ -84,4 +84,4 @@ QFuture<StoreResult<void>> KeychainTokenStore::deleteToken(const QString& server
     });
 }
 
-}  // namespace pictorio::token_store
+}  // namespace photobook::token_store

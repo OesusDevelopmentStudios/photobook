@@ -5,19 +5,19 @@
 # Build and run from the repository root:
 #
 #   flatpak-builder --user --install --force-clean build-flatpak \
-#       packaging/flatpak/io.github.oesusdevelopmentstudios.pictorio.yml
-#   flatpak run io.github.oesusdevelopmentstudios.pictorio
+#       packaging/flatpak/io.github.oesusdevelopmentstudios.photobook.yml
+#   flatpak run io.github.oesusdevelopmentstudios.photobook
 #
 # A Flathub release would use a "git" source with a fixed tag instead of the "dir" source below.
 
-id: io.github.oesusdevelopmentstudios.pictorio
+id: io.github.oesusdevelopmentstudios.photobook
 
 # KDE runtime: Qt and KDE Frameworks (Kirigami, KI18n, KCoreAddons, Qt Quick desktop style)
 runtime: org.kde.Platform
 runtime-version: '6.11'
 sdk: org.kde.Sdk
 
-command: pictorio
+command: photobook
 
 # Sandbox permissions. Each permission is added together with the feature that needs it,
 # so that the reason for every entry is visible in the history.
@@ -30,7 +30,7 @@ finish-args:
   # copy, so that the folder of the opened image can be browsed. Writable, because the Trash portal
   # moves an uploaded original to the trash only if the app itself may change the file.
   - --filesystem=host
-  - --share=network                    # the pictorio-db server
+  - --share=network                    # the photobook-db server
   - --talk-name=org.freedesktop.secrets  # the login token in the keyring: the Secret Service…
   - --talk-name=org.kde.kwalletd6        # …or KWallet
   - --talk-name=org.freedesktop.FileManager1  # "Open Containing Folder": the file manager selects the image
@@ -77,14 +77,14 @@ modules:
       - /lib/cmake
       - /mkspecs
 
-  - name: pictorio
+  - name: photobook
     buildsystem: cmake-ninja
     builddir: true
     config-opts:
       - -DCMAKE_BUILD_TYPE=Release
       - -DBUILD_TESTING=OFF
       # A newer compiler in the SDK may add warnings; they must not break a package build.
-      - -DPICTORIO_WARNINGS_AS_ERRORS=OFF
+      - -DPHOTOBOOK_WARNINGS_AS_ERRORS=OFF
       # flatpak-builder sets CMAKE_INSTALL_LIBDIR; ECM warns unless the KDE variant is set as well.
       - -DKDE_INSTALL_LIBDIR=lib
     sources:

@@ -9,7 +9,7 @@
 
 #include "impl/KConfigSettings.hpp"
 
-namespace pictorio::settings
+namespace photobook::settings
 {
 
 std::unique_ptr<Settings> createSettings()
@@ -22,4 +22,4 @@ std::unique_ptr<Settings> createSettings(const QString& configFilePath)
     return std::make_unique<KConfigSettings>(KSharedConfig::openConfig(configFilePath, KConfig::SimpleConfig));
 }
 
-}  // namespace pictorio::settings
+}  // namespace photobook::settings

@@ -5,15 +5,15 @@
 # which Flatpak requires for every file it exports to the host.
 
 # Start menu entry and "Open with" registration for the listed image types
-install(FILES io.github.oesusdevelopmentstudios.pictorio.desktop
+install(FILES io.github.oesusdevelopmentstudios.photobook.desktop
     DESTINATION ${KDE_INSTALL_APPDIR}
 )
 
 # App description for software centres; checked by the appstreamtest test after installation
-install(FILES io.github.oesusdevelopmentstudios.pictorio.metainfo.xml
+install(FILES io.github.oesusdevelopmentstudios.photobook.metainfo.xml
     DESTINATION ${KDE_INSTALL_METAINFODIR}
 )
 
-install(FILES icons/io.github.oesusdevelopmentstudios.pictorio.svg
+install(FILES icons/io.github.oesusdevelopmentstudios.photobook.svg
     DESTINATION ${KDE_INSTALL_ICONDIR}/hicolor/scalable/apps
 )

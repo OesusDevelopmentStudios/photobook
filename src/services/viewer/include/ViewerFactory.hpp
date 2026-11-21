@@ -9,9 +9,9 @@
 
 #include "Viewer.hpp"
 
-namespace pictorio::viewer
+namespace photobook::viewer
 {
 
 std::unique_ptr<Viewer> createViewer(std::unique_ptr<image_loader::ImageLoader> imageLoader);
 
-}  // namespace pictorio::viewer
+}  // namespace photobook::viewer

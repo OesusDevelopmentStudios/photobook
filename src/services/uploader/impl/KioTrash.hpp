@@ -7,7 +7,7 @@
 
 #include "Trash.hpp"
 
-namespace pictorio::uploader
+namespace photobook::uploader
 {
 
 class KioTrash : public Trash
@@ -16,4 +16,4 @@ public:
     QFuture<std::expected<void, QString>> moveToTrash(const QString& filePath) override;
 };
 
-}  // namespace pictorio::uploader
+}  // namespace photobook::uploader

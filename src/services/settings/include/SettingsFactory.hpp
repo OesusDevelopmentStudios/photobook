@@ -11,12 +11,12 @@
 
 #include "Settings.hpp"
 
-namespace pictorio::settings
+namespace photobook::settings
 {
 
-// In the application's config file, ~/.config/pictoriorc
+// In the application's config file, ~/.config/photobookrc
 std::unique_ptr<Settings> createSettings();
 
 std::unique_ptr<Settings> createSettings(const QString& configFilePath);
 
-}  // namespace pictorio::settings
+}  // namespace photobook::settings

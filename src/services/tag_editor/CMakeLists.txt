@@ -3,7 +3,7 @@
 
 # Changing the tags of images on the server (see include/). hlp/ holds the rules a change is checked
 # against before it is sent.
-add_library(pictorio_tag_editor STATIC
+add_library(photobook_tag_editor STATIC
     include/BulkTagEditor.hpp
     include/HiddenFilterEditor.hpp
     include/TagEditor.hpp
@@ -33,16 +33,16 @@ add_library(pictorio_tag_editor STATIC
 )
 
 # Users of the service see only include/; hlp/ stays private to the service.
-target_include_directories(pictorio_tag_editor
+target_include_directories(photobook_tag_editor
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-target_link_libraries(pictorio_tag_editor
+target_link_libraries(photobook_tag_editor
     PUBLIC
-        pictorio_connection
+        photobook_connection
         Qt6::Core
     PRIVATE
         KF6::I18n
@@ -50,4 +50,4 @@ target_link_libraries(pictorio_tag_editor
 
 # TagEditor and TagSuggestions are exposed to QML (app_manager/QmlForeignTypes.hpp); QML tools read their
 # properties from these metatypes.
-qt_extract_metatypes(pictorio_tag_editor)
+qt_extract_metatypes(photobook_tag_editor)

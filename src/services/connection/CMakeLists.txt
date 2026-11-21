@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 OesusDevelopmentStudios
 
-# The connection to a pictorio-db server and the login (see include/Connection.hpp).
-add_library(pictorio_connection STATIC
+# The connection to a photobook-db server and the login (see include/Connection.hpp).
+add_library(photobook_connection STATIC
     include/Connection.hpp
     include/ConnectionFactory.hpp
     hlp/ServerAddress.hpp
@@ -12,23 +12,23 @@ add_library(pictorio_connection STATIC
 )
 
 # Users of the service see only include/; hlp/ stays private to the service.
-target_include_directories(pictorio_connection
+target_include_directories(photobook_connection
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-target_link_libraries(pictorio_connection
+target_link_libraries(photobook_connection
     PUBLIC
         Qt6::Core
-        pictorio_server_client
-        pictorio_settings
-        pictorio_token_store
+        photobook_server_client
+        photobook_settings
+        photobook_token_store
     PRIVATE
         KF6::I18n
-        pictorio_utils  # this computer's machine ID
+        photobook_utils  # this computer's machine ID
 )
 
 # Connection is exposed to QML (app_manager/QmlForeignTypes.hpp); QML tools read its properties from these metatypes.
-qt_extract_metatypes(pictorio_connection)
+qt_extract_metatypes(photobook_connection)

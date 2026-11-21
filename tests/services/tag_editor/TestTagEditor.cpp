@@ -20,7 +20,7 @@
 #include "fakes/FakeTokenStore.hpp"
 #include "fakes/ImageJson.hpp"
 
-namespace pictorio::tag_editor
+namespace photobook::tag_editor
 {
 
 namespace
@@ -151,7 +151,7 @@ private:
 
 void TestTagEditor::initTestCase()
 {
-    KLocalizedString::setApplicationDomain("pictorio");
+    KLocalizedString::setApplicationDomain("photobook");
 }
 
 // Logged in from the last run
@@ -159,7 +159,7 @@ void TestTagEditor::init()
 {
     m_editor.reset();
     m_folder = std::make_unique<QTemporaryDir>();
-    m_settings = settings::createSettings(m_folder->filePath(QStringLiteral("pictoriorc")));
+    m_settings = settings::createSettings(m_folder->filePath(QStringLiteral("photobookrc")));
     m_settings->setServerUrl(QUrl(serverUrl));
     m_server = std::make_shared<FakeServer>();
     m_server->answer(
@@ -552,8 +552,8 @@ void TestTagEditor::anotherImageEndsEditing()
     QVERIFY(!m_editor->hasChanges());
 }
 
-}  // namespace pictorio::tag_editor
+}  // namespace photobook::tag_editor
 
-QTEST_GUILESS_MAIN(pictorio::tag_editor::TestTagEditor)
+QTEST_GUILESS_MAIN(photobook::tag_editor::TestTagEditor)
 
 #include "TestTagEditor.moc"

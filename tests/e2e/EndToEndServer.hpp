@@ -20,7 +20,7 @@
 #include "SettingsFactory.hpp"
 #include "fakes/FakeTokenStore.hpp"
 
-namespace pictorio::e2e
+namespace photobook::e2e
 {
 
 // The accounts tests/e2e/run_end_to_end_tests.py creates, all with the same password
@@ -30,7 +30,7 @@ inline const QString restrictedUserName = QStringLiteral("kid");  // restricted 
 // A real server answers over the network, more slowly than the fakes of the unit tests.
 constexpr std::chrono::milliseconds answerTimeout{10'000};
 
-// The pictorio-db server the script started, as it describes it in the environment
+// The photobook-db server the script started, as it describes it in the environment
 struct EndToEndServer
 {
     QUrl url;               // e.g. http://127.0.0.1:41234
@@ -41,16 +41,16 @@ struct EndToEndServer
     // Nothing unless the script set the environment, e.g. in a plain ctest run
     static std::optional<EndToEndServer> fromEnvironment()
     {
-        const QString url = qEnvironmentVariable("PICTORIO_E2E_SERVER_URL");
+        const QString url = qEnvironmentVariable("PHOTOBOOK_E2E_SERVER_URL");
         if (url.isEmpty())
         {
             return std::nullopt;
         }
 
         return EndToEndServer{QUrl(url),
-                              qEnvironmentVariable("PICTORIO_E2E_PASSWORD"),
-                              qEnvironmentVariable("PICTORIO_E2E_LIBRARY_DIR"),
-                              qEnvironmentVariable("PICTORIO_E2E_MACHINE_ID_FILE")};
+                              qEnvironmentVariable("PHOTOBOOK_E2E_PASSWORD"),
+                              qEnvironmentVariable("PHOTOBOOK_E2E_LIBRARY_DIR"),
+                              qEnvironmentVariable("PHOTOBOOK_E2E_MACHINE_ID_FILE")};
     }
 };
 
@@ -102,4 +102,4 @@ private:
     std::unique_ptr<connection::Connection> m_connection;
 };
 
-}  // namespace pictorio::e2e
+}  // namespace photobook::e2e

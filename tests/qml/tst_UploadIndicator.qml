@@ -4,7 +4,7 @@
 import QtQuick
 import QtTest
 import org.kde.kirigami as Kirigami
-import io.github.oesusdevelopmentstudios.pictorio
+import io.github.oesusdevelopmentstudios.photobook
 
 // Each test makes a window of its own, as only an application window gives its pages a toolbar.
 Item {

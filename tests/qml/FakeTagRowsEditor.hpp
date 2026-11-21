@@ -9,7 +9,7 @@
 
 #include "TagRowsEditor.hpp"
 
-namespace pictorio::tests
+namespace photobook::tests
 {
 
 // Records what the rows of an edit view ask the editor to do, e.g. "removeTag general:beach", and agrees to all.
@@ -90,4 +90,4 @@ private:
     QStringList m_calls;
 };
 
-}  // namespace pictorio::tests
+}  // namespace photobook::tests

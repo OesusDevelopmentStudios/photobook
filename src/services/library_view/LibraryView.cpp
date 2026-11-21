@@ -13,7 +13,7 @@
 namespace
 {
 
-using pictorio::library_view::LibraryView;
+using photobook::library_view::LibraryView;
 
 int limitedTileSize(int gridUnits)
 {
@@ -22,7 +22,7 @@ int limitedTileSize(int gridUnits)
 
 }  // namespace
 
-namespace pictorio::library_view
+namespace photobook::library_view
 {
 
 LibraryView::LibraryView(settings::Settings* settings, QObject* parent)
@@ -93,4 +93,4 @@ int LibraryView::maximumTileSizeForQml() const
     return maximumTileSize;
 }
 
-}  // namespace pictorio::library_view
+}  // namespace photobook::library_view

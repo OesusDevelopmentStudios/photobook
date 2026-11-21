@@ -5,7 +5,7 @@
 
 #include "hlp/KeychainErrors.hpp"
 
-namespace pictorio::token_store
+namespace photobook::token_store
 {
 
 TokenStoreError errorFrom(QKeychain::Error error, const QString& errorString)
@@ -30,4 +30,4 @@ TokenStoreError errorFrom(QKeychain::Error error, const QString& errorString)
     return storeError;
 }
 
-}  // namespace pictorio::token_store
+}  // namespace photobook::token_store

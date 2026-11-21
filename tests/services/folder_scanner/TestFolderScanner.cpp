@@ -17,9 +17,9 @@
 namespace
 {
 
-using pictorio::image_loader::ImageInfo;
-using pictorio::image_loader::ImageLoader;
-using pictorio::image_loader::ImageLoadError;
+using photobook::image_loader::ImageInfo;
+using photobook::image_loader::ImageLoader;
+using photobook::image_loader::ImageLoadError;
 
 // Capture dates by file name, set up by the test. Read-only during a listing, so thread-safe.
 class FakeImageLoader : public ImageLoader
@@ -45,7 +45,7 @@ QDateTime dayInYear(int year)
 
 }  // namespace
 
-namespace pictorio::folder_scanner
+namespace photobook::folder_scanner
 {
 
 // Images are recognized by extension, so the test files can be empty.
@@ -314,8 +314,8 @@ QStringList TestFolderScanner::listedFileNames(const Sorting& sorting) const
     return fileNames;
 }
 
-}  // namespace pictorio::folder_scanner
+}  // namespace photobook::folder_scanner
 
-QTEST_GUILESS_MAIN(pictorio::folder_scanner::TestFolderScanner)
+QTEST_GUILESS_MAIN(photobook::folder_scanner::TestFolderScanner)
 
 #include "TestFolderScanner.moc"

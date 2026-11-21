@@ -9,7 +9,7 @@
 #include <QString>
 #include <QStringList>
 
-namespace pictorio::utils
+namespace photobook::utils
 {
 
 struct CommandLineOptions
@@ -25,4 +25,4 @@ void addCommandLineOptions(QCommandLineParser& parser);
 // non-local URLs (http://...) are skipped.
 CommandLineOptions readCommandLineOptions(const QCommandLineParser& parser, const QString& workingDirectory);
 
-}  // namespace pictorio::utils
+}  // namespace photobook::utils

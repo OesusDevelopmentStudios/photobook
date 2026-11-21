@@ -32,7 +32,7 @@
 #include "e2e/EndToEndServer.hpp"
 #include "fakes/FakeTrash.hpp"
 
-namespace pictorio::e2e
+namespace photobook::e2e
 {
 
 // A small image of random pixels, so that every image is new to the server, which refuses a file it has. Its type
@@ -75,7 +75,7 @@ public:
     using TypedTag = std::pair<QString, QString>;
 
     AppSession()
-        : m_connection(m_folder.filePath(QStringLiteral("pictoriorc")), std::make_shared<fakes::Keyring>())
+        : m_connection(m_folder.filePath(QStringLiteral("photobookrc")), std::make_shared<fakes::Keyring>())
         , m_uploadTagEditor(tag_editor::createUploadTagEditor(&*m_connection))
         , m_uploader(std::make_unique<uploader::Uploader>(
               &*m_connection, m_uploadTagEditor.get(), std::make_unique<fakes::FakeTrash>(m_trashCan)))
@@ -261,4 +261,4 @@ private:
     std::unique_ptr<tag_editor::HiddenFilterEditor> m_hiddenFilterEditor;
 };
 
-}  // namespace pictorio::e2e
+}  // namespace photobook::e2e

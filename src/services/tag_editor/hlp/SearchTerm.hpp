@@ -16,7 +16,7 @@
 
 #include "hlp/TagNames.hpp"
 
-namespace pictorio::tag_editor
+namespace photobook::tag_editor
 {
 
 // One term of the search language, e.g. a restricted term such as "rating:nsfw|questionable".
@@ -59,4 +59,4 @@ private:
     Node m_root;
 };
 
-}  // namespace pictorio::tag_editor
+}  // namespace photobook::tag_editor

@@ -10,7 +10,7 @@
 #include "impl/KioTrash.hpp"
 #include "impl/PortalTrash.hpp"
 
-namespace pictorio::uploader
+namespace photobook::uploader
 {
 
 std::unique_ptr<Uploader> createUploader(connection::Connection* connection, tag_editor::UploadTagEditor* tagEditor)
@@ -28,4 +28,4 @@ std::unique_ptr<Uploader> createUploader(connection::Connection* connection, tag
     return std::make_unique<Uploader>(connection, tagEditor, std::move(trash));
 }
 
-}  // namespace pictorio::uploader
+}  // namespace photobook::uploader

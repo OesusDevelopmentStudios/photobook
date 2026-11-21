@@ -7,7 +7,7 @@
 
 #include "ImageLoader.hpp"
 
-namespace pictorio::image_loader
+namespace photobook::image_loader
 {
 
 class QtImageLoader : public ImageLoader
@@ -17,4 +17,4 @@ public:
     QDateTime readCaptureDate(const QString& filePath) const override;
 };
 
-}  // namespace pictorio::image_loader
+}  // namespace photobook::image_loader

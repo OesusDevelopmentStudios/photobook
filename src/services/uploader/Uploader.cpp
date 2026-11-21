@@ -19,11 +19,11 @@
 namespace
 {
 
-using pictorio::server_client::ApiError;
+using photobook::server_client::ApiError;
 
 QString describeError(const ApiError& error)
 {
-    if (error.code == pictorio::server_client::networkErrorCode)
+    if (error.code == photobook::server_client::networkErrorCode)
     {
         return i18nc("@info %1 is the reason, e.g. Connection refused", "The server does not answer: %1", error.detail);
     }
@@ -48,7 +48,7 @@ QString describeError(const ApiError& error)
 
 }  // namespace
 
-namespace pictorio::uploader
+namespace photobook::uploader
 {
 
 Uploader::Uploader(connection::Connection* connection,
@@ -423,4 +423,4 @@ void Uploader::setRunning(bool running)
     }
 }
 
-}  // namespace pictorio::uploader
+}  // namespace photobook::uploader

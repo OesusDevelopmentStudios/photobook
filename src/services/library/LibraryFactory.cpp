@@ -5,7 +5,7 @@
 
 #include "LibraryFactory.hpp"
 
-namespace pictorio::library
+namespace photobook::library
 {
 
 std::unique_ptr<Library> createLibrary(connection::Connection* connection)
@@ -13,4 +13,4 @@ std::unique_ptr<Library> createLibrary(connection::Connection* connection)
     return std::make_unique<Library>(connection);
 }
 
-}  // namespace pictorio::library
+}  // namespace photobook::library

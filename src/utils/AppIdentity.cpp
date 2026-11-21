@@ -8,7 +8,7 @@
 #include <KAboutData>
 #include <KLocalizedString>
 
-namespace pictorio::utils
+namespace photobook::utils
 {
 
 void registerApplicationIdentity()
@@ -17,8 +17,8 @@ void registerApplicationIdentity()
     KLocalizedString::setApplicationDomain(applicationComponentName.toUtf8());
 
     KAboutData aboutData(applicationComponentName,
-                         i18nc("@title", "Pictorio"),
-                         QStringLiteral(PICTORIO_VERSION),
+                         i18nc("@title", "Photobook"),
+                         QStringLiteral(PHOTOBOOK_VERSION),
                          i18nc("@info:credit", "Image viewer and photo library"),
                          KAboutLicense::Unknown,
                          i18nc("@info:credit", "© 2026 OesusDevelopmentStudios"));
@@ -29,4 +29,4 @@ void registerApplicationIdentity()
     KAboutData::setApplicationData(aboutData);
 }
 
-}  // namespace pictorio::utils
+}  // namespace photobook::utils

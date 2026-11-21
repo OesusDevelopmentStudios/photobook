@@ -17,7 +17,7 @@
 #include "Trash.hpp"
 #include "UploadTagEditor.hpp"
 
-namespace pictorio::uploader
+namespace photobook::uploader
 {
 
 // The files of an upload and their way to the server: one file at a time, with the tags of the upload. A file
@@ -133,4 +133,4 @@ private:
     int m_foldersBeingListed = 0;
 };
 
-}  // namespace pictorio::uploader
+}  // namespace photobook::uploader

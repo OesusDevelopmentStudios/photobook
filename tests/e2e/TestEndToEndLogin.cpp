@@ -15,7 +15,7 @@
 #include "ServerClientFactory.hpp"
 #include "e2e/EndToEndServer.hpp"
 
-namespace pictorio::e2e
+namespace photobook::e2e
 {
 
 namespace
@@ -61,7 +61,7 @@ private:
 
 void TestEndToEndLogin::initTestCase()
 {
-    KLocalizedString::setApplicationDomain("pictorio");
+    KLocalizedString::setApplicationDomain("photobook");
     m_server = EndToEndServer::fromEnvironment();
     if (!m_server.has_value())
     {
@@ -83,7 +83,7 @@ void TestEndToEndLogin::logsInWithTheRightPassword()
 
     QCOMPARE(connection->username(), userName);
     QVERIFY(connection->isPlainHttp());  // the script's server has no TLS
-    QVERIFY(connection->serverDescription().startsWith(QStringLiteral("pictorio-db")));
+    QVERIFY(connection->serverDescription().startsWith(QStringLiteral("photobook-db")));
     QVERIFY(!m_keyring->tokens.isEmpty());  // kept for the next start
 }
 
@@ -142,11 +142,11 @@ void TestEndToEndLogin::logsOutOnTheServerToo()
 
 QString TestEndToEndLogin::settingsFile() const
 {
-    return m_folder->filePath(QStringLiteral("pictoriorc"));
+    return m_folder->filePath(QStringLiteral("photobookrc"));
 }
 
-}  // namespace pictorio::e2e
+}  // namespace photobook::e2e
 
-QTEST_GUILESS_MAIN(pictorio::e2e::TestEndToEndLogin)
+QTEST_GUILESS_MAIN(photobook::e2e::TestEndToEndLogin)
 
 #include "TestEndToEndLogin.moc"

@@ -8,11 +8,11 @@
 #include <QDateTime>
 #include <QString>
 
-namespace pictorio::image_loader
+namespace photobook::image_loader
 {
 
 // DateTimeOriginal, else DateTimeDigitized; invalid if neither can be read. EXIF dates carry no time zone:
 // read as local time. Thread-safe.
 QDateTime readExifCaptureDate(const QString& filePath);
 
-}  // namespace pictorio::image_loader
+}  // namespace photobook::image_loader

@@ -12,7 +12,7 @@
 #include "e2e/AppSession.hpp"
 #include "e2e/EndToEndServer.hpp"
 
-namespace pictorio::e2e
+namespace photobook::e2e
 {
 
 namespace
@@ -50,7 +50,7 @@ private:
 
 void TestEndToEndLibrary::initTestCase()
 {
-    KLocalizedString::setApplicationDomain("pictorio");
+    KLocalizedString::setApplicationDomain("photobook");
     m_server = EndToEndServer::fromEnvironment();
     if (!m_server.has_value())
     {
@@ -126,8 +126,8 @@ std::optional<server_client::Image> TestEndToEndLibrary::uploadedPhoto(const QSt
     return found.size() == 1 ? std::optional(found.first()) : std::nullopt;
 }
 
-}  // namespace pictorio::e2e
+}  // namespace photobook::e2e
 
-QTEST_GUILESS_MAIN(pictorio::e2e::TestEndToEndLibrary)
+QTEST_GUILESS_MAIN(photobook::e2e::TestEndToEndLibrary)
 
 #include "TestEndToEndLibrary.moc"

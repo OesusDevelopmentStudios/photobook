@@ -16,7 +16,7 @@
 #include "TestServices.hpp"
 
 // The application's QML module, as main.cpp uses it
-Q_IMPORT_QML_PLUGIN(io_github_oesusdevelopmentstudios_pictorioPlugin)
+Q_IMPORT_QML_PLUGIN(io_github_oesusdevelopmentstudios_photobookPlugin)
 
 namespace
 {
@@ -37,15 +37,15 @@ public Q_SLOTS:
 }  // namespace
 
 // The QML tests in tests/qml, tst_*.qml. They use the application's QML module, and fakes from the module
-// "pictorio.tests".
+// "photobook.tests".
 int main(int argc, char* argv[])
 {
     QApplication application(argc, argv);  // the KDE style needs widgets
-    KLocalizedString::setApplicationDomain("pictorio");
+    KLocalizedString::setApplicationDomain("photobook");
     QQuickStyle::setStyle(QStringLiteral("org.kde.desktop"));
-    qmlRegisterType<pictorio::tests::FakeTagRowsEditor>("pictorio.tests", 1, 0, "FakeTagRowsEditor");
-    pictorio::tests::TestServices services;
-    qmlRegisterSingletonInstance("pictorio.tests", 1, 0, "TestServices", &services);
+    qmlRegisterType<photobook::tests::FakeTagRowsEditor>("photobook.tests", 1, 0, "FakeTagRowsEditor");
+    photobook::tests::TestServices services;
+    qmlRegisterSingletonInstance("photobook.tests", 1, 0, "TestServices", &services);
 
     Setup setup;
     return quick_test_main_with_setup(argc, argv, "TestQml", QUICK_TEST_SOURCE_DIR, &setup);

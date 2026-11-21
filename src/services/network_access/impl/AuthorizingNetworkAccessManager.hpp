@@ -11,7 +11,7 @@
 
 #include "NetworkAccess.hpp"
 
-namespace pictorio::network_access
+namespace photobook::network_access
 {
 
 // Adds the login token to the requests that go to the server, and only to those.
@@ -27,4 +27,4 @@ private:
     std::shared_ptr<const ServerCredentials> m_credentials;
 };
 
-}  // namespace pictorio::network_access
+}  // namespace photobook::network_access

@@ -7,7 +7,7 @@
 
 #include <KLocalizedString>
 
-namespace pictorio::image_loader
+namespace photobook::image_loader
 {
 
 // Defined here rather than in the header, so the class's virtual table is created in one place only.
@@ -32,4 +32,4 @@ QString describeError(ImageLoadError error)
     return {};
 }
 
-}  // namespace pictorio::image_loader
+}  // namespace photobook::image_loader

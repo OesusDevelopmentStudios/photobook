@@ -7,12 +7,12 @@
 
 #include "impl/KeychainTokenStore.hpp"
 
-namespace pictorio::token_store
+namespace photobook::token_store
 {
 
 std::unique_ptr<TokenStore> createTokenStore()
 {
-    return std::make_unique<KeychainTokenStore>(QStringLiteral("io.github.oesusdevelopmentstudios.pictorio"));
+    return std::make_unique<KeychainTokenStore>(QStringLiteral("io.github.oesusdevelopmentstudios.photobook"));
 }
 
-}  // namespace pictorio::token_store
+}  // namespace photobook::token_store

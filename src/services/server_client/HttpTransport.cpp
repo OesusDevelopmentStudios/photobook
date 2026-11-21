@@ -5,7 +5,7 @@
 
 #include "HttpTransport.hpp"
 
-namespace pictorio::server_client
+namespace photobook::server_client
 {
 
 QByteArray HttpResponse::header(const QByteArray& name) const
@@ -23,4 +23,4 @@ QByteArray HttpResponse::header(const QByteArray& name) const
 
 HttpTransport::~HttpTransport() = default;
 
-}  // namespace pictorio::server_client
+}  // namespace photobook::server_client

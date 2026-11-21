@@ -7,7 +7,7 @@
 
 #include "hlp/KeychainErrors.hpp"
 
-namespace pictorio::token_store
+namespace photobook::token_store
 {
 
 // The keyring itself is not used here: a test must not write into the user's real KWallet. These tests
@@ -55,7 +55,7 @@ void TestTokenStore::keepsTheKeyringsMessage()
     QCOMPARE(error.message, QStringLiteral("The wallet is closed"));
 }
 
-}  // namespace pictorio::token_store
+}  // namespace photobook::token_store
 
-QTEST_GUILESS_MAIN(pictorio::token_store::TestTokenStore)
+QTEST_GUILESS_MAIN(photobook::token_store::TestTokenStore)
 #include "TestTokenStore.moc"

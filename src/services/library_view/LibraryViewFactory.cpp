@@ -5,7 +5,7 @@
 
 #include "LibraryViewFactory.hpp"
 
-namespace pictorio::library_view
+namespace photobook::library_view
 {
 
 std::unique_ptr<LibraryView> createLibraryView(settings::Settings* settings)
@@ -13,4 +13,4 @@ std::unique_ptr<LibraryView> createLibraryView(settings::Settings* settings)
     return std::make_unique<LibraryView>(settings);
 }
 
-}  // namespace pictorio::library_view
+}  // namespace photobook::library_view

@@ -10,7 +10,7 @@
 #include "hlp/SearchTerm.hpp"
 #include "hlp/TagNames.hpp"
 
-namespace pictorio::tag_editor
+namespace photobook::tag_editor
 {
 
 namespace
@@ -70,7 +70,7 @@ private Q_SLOTS:
 
 void TestTagRules::initTestCase()
 {
-    KLocalizedString::setApplicationDomain("pictorio");
+    KLocalizedString::setApplicationDomain("photobook");
 }
 
 void TestTagRules::normalisesTypedTags_data()
@@ -333,8 +333,8 @@ void TestTagRules::namesTheRestrictedTagsOfAnImage()
                 .isEmpty());
 }
 
-}  // namespace pictorio::tag_editor
+}  // namespace photobook::tag_editor
 
-QTEST_GUILESS_MAIN(pictorio::tag_editor::TestTagRules)
+QTEST_GUILESS_MAIN(photobook::tag_editor::TestTagRules)
 
 #include "TestTagRules.moc"

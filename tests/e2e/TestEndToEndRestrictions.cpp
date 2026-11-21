@@ -16,7 +16,7 @@
 #include "e2e/EndToEndServer.hpp"
 #include "utils/FileHash.hpp"
 
-namespace pictorio::e2e
+namespace photobook::e2e
 {
 
 namespace
@@ -59,7 +59,7 @@ private:
 
 void TestEndToEndRestrictions::initTestCase()
 {
-    KLocalizedString::setApplicationDomain("pictorio");
+    KLocalizedString::setApplicationDomain("photobook");
     m_server = EndToEndServer::fromEnvironment();
     if (!m_server.has_value())
     {
@@ -146,8 +146,8 @@ void TestEndToEndRestrictions::neverShowsARestrictedImage()
     QCOMPARE(byId.error().httpStatus, 404);
 }
 
-}  // namespace pictorio::e2e
+}  // namespace photobook::e2e
 
-QTEST_GUILESS_MAIN(pictorio::e2e::TestEndToEndRestrictions)
+QTEST_GUILESS_MAIN(photobook::e2e::TestEndToEndRestrictions)
 
 #include "TestEndToEndRestrictions.moc"

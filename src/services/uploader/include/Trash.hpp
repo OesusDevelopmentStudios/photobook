@@ -10,7 +10,7 @@
 #include <QFuture>
 #include <QString>
 
-namespace pictorio::uploader
+namespace photobook::uploader
 {
 
 // Files can be restored from there: the uploader removes originals only this way.
@@ -23,4 +23,4 @@ public:
     virtual QFuture<std::expected<void, QString>> moveToTrash(const QString& filePath) = 0;
 };
 
-}  // namespace pictorio::uploader
+}  // namespace photobook::uploader

@@ -14,7 +14,7 @@
 namespace
 {
 
-using namespace pictorio::server_client;
+using namespace photobook::server_client;
 
 // A search the server cannot read says why.
 QString describeError(const ApiError& error)
@@ -34,7 +34,7 @@ QString describeError(const ApiError& error)
 
 }  // namespace
 
-namespace pictorio::library
+namespace photobook::library
 {
 
 Library::Library(connection::Connection* connection, QObject* parent)
@@ -474,4 +474,4 @@ server_client::ImageQuery Library::queryFor(const QString& cursor) const
     return query;
 }
 
-}  // namespace pictorio::library
+}  // namespace photobook::library

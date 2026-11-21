@@ -9,9 +9,9 @@
 
 #include "ViewTransform.hpp"
 
-namespace pictorio::view_transform
+namespace photobook::view_transform
 {
 
 std::unique_ptr<ViewTransform> createViewTransform();
 
-}  // namespace pictorio::view_transform
+}  // namespace photobook::view_transform

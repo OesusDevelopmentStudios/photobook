@@ -5,9 +5,9 @@
 
 #include "TokenStore.hpp"
 
-namespace pictorio::token_store
+namespace photobook::token_store
 {
 
 TokenStore::~TokenStore() = default;
 
-}  // namespace pictorio::token_store
+}  // namespace photobook::token_store

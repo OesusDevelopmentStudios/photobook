@@ -10,7 +10,7 @@
 #include <QStringList>
 #include <QVariantList>
 
-namespace pictorio::tag_editor
+namespace photobook::tag_editor
 {
 
 // The namespaces while an image's tags are edited, one row each, for the edit view. The rows stay while their
@@ -61,4 +61,4 @@ private:
     QList<Row> m_rows;
 };
 
-}  // namespace pictorio::tag_editor
+}  // namespace photobook::tag_editor

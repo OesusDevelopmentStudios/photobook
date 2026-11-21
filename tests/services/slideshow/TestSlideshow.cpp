@@ -16,10 +16,10 @@
 namespace
 {
 
-using pictorio::folder_scanner::FolderScanner;
-using pictorio::folder_scanner::Sorting;
-using pictorio::folder_scanner::SortOrder;
-using pictorio::settings::Settings;
+using photobook::folder_scanner::FolderScanner;
+using photobook::folder_scanner::Sorting;
+using photobook::folder_scanner::SortOrder;
+using photobook::settings::Settings;
 
 const QStringList folderImages{
     QStringLiteral("/photos/a.jpg"),
@@ -100,7 +100,7 @@ constexpr int oneSecondInMilliseconds = 1000;
 
 }  // namespace
 
-namespace pictorio::slideshow
+namespace photobook::slideshow
 {
 
 class TestSlideshow : public QObject
@@ -307,8 +307,8 @@ void TestSlideshow::waitForListing()
     QVERIFY(positionSpy.wait());
 }
 
-}  // namespace pictorio::slideshow
+}  // namespace photobook::slideshow
 
-QTEST_GUILESS_MAIN(pictorio::slideshow::TestSlideshow)
+QTEST_GUILESS_MAIN(photobook::slideshow::TestSlideshow)
 
 #include "TestSlideshow.moc"

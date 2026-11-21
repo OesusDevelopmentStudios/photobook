@@ -12,11 +12,11 @@
 namespace
 {
 
-using namespace pictorio::server_client;
-using pictorio::token_store::StoreResult;
-using pictorio::token_store::TokenStoreError;
+using namespace photobook::server_client;
+using photobook::token_store::StoreResult;
+using photobook::token_store::TokenStoreError;
 
-const QString expectedServerName = QStringLiteral("pictorio-db");
+const QString expectedServerName = QStringLiteral("photobook-db");
 constexpr int supportedApiVersion = 1;
 constexpr int statusUnauthorized = 401;
 
@@ -25,13 +25,13 @@ QString problemWithServer(const QUrl& serverUrl, const ServerInfo& info)
 {
     if (info.name != expectedServerName)
     {
-        return i18nc("@info %1 is an address", "%1 is not a pictorio-db server.", serverUrl.toDisplayString());
+        return i18nc("@info %1 is an address", "%1 is not a photobook-db server.", serverUrl.toDisplayString());
     }
 
     if (info.apiVersion != supportedApiVersion)
     {
         return i18nc("@info %1 and %2 are version numbers",
-                     "The server speaks version %1 of the pictorio-db API, this Pictorio version %2. Update the "
+                     "The server speaks version %1 of the photobook-db API, this Photobook version %2. Update the "
                      "older of the two.",
                      info.apiVersion,
                      supportedApiVersion);
@@ -51,7 +51,7 @@ QString problemWithServer(const QUrl& serverUrl, const ServerInfo& info)
 
 }  // namespace
 
-namespace pictorio::connection
+namespace photobook::connection
 {
 
 Connection::Connection(ServerClientFactory serverClientFactory,
@@ -275,7 +275,7 @@ void Connection::tryServerAddress(const QList<QUrl>& candidates, qsizetype index
                 const ApiError& error = info.error();
                 setErrorMessage(noAnswer ? describeServerError(error.code, error.title, error.detail)
                                          : i18nc("@info %1 is an address",
-                                                 "%1 is not a pictorio-db server.",
+                                                 "%1 is not a photobook-db server.",
                                                  serverUrl.toDisplayString()));
                 setState(State::NoServer);
                 return;
@@ -418,12 +418,12 @@ void Connection::setKeyringWarning(const TokenStoreError& error)
     {
     case TokenStoreError::Kind::Unavailable:
         m_keyringWarning = i18nc("@info",
-                                 "No keyring is available, so you will have to log in again when Pictorio "
+                                 "No keyring is available, so you will have to log in again when Photobook "
                                  "starts.");
         break;
     case TokenStoreError::Kind::AccessDenied:
         m_keyringWarning = i18nc("@info",
-                                 "Pictorio may not use the keyring, so you will have to log in again when "
+                                 "Photobook may not use the keyring, so you will have to log in again when "
                                  "it starts.");
         break;
     case TokenStoreError::Kind::Failed:
@@ -440,4 +440,4 @@ QString Connection::keyringKey() const
     return m_serverUrl.adjusted(QUrl::StripTrailingSlash).toString();
 }
 
-}  // namespace pictorio::connection
+}  // namespace photobook::connection

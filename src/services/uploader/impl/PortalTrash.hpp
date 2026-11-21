@@ -7,7 +7,7 @@
 
 #include "Trash.hpp"
 
-namespace pictorio::uploader
+namespace photobook::uploader
 {
 
 // The desktop's trash through the Trash portal, for the Flatpak: inside the sandbox KIO would use a trash in the
@@ -18,4 +18,4 @@ public:
     QFuture<std::expected<void, QString>> moveToTrash(const QString& filePath) override;
 };
 
-}  // namespace pictorio::uploader
+}  // namespace photobook::uploader

@@ -9,10 +9,10 @@
 
 #include "Library.hpp"
 
-namespace pictorio::library
+namespace photobook::library
 {
 
 // The connection is not owned and must outlive the library.
 std::unique_ptr<Library> createLibrary(connection::Connection* connection);
 
-}  // namespace pictorio::library
+}  // namespace photobook::library

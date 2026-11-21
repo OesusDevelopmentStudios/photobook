@@ -63,7 +63,7 @@ Kirigami.ScrollablePage {
                 Controls.Button {
                     visible: !page.serverKnown
                     enabled: !page.busy && addressField.text.trim().length > 0
-                    text: KI18n.i18nc("@action:button Check that the address is a pictorio-db server", "Check")
+                    text: KI18n.i18nc("@action:button Check that the address is a photobook-db server", "Check")
                     onClicked: page.connection.checkServer(addressField.text)
                 }
 

@@ -8,7 +8,7 @@
 #include <KIO/CopyJob>
 #include <QUrl>
 
-namespace pictorio::uploader
+namespace photobook::uploader
 {
 
 QFuture<std::expected<void, QString>> KioTrash::moveToTrash(const QString& filePath)
@@ -25,4 +25,4 @@ QFuture<std::expected<void, QString>> KioTrash::moveToTrash(const QString& fileP
     });
 }
 
-}  // namespace pictorio::uploader
+}  // namespace photobook::uploader

@@ -21,7 +21,7 @@
 
 #include "hlp/FileRotation.hpp"
 
-namespace pictorio::image_actions
+namespace photobook::image_actions
 {
 
 ImageActions::ImageActions(connection::Connection* connection,
@@ -173,4 +173,4 @@ void ImageActions::setBusy(bool busy)
     }
 }
 
-}  // namespace pictorio::image_actions
+}  // namespace photobook::image_actions

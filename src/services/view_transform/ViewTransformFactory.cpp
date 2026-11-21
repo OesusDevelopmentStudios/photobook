@@ -5,7 +5,7 @@
 
 #include "ViewTransformFactory.hpp"
 
-namespace pictorio::view_transform
+namespace photobook::view_transform
 {
 
 std::unique_ptr<ViewTransform> createViewTransform()
@@ -13,4 +13,4 @@ std::unique_ptr<ViewTransform> createViewTransform()
     return std::make_unique<ViewTransform>();
 }
 
-}  // namespace pictorio::view_transform
+}  // namespace photobook::view_transform

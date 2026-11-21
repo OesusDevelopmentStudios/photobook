@@ -10,7 +10,7 @@
 #include <QString>
 #include <QUrl>
 
-namespace pictorio::settings
+namespace photobook::settings
 {
 
 // Getters return nothing for values never stored, so each user of a setting decides its default. Changes are
@@ -27,7 +27,7 @@ public:
     virtual std::optional<QString> slideshowOrder() const = 0;
     virtual void setSlideshowOrder(const QString& order) = 0;
 
-    // The pictorio-db server last connected to, and who logged in there. The login token itself is kept in
+    // The photobook-db server last connected to, and who logged in there. The login token itself is kept in
     // the system keyring, never here.
     virtual std::optional<QUrl> serverUrl() const = 0;
     virtual void setServerUrl(const QUrl& serverUrl) = 0;
@@ -41,4 +41,4 @@ public:
     virtual void setLibraryTileSize(int gridUnits) = 0;
 };
 
-}  // namespace pictorio::settings
+}  // namespace photobook::settings

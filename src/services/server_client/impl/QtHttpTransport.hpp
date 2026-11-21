@@ -11,7 +11,7 @@
 
 #include "HttpTransport.hpp"
 
-namespace pictorio::server_client
+namespace photobook::server_client
 {
 
 // Sends the requests over the network with Qt. Used from the thread that created it, like any
@@ -29,4 +29,4 @@ private:
     QNetworkAccessManager m_network;
 };
 
-}  // namespace pictorio::server_client
+}  // namespace photobook::server_client

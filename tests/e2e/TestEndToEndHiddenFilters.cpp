@@ -12,7 +12,7 @@
 #include "e2e/AppSession.hpp"
 #include "e2e/EndToEndServer.hpp"
 
-namespace pictorio::e2e
+namespace photobook::e2e
 {
 
 namespace
@@ -56,7 +56,7 @@ private:
 
 void TestEndToEndHiddenFilters::initTestCase()
 {
-    KLocalizedString::setApplicationDomain("pictorio");
+    KLocalizedString::setApplicationDomain("photobook");
     m_server = EndToEndServer::fromEnvironment();
     if (!m_server.has_value())
     {
@@ -127,8 +127,8 @@ void TestEndToEndHiddenFilters::showsTheImageAgainWithoutTheFilter()
     QCOMPARE(m_session->search(QStringLiteral("general:coast")).size(), 2);
 }
 
-}  // namespace pictorio::e2e
+}  // namespace photobook::e2e
 
-QTEST_GUILESS_MAIN(pictorio::e2e::TestEndToEndHiddenFilters)
+QTEST_GUILESS_MAIN(photobook::e2e::TestEndToEndHiddenFilters)
 
 #include "TestEndToEndHiddenFilters.moc"

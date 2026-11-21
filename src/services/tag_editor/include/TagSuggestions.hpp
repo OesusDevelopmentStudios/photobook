@@ -15,7 +15,7 @@
 #include "ApiTypes.hpp"
 #include "Connection.hpp"
 
-namespace pictorio::tag_editor
+namespace photobook::tag_editor
 {
 
 // Tags that start with what the user is typing, most used first, for the list under a tag field. The server
@@ -74,4 +74,4 @@ private:
     int m_askNumber = 0;  // answers to older typing are ignored
 };
 
-}  // namespace pictorio::tag_editor
+}  // namespace photobook::tag_editor

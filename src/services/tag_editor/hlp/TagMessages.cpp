@@ -8,7 +8,7 @@
 #include <KLocalizedString>
 #include <QJsonArray>
 
-namespace pictorio::tag_editor
+namespace photobook::tag_editor
 {
 
 QString restrictedMessage(const QStringList& tags)
@@ -41,4 +41,4 @@ QString describeError(const server_client::ApiError& error)
                : i18nc("@info %1 is a title, %2 an explanation", "%1. %2", error.title, error.detail);
 }
 
-}  // namespace pictorio::tag_editor
+}  // namespace photobook::tag_editor

@@ -10,7 +10,7 @@
 #include <QString>
 #include <QStringList>
 
-namespace pictorio::folder_scanner
+namespace photobook::folder_scanner
 {
 
 // Image types Qt can read. Only image/* types: Qt can also read e.g. PDF pages, which are not images.
@@ -22,4 +22,4 @@ bool isReadableImage(const QFileInfo& fileInfo, const QSet<QString>& readableMim
 // Natural order, case ignored: "img2" before "img10"
 void sortNaturally(QStringList& filePaths);
 
-}  // namespace pictorio::folder_scanner
+}  // namespace photobook::folder_scanner

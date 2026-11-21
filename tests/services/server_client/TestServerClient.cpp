@@ -19,7 +19,7 @@
 #include "ServerClient.hpp"
 #include "ServerClientFactory.hpp"
 
-namespace pictorio::server_client
+namespace photobook::server_client
 {
 
 namespace
@@ -198,8 +198,8 @@ void TestServerClient::buildsUrlsUnderTheServerUrl_data()
                                    << "http://raspberrypi.local:8737/api/v1/server/info";
     QTest::newRow("trailing slash") << "https://photos.example.org/"
                                     << "https://photos.example.org/api/v1/server/info";
-    QTest::newRow("behind a proxy path") << "https://example.org/pictorio/"
-                                         << "https://example.org/pictorio/api/v1/server/info";
+    QTest::newRow("behind a proxy path") << "https://example.org/photobook/"
+                                         << "https://example.org/photobook/api/v1/server/info";
 }
 
 void TestServerClient::buildsUrlsUnderTheServerUrl()
@@ -207,7 +207,7 @@ void TestServerClient::buildsUrlsUnderTheServerUrl()
     QFETCH(QString, serverUrl);
     QFETCH(QString, expectedUrl);
     const auto client = createServerClient(QUrl(serverUrl), m_transport);
-    m_transport->nextResponse = answer(200, R"({"name":"pictorio-db","version":"0.1.0","api_version":1,
+    m_transport->nextResponse = answer(200, R"({"name":"photobook-db","version":"0.1.0","api_version":1,
                                                 "setup_required":false})");
 
     QVERIFY(valueOf(client->serverInfo()).has_value());
@@ -229,14 +229,14 @@ void TestServerClient::sendsTheTokenOnceItIsSet()
 
 void TestServerClient::readsTheServerInfo()
 {
-    m_transport->nextResponse = answer(200, R"({"name":"pictorio-db","version":"0.1.0","api_version":1,
+    m_transport->nextResponse = answer(200, R"({"name":"photobook-db","version":"0.1.0","api_version":1,
                                                 "setup_required":true})");
 
     const Result<ServerInfo> info = valueOf(m_client->serverInfo());
 
     QVERIFY(info.has_value());
     QCOMPARE(m_transport->lastRequest().method, QByteArray("GET"));
-    QCOMPARE(info->name, QStringLiteral("pictorio-db"));
+    QCOMPARE(info->name, QStringLiteral("photobook-db"));
     QCOMPARE(info->version, QStringLiteral("0.1.0"));
     QCOMPARE(info->apiVersion, 1);
     QVERIFY(info->setupRequired);
@@ -244,7 +244,7 @@ void TestServerClient::readsTheServerInfo()
 
 void TestServerClient::asksWhereTheLibraryIsOnThisComputer()
 {
-    m_transport->nextResponse = answer(200, R"({"library_dir":"/home/kid/Pictures/pictorio-library"})");
+    m_transport->nextResponse = answer(200, R"({"library_dir":"/home/kid/Pictures/photobook-library"})");
 
     const Result<LocalLibrary> library = valueOf(m_client->localLibrary(QStringLiteral("9d623a36")));
 
@@ -252,7 +252,7 @@ void TestServerClient::asksWhereTheLibraryIsOnThisComputer()
     QCOMPARE(url.path(), QStringLiteral("/api/v1/server/local"));
     QCOMPARE(serverSideValue(url, "machine"), QStringLiteral("9d623a36"));
     QVERIFY(library.has_value());
-    QCOMPARE(library->libraryDir, QStringLiteral("/home/kid/Pictures/pictorio-library"));
+    QCOMPARE(library->libraryDir, QStringLiteral("/home/kid/Pictures/photobook-library"));
 }
 
 void TestServerClient::logsInAndReadsTheToken()
@@ -327,7 +327,7 @@ void TestServerClient::revokesADevice()
 
 void TestServerClient::turnsProblemDetailsIntoErrors()
 {
-    m_transport->nextResponse = answer(404, R"({"type":"https://pictorio.invalid/problems/not-found",
+    m_transport->nextResponse = answer(404, R"({"type":"https://photobook.invalid/problems/not-found",
         "title":"Image not found","status":404,"code":"not_found","detail":"One of the images does not exist."})");
 
     const Result<Image> result = valueOf(m_client->image(7));
@@ -725,7 +725,7 @@ void TestServerClient::realTransportReadsAnAnswer()
         connect(socket, &QTcpSocket::readyRead, socket, [socket]() {
             socket->readAll();
             const QByteArray body =
-                R"({"name":"pictorio-db","version":"0.1.0","api_version":1,"setup_required":false})";
+                R"({"name":"photobook-db","version":"0.1.0","api_version":1,"setup_required":false})";
             socket->write("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nConnection: close\r\nContent-Length: " +
                           QByteArray::number(body.size()) + "\r\n\r\n" + body);
             socket->disconnectFromHost();
@@ -737,7 +737,7 @@ void TestServerClient::realTransportReadsAnAnswer()
 
     QTRY_VERIFY(future.isFinished());
     QVERIFY(future.result().has_value());
-    QCOMPARE(future.result()->name, QStringLiteral("pictorio-db"));
+    QCOMPARE(future.result()->name, QStringLiteral("photobook-db"));
 }
 
 void TestServerClient::realTransportReportsARefusedConnection()
@@ -799,7 +799,7 @@ void TestServerClient::realTransportUploadsTheFileAsMultipart()
     QVERIFY(request.contains("fake jpeg bytes"));
 }
 
-}  // namespace pictorio::server_client
+}  // namespace photobook::server_client
 
-QTEST_GUILESS_MAIN(pictorio::server_client::TestServerClient)
+QTEST_GUILESS_MAIN(photobook::server_client::TestServerClient)
 #include "TestServerClient.moc"

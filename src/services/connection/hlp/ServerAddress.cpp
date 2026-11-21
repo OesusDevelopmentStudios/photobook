@@ -21,7 +21,7 @@ bool isServerUrl(const QUrl& url)
 
 }  // namespace
 
-namespace pictorio::connection
+namespace photobook::connection
 {
 
 QList<QUrl> serverUrlCandidates(const QString& typedAddress)
@@ -54,7 +54,7 @@ QList<QUrl> serverUrlCandidates(const QString& typedAddress)
 QString deviceName()
 {
     const QString version = QCoreApplication::applicationVersion();
-    const QString app = version.isEmpty() ? QStringLiteral("Pictorio") : QStringLiteral("Pictorio %1").arg(version);
+    const QString app = version.isEmpty() ? QStringLiteral("Photobook") : QStringLiteral("Photobook %1").arg(version);
     return QStringLiteral("%1 (%2)").arg(QSysInfo::machineHostName(), app);
 }
 
@@ -78,4 +78,4 @@ QString describeServerError(const QString& code, const QString& title, const QSt
     return detail.isEmpty() ? title : i18nc("@info %1 is a title, %2 an explanation", "%1. %2", title, detail);
 }
 
-}  // namespace pictorio::connection
+}  // namespace photobook::connection

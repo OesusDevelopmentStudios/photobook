@@ -4,7 +4,7 @@
 import QtQuick
 import QtQuick.Controls as Controls
 import QtTest
-import io.github.oesusdevelopmentstudios.pictorio
+import io.github.oesusdevelopmentstudios.photobook
 
 Item {
     id: root

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 OesusDevelopmentStudios
 #
-# Builds pictorio and runs all its tests, the end-to-end tests against a real pictorio-db server too, inside
+# Builds photobook and runs all its tests, the end-to-end tests against a real photobook-db server too, inside
 # the KDE SDK that the Flatpak is built with (tests/run_in_flatpak_sdk.sh, which also runs locally).
 
 name: CI
@@ -23,15 +23,15 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          path: pictorio
+          path: photobook
 
       # The server the end-to-end tests run against, at a fixed commit, so a server change never breaks the
       # app's CI unannounced. Move it on when the app needs a newer server.
       - uses: actions/checkout@v7
         with:
-          repository: OesusDevelopmentStudios/pictorio-db
+          repository: OesusDevelopmentStudios/photobook-db
           ref: e4d8ca7db420d74bfd0992372c12f8a6b37144dc
-          path: pictorio-db
+          path: photobook-db
 
       # flatpak-builder needs a session bus; the container has none, nor the machine-id to start one itself.
-      - run: dbus-run-session -- pictorio/tests/run_in_flatpak_sdk.sh
+      - run: dbus-run-session -- photobook/tests/run_in_flatpak_sdk.sh

@@ -2,23 +2,23 @@
 # SPDX-FileCopyrightText: 2026 OesusDevelopmentStudios
 
 # Shared helpers. A static library, so that tests can link the same code as the application.
-add_library(pictorio_utils STATIC
+add_library(photobook_utils STATIC
     utils/AppIdentity.cpp
     utils/CommandLine.cpp
     utils/FileHash.cpp
     utils/MachineId.cpp
 )
 
-# Lets every target that links pictorio_utils write #include "utils/AppIdentity.hpp".
-target_include_directories(pictorio_utils PUBLIC
+# Lets every target that links photobook_utils write #include "utils/AppIdentity.hpp".
+target_include_directories(photobook_utils PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-target_compile_definitions(pictorio_utils PRIVATE
-    PICTORIO_VERSION="${PROJECT_VERSION}"
+target_compile_definitions(photobook_utils PRIVATE
+    PHOTOBOOK_VERSION="${PROJECT_VERSION}"
 )
 
-target_link_libraries(pictorio_utils
+target_link_libraries(photobook_utils
     PUBLIC
         Qt6::Core
     PRIVATE
@@ -46,7 +46,7 @@ add_subdirectory(services/image_actions)
 # The user interface: the QML files and the C++ types they use, the AppManager and through it the services. A
 # static library that is also a QML module, so the application and the QML tests use the same one. The URI is
 # the app ID; main.cpp loads Main.qml from it with loadFromModule().
-qt_add_library(pictorio_ui STATIC)
+qt_add_library(photobook_ui STATIC)
 
 # QML modules go into folders named after their URI under one root, where qmllint and the QML tests find them.
 set(QT_QML_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/qml)
@@ -81,8 +81,8 @@ foreach(qmlFile ${qmlFiles})
     set_source_files_properties(${qmlFile} PROPERTIES QT_RESOURCE_ALIAS ${fileName})
 endforeach()
 
-qt_add_qml_module(pictorio_ui
-    URI io.github.oesusdevelopmentstudios.pictorio
+qt_add_qml_module(photobook_ui
+    URI io.github.oesusdevelopmentstudios.photobook
     VERSION 1.0
     RESOURCE_PREFIX /qt/qml  # where the QML engine looks for modules in the resources
     SOURCES
@@ -94,43 +94,43 @@ qt_add_qml_module(pictorio_ui
 
 # Qt gives the module's generated targets (resources, plugin) the folders of generated headers, and they can be
 # built before those exist; with warnings as errors, a missing include folder would stop the build.
-foreach(generatingTarget pictorio_ui pictorio_uiplugin)
+foreach(generatingTarget photobook_ui photobook_uiplugin)
     file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${generatingTarget}_autogen/include)
 endforeach()
 
 # Qt's generated QML type registration includes the headers by file name only.
-target_include_directories(pictorio_ui PUBLIC
+target_include_directories(photobook_ui PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/app_manager
 )
 
-target_link_libraries(pictorio_ui PUBLIC
-    pictorio_utils
-    pictorio_viewer
-    pictorio_view_transform
-    pictorio_navigator
-    pictorio_slideshow
-    pictorio_connection
-    pictorio_network_access
-    pictorio_library
-    pictorio_library_view
-    pictorio_tag_editor
-    pictorio_uploader
-    pictorio_image_actions
+target_link_libraries(photobook_ui PUBLIC
+    photobook_utils
+    photobook_viewer
+    photobook_view_transform
+    photobook_navigator
+    photobook_slideshow
+    photobook_connection
+    photobook_network_access
+    photobook_library
+    photobook_library_view
+    photobook_tag_editor
+    photobook_uploader
+    photobook_image_actions
     Qt6::Qml
     Qt6::Quick
     Qt6::QuickControls2
 )
 
 # The application. main.cpp only wires things together; logic lives in the libraries above.
-add_executable(pictorio main.cpp)
+add_executable(photobook main.cpp)
 
-target_link_libraries(pictorio PRIVATE
-    pictorio_ui
-    pictorio_uiplugin  # the QML module's types, imported in main.cpp
+target_link_libraries(photobook PRIVATE
+    photobook_ui
+    photobook_uiplugin  # the QML module's types, imported in main.cpp
     Qt6::Widgets
     KF6::CoreAddons
     KF6::I18n
     KF6::I18nQml
 )
 
-install(TARGETS pictorio ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
+install(TARGETS photobook ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})

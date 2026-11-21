@@ -9,7 +9,7 @@
 #include "TokenStoreFactory.hpp"
 #include "utils/MachineId.hpp"
 
-namespace pictorio::connection
+namespace photobook::connection
 {
 
 std::unique_ptr<Connection> createConnection(settings::Settings* settings)
@@ -19,4 +19,4 @@ std::unique_ptr<Connection> createConnection(settings::Settings* settings)
         serverClientFactory, token_store::createTokenStore(), settings, utils::thisComputersAppSpecificId());
 }
 
-}  // namespace pictorio::connection
+}  // namespace photobook::connection

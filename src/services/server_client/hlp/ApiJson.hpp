@@ -10,7 +10,7 @@
 
 #include "ApiTypes.hpp"
 
-namespace pictorio::server_client
+namespace photobook::server_client
 {
 
 // The API's JSON answers as the client's types. Anything missing or of the wrong type gives an
@@ -28,4 +28,4 @@ Result<QList<TagCount>> tagCountsFrom(const QJsonValue& json);
 Result<QList<Namespace>> namespacesFrom(const QJsonValue& json);
 Result<Preferences> preferencesFrom(const QJsonValue& json);
 
-}  // namespace pictorio::server_client
+}  // namespace photobook::server_client

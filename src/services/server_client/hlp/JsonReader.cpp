@@ -33,7 +33,7 @@ QString typeName(QJsonValue::Type type)
 
 }  // namespace
 
-namespace pictorio::server_client
+namespace photobook::server_client
 {
 
 JsonReader::JsonReader(const QJsonObject& object, const QString& context)
@@ -204,4 +204,4 @@ QJsonValue JsonReader::field(const QString& key, QJsonValue::Type type)
     return value;
 }
 
-}  // namespace pictorio::server_client
+}  // namespace photobook::server_client

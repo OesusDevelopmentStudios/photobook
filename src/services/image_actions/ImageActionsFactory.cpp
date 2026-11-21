@@ -7,7 +7,7 @@
 
 #include "impl/KioFileManager.hpp"
 
-namespace pictorio::image_actions
+namespace photobook::image_actions
 {
 
 std::unique_ptr<ImageActions> createImageActions(connection::Connection* connection)
@@ -15,4 +15,4 @@ std::unique_ptr<ImageActions> createImageActions(connection::Connection* connect
     return std::make_unique<ImageActions>(connection, std::make_unique<KioFileManager>());
 }
 
-}  // namespace pictorio::image_actions
+}  // namespace photobook::image_actions

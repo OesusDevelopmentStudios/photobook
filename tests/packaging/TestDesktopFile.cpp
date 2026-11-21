@@ -52,7 +52,7 @@ bool isReadable(const QString& mimeType)
 
 }  // namespace
 
-namespace pictorio::image_loader
+namespace photobook::image_loader
 {
 
 // Checks that the app can open every image type it registers for in the .desktop file.
@@ -75,7 +75,7 @@ private:
 
 void TestDesktopFile::initTestCase()
 {
-    KLocalizedString::setApplicationDomain("pictorio");
+    KLocalizedString::setApplicationDomain("photobook");
     QVERIFY(m_temporaryDir.isValid());
     m_imageLoader = createImageLoader();
 }
@@ -85,7 +85,7 @@ void TestDesktopFile::listsImageTypes()
     QVERIFY(mimeTypesInDesktopFile().contains(QStringLiteral("image/jpeg")));
 }
 
-// So that Dolphin offers "Open with Pictorio" on folders too
+// So that Dolphin offers "Open with Photobook" on folders too
 void TestDesktopFile::listsFolders()
 {
     QVERIFY(mimeTypesInDesktopFile().contains(QStringLiteral("inode/directory")));
@@ -138,8 +138,8 @@ void TestDesktopFile::opensEveryListedImageType()
     QCOMPARE(result->mimeType, mimeType);
 }
 
-}  // namespace pictorio::image_loader
+}  // namespace photobook::image_loader
 
-QTEST_GUILESS_MAIN(pictorio::image_loader::TestDesktopFile)
+QTEST_GUILESS_MAIN(photobook::image_loader::TestDesktopFile)
 
 #include "TestDesktopFile.moc"

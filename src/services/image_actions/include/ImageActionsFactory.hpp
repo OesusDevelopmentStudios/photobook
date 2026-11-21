@@ -9,10 +9,10 @@
 
 #include "ImageActions.hpp"
 
-namespace pictorio::image_actions
+namespace photobook::image_actions
 {
 
 // The connection is not owned and must outlive the actions.
 std::unique_ptr<ImageActions> createImageActions(connection::Connection* connection);
 
-}  // namespace pictorio::image_actions
+}  // namespace photobook::image_actions

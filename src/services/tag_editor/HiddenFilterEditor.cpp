@@ -15,7 +15,7 @@
 namespace
 {
 
-using pictorio::tag_editor::HiddenFilterEditor;
+using photobook::tag_editor::HiddenFilterEditor;
 
 QVariantMap filterEntry(const QString& filter, HiddenFilterEditor::Change change)
 {
@@ -28,7 +28,7 @@ QVariantMap filterEntry(const QString& filter, HiddenFilterEditor::Change change
 
 }  // namespace
 
-namespace pictorio::tag_editor
+namespace photobook::tag_editor
 {
 
 HiddenFilterEditor::HiddenFilterEditor(connection::Connection* connection, QObject* parent)
@@ -330,4 +330,4 @@ void HiddenFilterEditor::setErrorMessage(const QString& message)
     }
 }
 
-}  // namespace pictorio::tag_editor
+}  // namespace photobook::tag_editor

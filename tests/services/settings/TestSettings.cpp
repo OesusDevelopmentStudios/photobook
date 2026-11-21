@@ -13,7 +13,7 @@
 #include "Settings.hpp"
 #include "SettingsFactory.hpp"
 
-namespace pictorio::settings
+namespace photobook::settings
 {
 
 // Each test uses its own temporary config file, never the user's real settings.
@@ -101,11 +101,11 @@ void TestSettings::writesReadableConfigFile()
 
 QString TestSettings::configFilePath() const
 {
-    return m_folder->filePath(QStringLiteral("pictoriorc"));
+    return m_folder->filePath(QStringLiteral("photobookrc"));
 }
 
-}  // namespace pictorio::settings
+}  // namespace photobook::settings
 
-QTEST_GUILESS_MAIN(pictorio::settings::TestSettings)
+QTEST_GUILESS_MAIN(photobook::settings::TestSettings)
 
 #include "TestSettings.moc"

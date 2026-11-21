@@ -11,7 +11,7 @@
 
 #include "fakes/FakeServer.hpp"
 
-namespace pictorio::fakes
+namespace photobook::fakes
 {
 
 inline server_client::HttpResponse jsonResponse(int status, const QJsonObject& json)
@@ -60,4 +60,4 @@ inline server_client::HttpResponse imagePageJson(const QList<int>& imageIds, con
                         });
 }
 
-}  // namespace pictorio::fakes
+}  // namespace photobook::fakes

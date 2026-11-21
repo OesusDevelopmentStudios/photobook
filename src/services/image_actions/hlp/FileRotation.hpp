@@ -9,7 +9,7 @@
 
 #include <QString>
 
-namespace pictorio::image_actions
+namespace photobook::image_actions
 {
 
 enum class RotationSaving
@@ -25,4 +25,4 @@ RotationSaving rotationSavingFor(const QString& mimeType);
 // it could not.
 std::expected<void, QString> saveRotation(const QString& filePath, const QString& mimeType, int clockwiseDegrees);
 
-}  // namespace pictorio::image_actions
+}  // namespace photobook::image_actions

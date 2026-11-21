@@ -5,9 +5,9 @@
 
 #include "Settings.hpp"
 
-namespace pictorio::settings
+namespace photobook::settings
 {
 
 Settings::~Settings() = default;
 
-}  // namespace pictorio::settings
+}  // namespace photobook::settings

@@ -10,7 +10,7 @@
 
 #include "Settings.hpp"
 
-namespace pictorio::settings
+namespace photobook::settings
 {
 
 class KConfigSettings : public Settings
@@ -45,4 +45,4 @@ private:
     KSharedConfigPtr m_config;
 };
 
-}  // namespace pictorio::settings
+}  // namespace photobook::settings

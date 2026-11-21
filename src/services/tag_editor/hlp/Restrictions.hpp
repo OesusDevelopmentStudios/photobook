@@ -12,7 +12,7 @@
 
 #include "hlp/TagNames.hpp"
 
-namespace pictorio::tag_editor
+namespace photobook::tag_editor
 {
 
 // As the server checks a change: an image must stay visible to the user with its tags after it. Gives the
@@ -22,4 +22,4 @@ QStringList restrictedTagsAmong(const QStringList& restrictedTerms,
                                 const QList<TagName>& tagsAfter,
                                 const QDateTime& takenAt);
 
-}  // namespace pictorio::tag_editor
+}  // namespace photobook::tag_editor

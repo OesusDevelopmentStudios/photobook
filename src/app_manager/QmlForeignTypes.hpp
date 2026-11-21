@@ -27,13 +27,13 @@
 // Makes service classes known to QML without the services depending on QML. QML only receives
 // these objects from the AppManager; it cannot create them.
 
-namespace pictorio::app_manager
+namespace photobook::app_manager
 {
 
 struct ForeignViewer
 {
     Q_GADGET
-    QML_FOREIGN(pictorio::viewer::Viewer)
+    QML_FOREIGN(photobook::viewer::Viewer)
     QML_NAMED_ELEMENT(Viewer)
     QML_UNCREATABLE("Provided by AppManager")
 };
@@ -41,7 +41,7 @@ struct ForeignViewer
 struct ForeignViewTransform
 {
     Q_GADGET
-    QML_FOREIGN(pictorio::view_transform::ViewTransform)
+    QML_FOREIGN(photobook::view_transform::ViewTransform)
     QML_NAMED_ELEMENT(ViewTransform)
     QML_UNCREATABLE("Provided by AppManager")
 };
@@ -49,7 +49,7 @@ struct ForeignViewTransform
 struct ForeignNavigator
 {
     Q_GADGET
-    QML_FOREIGN(pictorio::navigator::Navigator)
+    QML_FOREIGN(photobook::navigator::Navigator)
     QML_NAMED_ELEMENT(Navigator)
     QML_UNCREATABLE("Provided by AppManager")
 };
@@ -57,7 +57,7 @@ struct ForeignNavigator
 struct ForeignSlideshow
 {
     Q_GADGET
-    QML_FOREIGN(pictorio::slideshow::Slideshow)
+    QML_FOREIGN(photobook::slideshow::Slideshow)
     QML_NAMED_ELEMENT(Slideshow)
     QML_UNCREATABLE("Provided by AppManager")
 };
@@ -65,7 +65,7 @@ struct ForeignSlideshow
 struct ForeignConnection
 {
     Q_GADGET
-    QML_FOREIGN(pictorio::connection::Connection)
+    QML_FOREIGN(photobook::connection::Connection)
     QML_NAMED_ELEMENT(Connection)
     QML_UNCREATABLE("Provided by AppManager")
 };
@@ -73,7 +73,7 @@ struct ForeignConnection
 struct ForeignLibrary
 {
     Q_GADGET
-    QML_FOREIGN(pictorio::library::Library)
+    QML_FOREIGN(photobook::library::Library)
     QML_NAMED_ELEMENT(Library)
     QML_UNCREATABLE("Provided by AppManager")
 };
@@ -81,7 +81,7 @@ struct ForeignLibrary
 struct ForeignLibraryView
 {
     Q_GADGET
-    QML_FOREIGN(pictorio::library_view::LibraryView)
+    QML_FOREIGN(photobook::library_view::LibraryView)
     QML_NAMED_ELEMENT(LibraryView)
     QML_UNCREATABLE("Provided by AppManager")
 };
@@ -89,7 +89,7 @@ struct ForeignLibraryView
 struct ForeignTagEditor
 {
     Q_GADGET
-    QML_FOREIGN(pictorio::tag_editor::TagEditor)
+    QML_FOREIGN(photobook::tag_editor::TagEditor)
     QML_NAMED_ELEMENT(TagEditor)
     QML_UNCREATABLE("Provided by AppManager")
 };
@@ -97,7 +97,7 @@ struct ForeignTagEditor
 struct ForeignBulkTagEditor
 {
     Q_GADGET
-    QML_FOREIGN(pictorio::tag_editor::BulkTagEditor)
+    QML_FOREIGN(photobook::tag_editor::BulkTagEditor)
     QML_NAMED_ELEMENT(BulkTagEditor)
     QML_UNCREATABLE("Provided by AppManager")
 };
@@ -105,7 +105,7 @@ struct ForeignBulkTagEditor
 struct ForeignUploadTagEditor
 {
     Q_GADGET
-    QML_FOREIGN(pictorio::tag_editor::UploadTagEditor)
+    QML_FOREIGN(photobook::tag_editor::UploadTagEditor)
     QML_NAMED_ELEMENT(UploadTagEditor)
     QML_UNCREATABLE("Provided by AppManager")
 };
@@ -113,7 +113,7 @@ struct ForeignUploadTagEditor
 struct ForeignImageActions
 {
     Q_GADGET
-    QML_FOREIGN(pictorio::image_actions::ImageActions)
+    QML_FOREIGN(photobook::image_actions::ImageActions)
     QML_NAMED_ELEMENT(ImageActions)
     QML_UNCREATABLE("Provided by AppManager")
 };
@@ -121,7 +121,7 @@ struct ForeignImageActions
 struct ForeignUploader
 {
     Q_GADGET
-    QML_FOREIGN(pictorio::uploader::Uploader)
+    QML_FOREIGN(photobook::uploader::Uploader)
     QML_NAMED_ELEMENT(Uploader)
     QML_UNCREATABLE("Provided by AppManager")
 };
@@ -129,7 +129,7 @@ struct ForeignUploader
 struct ForeignHiddenFilterEditor
 {
     Q_GADGET
-    QML_FOREIGN(pictorio::tag_editor::HiddenFilterEditor)
+    QML_FOREIGN(photobook::tag_editor::HiddenFilterEditor)
     QML_NAMED_ELEMENT(HiddenFilterEditor)
     QML_UNCREATABLE("Provided by AppManager")
 };
@@ -138,7 +138,7 @@ struct ForeignHiddenFilterEditor
 struct ForeignTagRowsEditor
 {
     Q_GADGET
-    QML_FOREIGN(pictorio::tag_editor::TagRowsEditor)
+    QML_FOREIGN(photobook::tag_editor::TagRowsEditor)
     QML_NAMED_ELEMENT(TagRowsEditor)
     QML_UNCREATABLE("A base of the tag editors and HiddenFilterEditor")
 };
@@ -146,9 +146,9 @@ struct ForeignTagRowsEditor
 struct ForeignTagSuggestions
 {
     Q_GADGET
-    QML_FOREIGN(pictorio::tag_editor::TagSuggestions)
+    QML_FOREIGN(photobook::tag_editor::TagSuggestions)
     QML_NAMED_ELEMENT(TagSuggestions)
     QML_UNCREATABLE("Provided by TagEditor")
 };
 
-}  // namespace pictorio::app_manager
+}  // namespace photobook::app_manager

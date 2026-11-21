@@ -14,7 +14,7 @@
 
 #include "NetworkAccess.hpp"
 
-namespace pictorio::network_access
+namespace photobook::network_access
 {
 
 namespace
@@ -109,11 +109,11 @@ void TestNetworkAccess::givesTheTokenOnlyForTheServersAddresses_data()
     QTest::newRow("another host") << server << QStringLiteral("https://example.org") + thumbnail << false;
     QTest::newRow("another port") << server << QStringLiteral("https://photos.example.org:8443") + thumbnail << false;
 
-    const QString proxied = QStringLiteral("https://example.org/pictorio/");
+    const QString proxied = QStringLiteral("https://example.org/photobook/");
     QTest::newRow("below the server's path")
-        << proxied << QStringLiteral("https://example.org/pictorio") + thumbnail << true;
+        << proxied << QStringLiteral("https://example.org/photobook") + thumbnail << true;
     QTest::newRow("beside the server's path")
-        << proxied << QStringLiteral("https://example.org/pictorio-old") + thumbnail << false;
+        << proxied << QStringLiteral("https://example.org/photobook-old") + thumbnail << false;
     QTest::newRow("outside the server's path") << proxied << QStringLiteral("https://example.org/other") << false;
 }
 
@@ -200,7 +200,7 @@ QNetworkReply* TestNetworkAccess::get(QNetworkAccessManager& networkAccess, cons
     return reply;
 }
 
-}  // namespace pictorio::network_access
+}  // namespace photobook::network_access
 
-QTEST_GUILESS_MAIN(pictorio::network_access::TestNetworkAccess)
+QTEST_GUILESS_MAIN(photobook::network_access::TestNetworkAccess)
 #include "TestNetworkAccess.moc"

@@ -9,9 +9,9 @@
 
 #include "ImageLoader.hpp"
 
-namespace pictorio::image_loader
+namespace photobook::image_loader
 {
 
 std::unique_ptr<ImageLoader> createImageLoader();
 
-}  // namespace pictorio::image_loader
+}  // namespace photobook::image_loader

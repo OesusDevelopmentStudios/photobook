@@ -13,10 +13,10 @@
 
 #include "ApiTypes.hpp"
 
-namespace pictorio::server_client
+namespace photobook::server_client
 {
 
-// The pictorio-db REST API (version 1): one function per endpoint the app uses. Each returns at once; the
+// The photobook-db REST API (version 1): one function per endpoint the app uses. Each returns at once; the
 // future finishes with the parsed answer or an ApiError. The functions only talk to the server: storing
 // the token, retrying or showing errors is up to their callers.
 class ServerClient
@@ -103,4 +103,4 @@ public:
     virtual QFuture<Result<Preferences>> setPreferences(const Preferences& preferences) = 0;
 };
 
-}  // namespace pictorio::server_client
+}  // namespace photobook::server_client

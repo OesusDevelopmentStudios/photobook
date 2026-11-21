@@ -9,7 +9,7 @@
 #include <QSize>
 #include <QSizeF>
 
-namespace pictorio::view_transform
+namespace photobook::view_transform
 {
 
 // The zoom and rotation of the view; the file is never changed. A scale the user chose is always larger than
@@ -75,4 +75,4 @@ private:
     int m_rotationAngle = 0;
 };
 
-}  // namespace pictorio::view_transform
+}  // namespace photobook::view_transform

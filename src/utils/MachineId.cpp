@@ -9,14 +9,14 @@
 #include <QFile>
 #include <QMessageAuthenticationCode>
 
-namespace pictorio::utils
+namespace photobook::utils
 {
 
 QString appSpecificMachineId(const QString& machineId)
 {
     const QByteArray key = machineId.trimmed().toLatin1();
     return QString::fromLatin1(
-        QMessageAuthenticationCode::hash("pictorio-db", key, QCryptographicHash::Sha256).toHex());
+        QMessageAuthenticationCode::hash("photobook-db", key, QCryptographicHash::Sha256).toHex());
 }
 
 QString thisComputersAppSpecificId(const QString& filePath)
@@ -31,4 +31,4 @@ QString thisComputersAppSpecificId(const QString& filePath)
     return machineId.isEmpty() ? QString() : appSpecificMachineId(machineId);
 }
 
-}  // namespace pictorio::utils
+}  // namespace photobook::utils

@@ -22,7 +22,7 @@
 #include "fakes/FakeTrash.hpp"
 #include "fakes/ImageJson.hpp"
 
-namespace pictorio::uploader
+namespace photobook::uploader
 {
 
 namespace
@@ -131,7 +131,7 @@ private:
 
 void TestUploader::initTestCase()
 {
-    KLocalizedString::setApplicationDomain("pictorio");
+    KLocalizedString::setApplicationDomain("photobook");
 }
 
 // Logged in from the last run; the upload's tag is general:beach.
@@ -140,7 +140,7 @@ void TestUploader::init()
     m_uploader.reset();
     m_tagEditor.reset();
     m_folder = std::make_unique<QTemporaryDir>();
-    m_settings = settings::createSettings(m_folder->filePath(QStringLiteral("pictoriorc")));
+    m_settings = settings::createSettings(m_folder->filePath(QStringLiteral("photobookrc")));
     m_settings->setServerUrl(QUrl(serverUrl));
     m_server = std::make_shared<FakeServer>();
     m_server->answer(
@@ -463,8 +463,8 @@ void TestUploader::keepsTheStateWhenTheTrashFails()
     QVERIFY(m_uploader->index(1).data(Uploader::MessageRole).toString().contains(QStringLiteral("No trash here")));
 }
 
-}  // namespace pictorio::uploader
+}  // namespace photobook::uploader
 
-QTEST_GUILESS_MAIN(pictorio::uploader::TestUploader)
+QTEST_GUILESS_MAIN(photobook::uploader::TestUploader)
 
 #include "TestUploader.moc"

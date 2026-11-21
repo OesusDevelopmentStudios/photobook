@@ -16,8 +16,8 @@ Kirigami.ApplicationWindow {
     required property bool openedAtStart  // an image or a folder was given on the command line
 
     title: appManager.viewer.hasImage
-        ? KI18n.i18nc("@title:window %1 is a file name", "%1 — Pictorio", appManager.viewer.fileName)
-        : KI18n.i18nc("@title:window", "Pictorio")
+        ? KI18n.i18nc("@title:window %1 is a file name", "%1 — Photobook", appManager.viewer.fileName)
+        : KI18n.i18nc("@title:window", "Photobook")
 
     width: Kirigami.Units.gridUnit * 50
     height: Kirigami.Units.gridUnit * 35

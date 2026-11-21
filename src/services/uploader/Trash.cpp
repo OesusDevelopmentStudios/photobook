@@ -5,9 +5,9 @@
 
 #include "Trash.hpp"
 
-namespace pictorio::uploader
+namespace photobook::uploader
 {
 
 Trash::~Trash() = default;
 
-}  // namespace pictorio::uploader
+}  // namespace photobook::uploader

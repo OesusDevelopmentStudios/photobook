@@ -5,7 +5,7 @@
 
 #include "impl/NamespaceRows.hpp"
 
-namespace pictorio::tag_editor
+namespace photobook::tag_editor
 {
 
 void NamespaceRows::setRows(const QList<Row>& rows)
@@ -96,4 +96,4 @@ bool NamespaceRows::hasSameNamespaces(const QList<Row>& rows) const
     return true;
 }
 
-}  // namespace pictorio::tag_editor
+}  // namespace photobook::tag_editor

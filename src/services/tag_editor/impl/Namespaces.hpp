@@ -15,7 +15,7 @@
 
 #include "Connection.hpp"
 
-namespace pictorio::tag_editor
+namespace photobook::tag_editor
 {
 
 // The server's namespaces as editing tags needs them: which hold one tag, which have a dropdown and what it
@@ -61,4 +61,4 @@ private:
     QHash<QString, QStringList> m_knownValues;
 };
 
-}  // namespace pictorio::tag_editor
+}  // namespace photobook::tag_editor

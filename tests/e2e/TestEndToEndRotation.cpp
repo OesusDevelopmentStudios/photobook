@@ -23,7 +23,7 @@
 #include "e2e/EndToEndServer.hpp"
 #include "fakes/FakeFileManager.hpp"
 
-namespace pictorio::e2e
+namespace photobook::e2e
 {
 
 namespace
@@ -78,7 +78,7 @@ private:
 
 void TestEndToEndRotation::initTestCase()
 {
-    KLocalizedString::setApplicationDomain("pictorio");
+    KLocalizedString::setApplicationDomain("photobook");
     m_server = EndToEndServer::fromEnvironment();
     if (!m_server.has_value())
     {
@@ -228,8 +228,8 @@ QImage TestEndToEndRotation::thumbnail(const server_client::Image& image)
     return QImage::fromData(reply->readAll());
 }
 
-}  // namespace pictorio::e2e
+}  // namespace photobook::e2e
 
-QTEST_GUILESS_MAIN(pictorio::e2e::TestEndToEndRotation)
+QTEST_GUILESS_MAIN(photobook::e2e::TestEndToEndRotation)
 
 #include "TestEndToEndRotation.moc"

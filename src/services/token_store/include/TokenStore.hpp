@@ -10,7 +10,7 @@
 #include <QFuture>
 #include <QString>
 
-namespace pictorio::token_store
+namespace photobook::token_store
 {
 
 struct TokenStoreError
@@ -41,4 +41,4 @@ public:
     virtual QFuture<StoreResult<void>> deleteToken(const QString& serverKey) = 0;
 };
 
-}  // namespace pictorio::token_store
+}  // namespace photobook::token_store

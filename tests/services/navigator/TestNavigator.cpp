@@ -18,9 +18,9 @@
 namespace
 {
 
-using pictorio::folder_scanner::FolderScanner;
-using pictorio::folder_scanner::Sorting;
-using pictorio::folder_scanner::SortOrder;
+using photobook::folder_scanner::FolderScanner;
+using photobook::folder_scanner::Sorting;
+using photobook::folder_scanner::SortOrder;
 
 constexpr int openGate = 1000;
 
@@ -67,7 +67,7 @@ const QString singleImage = QStringLiteral("/photos/single/only.jpg");
 
 }  // namespace
 
-namespace pictorio::navigator
+namespace photobook::navigator
 {
 
 class TestNavigator : public QObject
@@ -407,8 +407,8 @@ void TestNavigator::waitForListing()
     QVERIFY(positionSpy.wait());
 }
 
-}  // namespace pictorio::navigator
+}  // namespace photobook::navigator
 
-QTEST_GUILESS_MAIN(pictorio::navigator::TestNavigator)
+QTEST_GUILESS_MAIN(photobook::navigator::TestNavigator)
 
 #include "TestNavigator.moc"

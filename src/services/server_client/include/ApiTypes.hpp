@@ -14,7 +14,7 @@
 #include <QString>
 #include <QStringList>
 
-namespace pictorio::server_client
+namespace photobook::server_client
 {
 
 // Error codes made by the client itself; every other code comes from the server.
@@ -200,4 +200,4 @@ struct Preferences
     QStringList hiddenFilters;  // search terms hidden unless searched for, e.g. "rating:nsfw"
 };
 
-}  // namespace pictorio::server_client
+}  // namespace photobook::server_client

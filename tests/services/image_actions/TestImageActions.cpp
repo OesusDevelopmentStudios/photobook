@@ -30,7 +30,7 @@
 #include "fakes/FakeTokenStore.hpp"
 #include "fakes/ImageJson.hpp"
 
-namespace pictorio::image_actions
+namespace photobook::image_actions
 {
 
 namespace
@@ -153,7 +153,7 @@ private:
 
 void TestImageActions::initTestCase()
 {
-    KLocalizedString::setApplicationDomain("pictorio");
+    KLocalizedString::setApplicationDomain("photobook");
 }
 
 // Logged in from the last run; the clipboard empty
@@ -162,7 +162,7 @@ void TestImageActions::init()
     QGuiApplication::clipboard()->clear();
     m_actions.reset();
     m_folder = std::make_unique<QTemporaryDir>();
-    m_settings = settings::createSettings(m_folder->filePath(QStringLiteral("pictoriorc")));
+    m_settings = settings::createSettings(m_folder->filePath(QStringLiteral("photobookrc")));
     m_settings->setServerUrl(QUrl(serverUrl));
     m_server = std::make_shared<FakeServer>();
     m_server->answer("GET",
@@ -421,8 +421,8 @@ void TestImageActions::reportsARotationTheServerRefuses()
     QVERIFY(!m_actions->isBusy());
 }
 
-}  // namespace pictorio::image_actions
+}  // namespace photobook::image_actions
 
-QTEST_MAIN(pictorio::image_actions::TestImageActions)
+QTEST_MAIN(photobook::image_actions::TestImageActions)
 
 #include "TestImageActions.moc"

@@ -11,7 +11,7 @@
 #include "Navigator.hpp"
 #include "Settings.hpp"
 
-namespace pictorio::slideshow
+namespace photobook::slideshow
 {
 
 // Starts with the image on screen and starts over after the last one. The chosen order applies to folders;
@@ -77,4 +77,4 @@ private:
     bool m_paused = false;
 };
 
-}  // namespace pictorio::slideshow
+}  // namespace photobook::slideshow

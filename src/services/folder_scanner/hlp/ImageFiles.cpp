@@ -11,7 +11,7 @@
 #include <QImageReader>
 #include <QMimeDatabase>
 
-namespace pictorio::folder_scanner
+namespace photobook::folder_scanner
 {
 
 QSet<QString> readableImageMimeTypes()
@@ -50,4 +50,4 @@ void sortNaturally(QStringList& filePaths)
                       [&](const QString& left, const QString& right) { return collator.compare(left, right) < 0; });
 }
 
-}  // namespace pictorio::folder_scanner
+}  // namespace photobook::folder_scanner

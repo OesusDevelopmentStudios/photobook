@@ -36,7 +36,7 @@ ColumnLimit: 120
 # `public:` / `private:` at the same column as `class`
 AccessModifierOffset: -4
 
-# Namespace bodies are not indented; closing brace gets `}  // namespace pictorio::name`
+# Namespace bodies are not indented; closing brace gets `}  // namespace photobook::name`
 NamespaceIndentation: None
 FixNamespaceComments: true
 SpacesBeforeTrailingComments: 2

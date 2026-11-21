@@ -16,7 +16,7 @@ constexpr int quarterTurn = 90;
 
 }  // namespace
 
-namespace pictorio::view_transform
+namespace photobook::view_transform
 {
 
 ViewTransform::ViewTransform(QObject* parent)
@@ -191,4 +191,4 @@ void ViewTransform::switchToFitIfWholeImageFits()
     }
 }
 
-}  // namespace pictorio::view_transform
+}  // namespace photobook::view_transform

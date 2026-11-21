@@ -9,9 +9,9 @@
 
 #include "Navigator.hpp"
 
-namespace pictorio::navigator
+namespace photobook::navigator
 {
 
 std::unique_ptr<Navigator> createNavigator(std::unique_ptr<folder_scanner::FolderScanner> folderScanner);
 
-}  // namespace pictorio::navigator
+}  // namespace photobook::navigator

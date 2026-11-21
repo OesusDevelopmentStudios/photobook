@@ -14,7 +14,7 @@
 namespace
 {
 
-using namespace pictorio::server_client;
+using namespace photobook::server_client;
 
 Role roleFrom(JsonReader& reader)
 {
@@ -159,7 +159,7 @@ template <typename T> Result<QList<T>> itemsFrom(const QJsonValue& json, T (*rea
 
 }  // namespace
 
-namespace pictorio::server_client
+namespace photobook::server_client
 {
 
 Result<ServerInfo> serverInfoFrom(const QJsonValue& json)
@@ -268,4 +268,4 @@ Result<Preferences> preferencesFrom(const QJsonValue& json)
     return checked(reader, preferences);
 }
 
-}  // namespace pictorio::server_client
+}  // namespace photobook::server_client

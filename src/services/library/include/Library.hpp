@@ -14,7 +14,7 @@
 #include "ApiTypes.hpp"
 #include "Connection.hpp"
 
-namespace pictorio::library
+namespace photobook::library
 {
 
 // The first page loads with the search; the grid asks for more through canFetchMore() and fetchMore() as it
@@ -136,4 +136,4 @@ private:
     bool m_selecting = false;
 };
 
-}  // namespace pictorio::library
+}  // namespace photobook::library

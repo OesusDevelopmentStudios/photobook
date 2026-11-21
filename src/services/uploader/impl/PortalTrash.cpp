@@ -17,7 +17,7 @@
 #include <QDBusUnixFileDescriptor>
 #include <QFile>
 
-namespace pictorio::uploader
+namespace photobook::uploader
 {
 
 QFuture<std::expected<void, QString>> PortalTrash::moveToTrash(const QString& filePath)
@@ -60,4 +60,4 @@ QFuture<std::expected<void, QString>> PortalTrash::moveToTrash(const QString& fi
         });
 }
 
-}  // namespace pictorio::uploader
+}  // namespace photobook::uploader

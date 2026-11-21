@@ -13,9 +13,9 @@
 namespace
 {
 
-using pictorio::tag_editor::generalNamespace;
-using pictorio::tag_editor::SearchTerm;
-using pictorio::tag_editor::TagName;
+using photobook::tag_editor::generalNamespace;
+using photobook::tag_editor::SearchTerm;
+using photobook::tag_editor::TagName;
 using Node = SearchTerm::Node;
 
 // Search fields that use the namespace syntax and match the date a photo was taken
@@ -294,7 +294,7 @@ void collectTagMatches(const Node& node, QList<const Node*>& matches)
 
 }  // namespace
 
-namespace pictorio::tag_editor
+namespace photobook::tag_editor
 {
 
 SearchTerm::SearchTerm(Node root)
@@ -340,4 +340,4 @@ QList<TagName> SearchTerm::mentionedAmong(const QList<TagName>& tags) const
     return mentioned;
 }
 
-}  // namespace pictorio::tag_editor
+}  // namespace photobook::tag_editor

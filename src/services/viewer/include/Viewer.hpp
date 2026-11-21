@@ -18,7 +18,7 @@
 
 #include "ImageLoader.hpp"
 
-namespace pictorio::viewer
+namespace photobook::viewer
 {
 
 class Viewer : public QObject
@@ -113,4 +113,4 @@ private:
     QString m_errorMessage;
 };
 
-}  // namespace pictorio::viewer
+}  // namespace photobook::viewer

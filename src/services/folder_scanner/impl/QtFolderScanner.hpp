@@ -10,7 +10,7 @@
 #include "FolderScanner.hpp"
 #include "ImageLoader.hpp"
 
-namespace pictorio::folder_scanner
+namespace photobook::folder_scanner
 {
 
 class QtFolderScanner : public FolderScanner
@@ -26,4 +26,4 @@ private:
     std::unique_ptr<const image_loader::ImageLoader> m_imageLoader;
 };
 
-}  // namespace pictorio::folder_scanner
+}  // namespace photobook::folder_scanner

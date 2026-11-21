@@ -68,7 +68,7 @@ std::optional<QString> problemWith(const QString& name)
 
 }  // namespace
 
-namespace pictorio::tag_editor
+namespace photobook::tag_editor
 {
 
 QString TagName::text() const
@@ -147,4 +147,4 @@ QList<TagName> tagsAfterChange(const QList<TagName>& current,
     return tags;
 }
 
-}  // namespace pictorio::tag_editor
+}  // namespace photobook::tag_editor

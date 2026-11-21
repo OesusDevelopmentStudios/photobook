@@ -12,7 +12,7 @@
 #include "TagEditor.hpp"
 #include "UploadTagEditor.hpp"
 
-namespace pictorio::tag_editor
+namespace photobook::tag_editor
 {
 
 // The connection is not owned and must outlive the editor.
@@ -27,4 +27,4 @@ std::unique_ptr<UploadTagEditor> createUploadTagEditor(connection::Connection* c
 // The connection is not owned and must outlive the editor.
 std::unique_ptr<HiddenFilterEditor> createHiddenFilterEditor(connection::Connection* connection);
 
-}  // namespace pictorio::tag_editor
+}  // namespace photobook::tag_editor

@@ -65,7 +65,7 @@ QByteArray gifWithFrames(int frameCount)
 
 }  // namespace
 
-namespace pictorio::image_loader
+namespace photobook::image_loader
 {
 
 // All test images are generated here, in a temporary folder, so the tests need no image files in git.
@@ -108,7 +108,7 @@ private:
 
 void TestImageLoader::initTestCase()
 {
-    KLocalizedString::setApplicationDomain("pictorio");
+    KLocalizedString::setApplicationDomain("photobook");
 
     QVERIFY(m_temporaryFolder.isValid());
     m_imageLoader = createImageLoader();
@@ -396,8 +396,8 @@ QString TestImageLoader::writeFile(const QString& fileName, const QByteArray& co
     return filePath;
 }
 
-}  // namespace pictorio::image_loader
+}  // namespace photobook::image_loader
 
-QTEST_GUILESS_MAIN(pictorio::image_loader::TestImageLoader)
+QTEST_GUILESS_MAIN(photobook::image_loader::TestImageLoader)
 
 #include "TestImageLoader.moc"
