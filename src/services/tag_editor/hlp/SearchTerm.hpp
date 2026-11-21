@@ -19,7 +19,7 @@
 namespace pictorio::tag_editor
 {
 
-// One term of the search language (data-model.md §3), e.g. a restricted term such as "rating:nsfw|questionable".
+// One term of the search language, e.g. a restricted term such as "rating:nsfw|questionable".
 // Matches an image whose tags are known, without asking the server: the same rules as the server's own check,
 // so a restricted tag is refused before anything is sent.
 class SearchTerm

@@ -39,8 +39,8 @@ QList<TagName> tagsFrom(const QStringList& texts)
 
 }  // namespace
 
-// The rules a tag change is checked against before it is sent: the same as the server's (data-model.md §1.3
-// and §3).
+// The rules a tag change is checked against before it is sent: the same as the server's tag names and search
+// terms.
 class TestTagRules : public QObject
 {
     Q_OBJECT
@@ -199,18 +199,18 @@ void TestTagRules::matchesTerms_data()
         QTest::newRow(name) << QString::fromUtf8(term) << tags << matches;
     };
 
-    // The restrictions table, data-model.md §3.4
+    // Restricted terms
     row("a tag", "rating:nsfw", {QStringLiteral("rating:nsfw")}, true);
     row("another tag", "rating:nsfw", {QStringLiteral("rating:sfw")}, false);
     row("either tag", "rating:nsfw|questionable", {QStringLiteral("rating:questionable")}, true);
-    row("any of a namespace", "character:*", {QStringLiteral("character:jane_doe")}, true);
+    row("any of a namespace", "character:*", {QStringLiteral("character:sample_hero")}, true);
     row("namespace is not a name", "character:*", {QStringLiteral("general:character")}, false);
-    row("name starting with", "author:pol*", {QStringLiteral("author:polina")}, true);
-    row("name not starting with", "author:pol*", {QStringLiteral("author:sample_artist")}, false);
+    row("name starting with", "author:sample*", {QStringLiteral("author:sample_artist")}, true);
+    row("name not starting with", "author:sample*", {QStringLiteral("author:other_artist")}, false);
     row("one of both", "general:nude,photo", {QStringLiteral("general:nude")}, false);
     row("both", "general:nude,photo", {QStringLiteral("general:nude"), QStringLiteral("general:photo")}, true);
 
-    // The examples, data-model.md §3.2
+    // Groups, negation and the default namespace
     row("general by default", "tag1,tag2", {QStringLiteral("general:tag1"), QStringLiteral("general:tag2")}, true);
     row("a group",
         "general:(tag_1,tag_2)|(tag_3,tag_4)",
