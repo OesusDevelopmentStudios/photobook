@@ -1,5 +1,12 @@
 # Pictorio
 
+[![CI](https://github.com/OesusDevelopmentStudios/pictorio/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/OesusDevelopmentStudios/pictorio/actions/workflows/ci.yml)
+[![Latest release](https://img.shields.io/github/v/tag/OesusDevelopmentStudios/pictorio?sort=semver&label=release)](https://github.com/OesusDevelopmentStudios/pictorio/releases)
+[![License: GPL-3.0](https://img.shields.io/github/license/OesusDevelopmentStudios/pictorio)](LICENSE)
+[![C++23](https://img.shields.io/badge/C%2B%2B-23-blue?logo=cplusplus)](CMakeLists.txt)
+[![Qt](https://img.shields.io/badge/Qt-6.8-41CD52?logo=qt)](CMakeLists.txt)
+[![KDE Frameworks](https://img.shields.io/badge/KDE_Frameworks-6.21-1D99F3?logo=kde)](CMakeLists.txt)
+
 Manage your images in an organised way.
 
 Pictorio is an image viewer and photo library for KDE Plasma.
@@ -8,10 +15,8 @@ Pictorio is an image viewer and photo library for KDE Plasma.
   the folder, run a slideshow.
 - **Connected to a [pictorio-db](https://github.com/OesusDevelopmentStudios/pictorio-db) server**
   it becomes a tag-based photo library: search by tags, browse a thumbnail grid, edit tags, upload
-  photos.
-
-> **Status:** early development. The application opens a single image (from Dolphin or the command
-> line) and can zoom and rotate it.
+  photos. To set up a server, see
+  [pictorio-db's install guide](https://github.com/OesusDevelopmentStudios/pictorio-db#install).
 
 ## Building
 
@@ -21,10 +26,11 @@ Pictorio is an image viewer and photo library for KDE Plasma.
 |---|---|
 | CMake | 3.25 |
 | C++23 compiler (GCC or Clang) | |
-| Qt (Core, Concurrent, Gui, Network, Qml, Quick, QuickControls2, Widgets, Test) | 6.8 |
-| KDE Frameworks (Extra CMake Modules, Kirigami, KI18n, KCoreAddons, KConfig) | 6.21 |
+| Qt (Core, Concurrent, DBus, Gui, Network, Qml, Quick, QuickControls2, Widgets; Test and QuickTest for the tests) | 6.8 |
+| KDE Frameworks (Extra CMake Modules, Kirigami, KI18n, KCoreAddons, KConfig, KIO) | 6.21 |
 | exiv2 | 0.28 |
-| QtKeychain (Qt 6 build), for the server login | 0.17 |
+| QtKeychain (Qt 6 build) | 0.17 |
+| Kirigami Addons, needed at run time | 1.7 |
 | KDE desktop style for Qt Quick (qqc2-desktop-style), needed at run time | |
 | Qt and KDE image format plugins (qtimageformats, kimageformats), needed at run time for WebP, TIFF, AVIF, HEIF and JPEG XL | |
 
@@ -33,9 +39,9 @@ On Fedora:
 ```sh
 sudo dnf install cmake gcc-c++ extra-cmake-modules \
     qt6-qtbase-devel qt6-qtdeclarative-devel \
-    kf6-kirigami-devel kf6-ki18n-devel kf6-kcoreaddons-devel kf6-kconfig-devel exiv2-devel \
-    qtkeychain-qt6-devel \
-    kf6-qqc2-desktop-style qt6-qtimageformats kf6-kimageformats
+    kf6-kirigami-devel kf6-ki18n-devel kf6-kcoreaddons-devel kf6-kconfig-devel kf6-kio-devel \
+    exiv2-devel qtkeychain-qt6-devel \
+    kf6-kirigami-addons kf6-qqc2-desktop-style qt6-qtimageformats kf6-kimageformats
 ```
 
 HEIF images also need an HEVC decoder for libheif, which Fedora does not ship. The Flatpak build
@@ -46,29 +52,17 @@ opens them.
 ```sh
 cmake -B build
 cmake --build build
-./build/bin/pictorio *path_to_image_file*
+./build/bin/pictorio              # or with an image: ./build/bin/pictorio beach.jpg
 ```
 
 Build options:
 
 | Option | Default | Meaning |
 |---|---|---|
-| `BUILD_TESTING` | `ON` | Build the unit tests |
+| `BUILD_TESTING` | `ON` | Build the tests |
 | `PICTORIO_WARNINGS_AS_ERRORS` | `ON` | Treat compiler warnings as errors. Turn off for packaging |
 
 Example: `cmake -B build -DBUILD_TESTING=OFF -DPICTORIO_WARNINGS_AS_ERRORS=OFF`
-
-### Tests
-
-```sh
-ctest --test-dir build --output-on-failure
-```
-
-Check the QML files with Qt's linter:
-
-```sh
-cmake --build build --target pictorio_ui_qmllint
-```
 
 ### Flatpak
 
@@ -85,7 +79,7 @@ This builds the current source tree, including uncommitted changes.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the code layout and coding style.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the code layout, the coding style and how to run the tests.
 
 ## License
 
