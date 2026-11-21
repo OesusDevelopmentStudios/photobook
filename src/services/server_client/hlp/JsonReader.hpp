@@ -25,7 +25,7 @@ public:
 
     QString string(const QString& key);
     int integer(const QString& key);
-    qint64 integer64(const QString& key);  // e.g. a file size
+    qint64 integer64(const QString& key);
     bool boolean(const QString& key);
     QDateTime dateTime(const QString& key);
     std::optional<QDateTime> optionalDateTime(const QString& key);  // null: nothing

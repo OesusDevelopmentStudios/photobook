@@ -28,7 +28,7 @@ struct MultipartForm
 
 struct HttpRequest
 {
-    QByteArray method;  // "GET", "POST"…
+    QByteArray method;
     QUrl url;
     QList<QPair<QByteArray, QByteArray>> headers;
     QByteArray body;

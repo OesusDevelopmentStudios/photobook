@@ -24,7 +24,7 @@ inline const QString fileUnreadableCode = QStringLiteral("file_unreadable");    
 
 struct FieldError
 {
-    QString field;  // e.g. "body.password"
+    QString field;  // e.g. "query.limit"
     QString message;
 };
 
