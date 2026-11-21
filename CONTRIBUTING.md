@@ -24,7 +24,10 @@ src/
 ├── services/           one folder per service, each with a single responsibility
 ├── utils/              small helpers shared by several services
 └── qml/                user interface (presentation only)
+packaging/              the desktop file, AppStream metainfo, icon and Flatpak manifest
 tests/                  mirrors src/: tests/utils/TestAppIdentity.cpp tests src/utils/AppIdentity.cpp
+├── fakes/              stand-ins for the server, keyring, trash and file manager, shared by the tests
+├── packaging/          checks of the files in packaging/
 ├── qml/                QML tests, tst_<component>.qml, with C++ fakes such as FakeTagRowsEditor
 └── e2e/                end-to-end tests against a real pictorio-db server, TestEndToEnd<flow>.cpp
 ```
