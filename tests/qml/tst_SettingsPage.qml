@@ -6,10 +6,7 @@ import QtTest
 import io.github.oesusdevelopmentstudios.pictorio
 import pictorio.tests
 
-// The settings page's hidden filters: the saved ones as chips, removing and adding filters, Save and Cancel; with
-// unsaved changes, going back and logging out are left to the window, which asks first.
 // The server has "rating:nsfw" and "category:refs" saved and keeps what is saved; the page loads them on opening.
-// The TestCase is invisible; what it tests is created in the visible root, where it can be clicked.
 Item {
     id: root
 

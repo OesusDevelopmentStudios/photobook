@@ -7,8 +7,6 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.ki18n
 
-// Shown when the app starts without an image: open an image or a folder, or connect to a server, one
-// elsewhere or one to set up on this computer.
 Kirigami.Page {
     id: page
 

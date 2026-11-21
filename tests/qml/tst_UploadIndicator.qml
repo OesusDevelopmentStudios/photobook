@@ -6,9 +6,7 @@ import QtTest
 import org.kde.kirigami as Kirigami
 import io.github.oesusdevelopmentstudios.pictorio
 
-// A running upload in a page's toolbar: added to a page's own actions as Main.qml does, shown only while the
-// action is visible, a ring that follows the progress, and a click that triggers the action. Each test makes a
-// window of its own, as only an application window gives its pages a toolbar.
+// Each test makes a window of its own, as only an application window gives its pages a toolbar.
 Item {
     id: root
 

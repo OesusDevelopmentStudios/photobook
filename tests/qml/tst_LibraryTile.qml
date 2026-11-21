@@ -5,9 +5,6 @@ import QtQuick
 import QtTest
 import io.github.oesusdevelopmentstudios.pictorio
 
-// A tile of the library grid: a click opens the image, or selects it while selecting; with Ctrl and Shift it
-// selects, as in Dolphin; a right-click asks for its menu.
-// The TestCase is invisible; what it tests is created in the visible root, where it can be clicked.
 Item {
     id: root
 

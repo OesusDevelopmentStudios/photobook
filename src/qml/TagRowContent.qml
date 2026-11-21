@@ -8,8 +8,7 @@ import QtQuick
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 
-// One namespace's row of an edit view, without its name: the dropdown of category or rating, or the tags with
-// an add field. The same for one image and for many.
+// Without the namespace's name. The same for one image and for many.
 ColumnLayout {
     id: content
 

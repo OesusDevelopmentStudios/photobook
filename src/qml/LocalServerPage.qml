@@ -7,9 +7,8 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.ki18n
 
-// How to run the pictorio-db server on this computer. The app never installs or starts anything itself, so
-// the Flatpak keeps its sandbox: it shows the install command to copy into a terminal and links to the guide
-// for doing it by hand. Then the web admin for the accounts, and connecting.
+// The app never installs or starts anything itself, so the Flatpak keeps its sandbox: it shows the install
+// command to copy into a terminal, and links to the guide for doing it by hand.
 Kirigami.ScrollablePage {
     id: page
 

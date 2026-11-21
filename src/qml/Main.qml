@@ -19,7 +19,6 @@ Kirigami.ApplicationWindow {
         ? KI18n.i18nc("@title:window %1 is a file name", "%1 — Pictorio", appManager.viewer.fileName)
         : KI18n.i18nc("@title:window", "Pictorio")
 
-    // Kirigami grid units scale with the system font size.
     width: Kirigami.Units.gridUnit * 50
     height: Kirigami.Units.gridUnit * 35
 

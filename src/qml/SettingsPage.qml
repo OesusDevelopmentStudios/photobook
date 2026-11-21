@@ -7,7 +7,6 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.ki18n
 
-// The app's configuration, one section per topic.
 Kirigami.ScrollablePage {
     id: page
 

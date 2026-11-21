@@ -6,8 +6,6 @@ import QtTest
 import io.github.oesusdevelopmentstudios.pictorio
 import pictorio.tests
 
-// A tag while editing: what its ✕ and a click ask the editor to do, and what it shows.
-// The TestCase is invisible; what it tests is created in the visible root, where it can be clicked.
 Item {
     id: root
 

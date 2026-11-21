@@ -6,9 +6,6 @@ import QtQuick.Controls as Controls
 import QtTest
 import io.github.oesusdevelopmentstudios.pictorio
 
-// Setting up a server on this computer: the install command goes to the clipboard, and Connect asks for the
-// connect page with the script's default port, or the one typed. The TestCase is invisible; what it tests is
-// created in the visible root, where it can be clicked.
 Item {
     id: root
 

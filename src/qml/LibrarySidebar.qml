@@ -7,8 +7,8 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.ki18n
 
-// The search and the choices of how its results are shown, at the left of the library page. "Edit Tags" at the
-// bottom starts selecting images: then the panel for their tags takes the place of those choices, until "Done".
+// "Edit Tags" at the bottom starts selecting images: the panel for their tags then takes the place of the
+// choices of order and size, until "Done".
 Rectangle {
     id: sidebar
 

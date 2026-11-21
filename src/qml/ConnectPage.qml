@@ -7,8 +7,7 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.ki18n
 
-// Finding a pictorio-db server and logging in. What the address means, and what an error says, is decided
-// by the Connection; this page only shows it.
+// What the address means, and what an error says, is decided by the Connection; this page only shows it.
 Kirigami.ScrollablePage {
     id: page
 

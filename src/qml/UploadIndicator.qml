@@ -6,8 +6,8 @@ import QtQuick.Controls as Controls
 import QtQuick.Shapes
 import org.kde.kirigami as Kirigami
 
-// A running upload in the toolbar: the upload icon in a ring that fills as the files are done. Its action gives
-// the icon, the text for the tooltip, and what a click does.
+// The upload icon in a ring that fills as the files are done. Its action gives the icon, the tooltip and what a
+// click does.
 Controls.ToolButton {
     id: indicator
 

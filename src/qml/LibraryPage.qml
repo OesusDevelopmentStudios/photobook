@@ -11,8 +11,6 @@ import org.kde.kirigami as Kirigami
 import org.kde.kirigamiaddons.components as Components
 import org.kde.ki18n
 
-// The images on the server: a sidebar with the search, and a grid of square thumbnails, newest first. More
-// images load as the grid nears its end.
 Kirigami.Page {
     id: page
 
@@ -29,7 +27,7 @@ Kirigami.Page {
     signal uploadRequested()
     signal imageOpenRequested(int row)
     signal imageCopyRequested(int row)
-    signal imageFolderRequested(int row)  // the image's, in the file manager
+    signal imageFolderRequested(int row)
     signal stopSelectingRequested()       // Done or Esc; the window asks first about tag changes not applied
 
     readonly property int connectionState: connection.state
@@ -260,7 +258,7 @@ Kirigami.Page {
                 cellWidth: width / columns
                 cellHeight: cellWidth
                 cacheBuffer: cellHeight * 2  // rows above and below the window are made in advance
-                reuseItems: true  // tiles scrolled away are reused, not made anew
+                reuseItems: true
 
                 Controls.ScrollBar.vertical: Controls.ScrollBar {
                     id: scrollBar

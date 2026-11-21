@@ -10,10 +10,9 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.ki18n
 
-// A namespace's add field, with the server's suggestions for that namespace above it. Enter adds the highlighted
-// suggestion, or what was typed; up and down move through the suggestions. What is typed counts as a change
-// until it is added. Without a namespace (the hidden filters) suggestions come from every namespace and are
-// added as whole tags, e.g. "rating:nsfw".
+// Enter adds the highlighted suggestion, or what was typed. What is typed counts as a change until it is added.
+// Without a namespace (the hidden filters) suggestions come from every namespace and are added as whole tags,
+// e.g. "rating:nsfw".
 Controls.TextField {
     id: field
 

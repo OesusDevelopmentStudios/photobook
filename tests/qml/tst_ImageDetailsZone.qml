@@ -6,9 +6,6 @@ import QtTest
 import io.github.oesusdevelopmentstudios.pictorio
 import pictorio.tests
 
-// The viewer's bottom edge: the pointer near it brings in the details footer, which stays while the pointer is
-// on it.
-// The TestCase is invisible; what it tests is created in the visible root, where it can be hovered.
 Item {
     id: root
 

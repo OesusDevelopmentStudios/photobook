@@ -11,7 +11,6 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.ki18n
 
-// Sending images to the server's library: the files to upload, the tags they all get, and how each of them went.
 Kirigami.Page {
     id: page
 
@@ -189,7 +188,6 @@ Kirigami.Page {
                                     color: Kirigami.Theme.disabledTextColor
                                 }
 
-                                // Why it failed, or what else happened
                                 Controls.Label {
                                     Layout.fillWidth: true
                                     visible: text.length > 0

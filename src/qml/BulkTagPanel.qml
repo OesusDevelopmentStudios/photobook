@@ -10,9 +10,7 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.ki18n
 
-// The tags of the images selected in the grid, changed for all of them at once: the same rows as the viewer's
-// edit view, each namespace's name above its row for the narrow sidebar. The changes go to the server with
-// "Apply"; "Clear" drops them.
+// The same rows as the viewer's edit view, with each namespace's name above its row for the narrow sidebar
 ColumnLayout {
     id: panel
 

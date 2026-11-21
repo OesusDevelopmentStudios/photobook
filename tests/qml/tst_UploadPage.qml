@@ -6,9 +6,7 @@ import QtTest
 import io.github.oesusdevelopmentstudios.pictorio
 import pictorio.tests
 
-// The upload page: the chosen files, taken off the list again, and folders with or without their subfolders;
-// starting, the trash option and how the files went. The connection is not logged in, so every file fails.
-// The TestCase is invisible; what it tests is created in the visible root, where it can be clicked.
+// The connection is not logged in, so every file fails.
 Item {
     id: root
 

@@ -10,8 +10,7 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.ki18n
 
-// The user's hidden filters as chips, with an add field, as the tag rows have them. Changes are sent together
-// with Save; Cancel drops them.
+// Changes are sent together with Save; Cancel drops them.
 ColumnLayout {
     id: settings
 

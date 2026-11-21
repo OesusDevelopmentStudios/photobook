@@ -10,8 +10,8 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.ki18n
 
-// The name and details of the image on screen, over the bottom of the image. The page decides when it shows;
-// it slides in and out. Expanded, it shows all details, the tags of a library image included.
+// Over the bottom of the image; the page decides when it shows. Expanded, it shows all details, a library
+// image's tags included.
 Rectangle {
     id: footer
 

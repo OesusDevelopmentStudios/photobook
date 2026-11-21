@@ -10,10 +10,7 @@ import org.kde.kirigami as Kirigami
 import org.kde.kirigamiaddons.components as Components
 import org.kde.ki18n
 
-// Shows the current image with zoom and rotation, or a message when there is none.
-// Previous / next step through the image's folder, or the library's search results for an image from the
-// library. During a slideshow the page presents the images:
-// black background and a control bar that appears when the mouse moves.
+// During a slideshow: a black background, and a control bar that appears when the mouse moves
 Kirigami.Page {
     id: page
 
@@ -28,11 +25,11 @@ Kirigami.Page {
 
     signal serverPageRequested()
     signal libraryRequested()
-    signal uploadImageRequested()   // the image on screen, to the upload page's list
-    signal uploadFolderRequested()  // the images of its folder, without subfolders
+    signal uploadImageRequested()
+    signal uploadFolderRequested()  // without subfolders
     signal copyImageRequested()
-    signal openFolderRequested()  // the image's, in the file manager
-    signal saveRotationRequested()  // the view's rotation, into the file
+    signal openFolderRequested()
+    signal saveRotationRequested()
     signal leaveRequested()  // back, while there are unsaved tag changes; the window asks first
 
     onBackRequested: event => {
@@ -220,7 +217,7 @@ Kirigami.Page {
             visible: page.viewer.hasImage && (!page.viewer.fromLibrary || page.connection.localLibraryDir.length > 0)
             onTriggered: page.openFolderRequested()
         },
-        // A local image to the server's library. Not while an upload runs: its list is fixed then.
+        // Not while an upload runs: its list is fixed then.
         Kirigami.Action {
             id: importAction
 
@@ -255,7 +252,7 @@ Kirigami.Page {
             icon.name: loggedIn ? "configure" : "network-server"
             text: loggedIn ? KI18n.i18nc("@action:inmenu", "Settings…")
                            : KI18n.i18nc("@action:inmenu", "Connect to Server…")
-            displayHint: Kirigami.DisplayHint.AlwaysHide  // in the menu, not the toolbar
+            displayHint: Kirigami.DisplayHint.AlwaysHide
             onTriggered: page.serverPageRequested()
         }
     ]
@@ -494,7 +491,7 @@ Kirigami.Page {
         Image {
             source: page.viewer.imageSource
             cache: false  // a file can change under the same address, e.g. a rotation saved into it
-            autoTransform: true  // apply the EXIF orientation
+            autoTransform: true
             asynchronous: true
             smooth: true
             mipmap: true
