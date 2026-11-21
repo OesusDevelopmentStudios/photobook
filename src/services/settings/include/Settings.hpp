@@ -13,8 +13,8 @@
 namespace pictorio::settings
 {
 
-// Settings that are kept between runs of the application. Getters return nothing for values that were
-// never stored, so each user of a setting decides its default. Changes are saved at once.
+// Getters return nothing for values never stored, so each user of a setting decides its default. Changes are
+// saved at once.
 class Settings
 {
 public:

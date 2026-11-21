@@ -59,7 +59,7 @@ int main(int argc, char* argv[])
         const QString& path = commandLineOptions.imagePaths.first();
         if (QFileInfo(path).isDir())
         {
-            appManager.navigator()->openFolder(path);  // e.g. pictorio ~/Pictures/holiday
+            appManager.navigator()->openFolder(path);
         }
         else
         {

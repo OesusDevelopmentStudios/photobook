@@ -13,7 +13,6 @@
 namespace pictorio::settings
 {
 
-// Stores the settings with KConfig, the usual KDE config file format.
 class KConfigSettings : public Settings
 {
 public:

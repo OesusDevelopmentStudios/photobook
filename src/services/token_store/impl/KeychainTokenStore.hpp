@@ -10,7 +10,6 @@
 namespace pictorio::token_store
 {
 
-// The tokens in KWallet or the Secret Service, through QtKeychain.
 class KeychainTokenStore : public TokenStore
 {
 public:

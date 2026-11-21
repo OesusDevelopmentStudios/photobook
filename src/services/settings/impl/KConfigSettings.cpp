@@ -8,7 +8,7 @@
 namespace
 {
 
-// Group and key names as they appear in the config file
+// As in the config file: a renamed key would lose the user's value.
 const QString slideshowGroupName = QStringLiteral("Slideshow");
 constexpr const char* intervalKey = "IntervalSeconds";
 constexpr const char* orderKey = "Order";

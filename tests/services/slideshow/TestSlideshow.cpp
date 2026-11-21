@@ -27,7 +27,6 @@ const QStringList folderImages{
     QStringLiteral("/photos/c.jpg"),
 };
 
-// Always lists the same folder and remembers the order it was asked for. Called from a background thread.
 class FakeFolderScanner : public FolderScanner
 {
 public:
@@ -37,10 +36,9 @@ public:
         return folderImages;
     }
 
-    mutable std::atomic<SortOrder> lastSortOrder = SortOrder::Name;
+    mutable std::atomic<SortOrder> lastSortOrder = SortOrder::Name;  // written on the scanner's thread
 };
 
-// Keeps the settings in memory.
 class FakeSettings : public Settings
 {
 public:

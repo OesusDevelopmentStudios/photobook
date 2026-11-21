@@ -21,8 +21,6 @@
 namespace pictorio::viewer
 {
 
-// What the viewer page shows: the current image, from a file or from the server, with its details, or why it
-// could not be opened.
 class Viewer : public QObject
 {
     Q_OBJECT
@@ -34,7 +32,6 @@ class Viewer : public QObject
     Q_PROPERTY(bool imageAnimated READ imageAnimated NOTIFY currentImageChanged)
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY currentImageChanged)
 
-    // The details of the image on screen
     Q_PROPERTY(bool fromLibrary READ isFromLibrary NOTIFY detailsChanged)
     Q_PROPERTY(QString mimeType READ mimeType NOTIFY detailsChanged)
     Q_PROPERTY(qint64 fileSize READ fileSize NOTIFY detailsChanged)
@@ -45,7 +42,6 @@ class Viewer : public QObject
     Q_PROPERTY(QVariantList tagGroups READ tagGroups NOTIFY detailsChanged)
 
 public:
-    // Where the date an image was taken comes from
     enum class TakenAtSource
     {
         Unknown,     // a local file without a date in it
@@ -55,7 +51,6 @@ public:
     };
     Q_ENUM(TakenAtSource)
 
-    // What is known about an image, for the details shown with it. Library images bring more than local files.
     struct ImageDetails
     {
         QString fileName;
@@ -73,14 +68,12 @@ public:
     ~Viewer() override;
 
     Q_INVOKABLE void openImage(const QString& filePath);
-    // An image in the server's library, loaded from fileUrl by the page. The MIME type tells whether it may be
-    // animated.
+    // Loaded from fileUrl by the page; the MIME type tells whether it may be animated.
     void openServerImage(const QUrl& fileUrl, const ImageDetails& details);
-    // The local file on screen read again, e.g. after a rotation was saved into it: its size and details anew,
-    // and imageFileChanged() for the page, which must load the picture again instead of taking it from its cache.
+    // After the file changed, e.g. a saved rotation: imageFileChanged() tells the page to load it again, not from
+    // its cache.
     void reloadImage();
-    // New details of the library image on screen, e.g. after its tags changed. The image itself stays, so
-    // the view keeps its zoom.
+    // The image itself stays, so the view keeps its zoom.
     void updateDetails(const ImageDetails& details);
 
     bool hasImage() const;

@@ -12,11 +12,9 @@
 namespace pictorio::view_transform
 {
 
-// How the current image is shown: zoom and rotation of the view (the file is never changed).
-//
-// The zoom either fits the image into the viewport or is a scale chosen by the user. A chosen scale is
-// always larger than the fit scale; zooming out further, or enlarging the window, switches back to fit.
-// Fitting never enlarges an image beyond 100 %.
+// The zoom and rotation of the view; the file is never changed. A scale the user chose is always larger than
+// the fit scale: zooming out further, or enlarging the window, switches back to fit. Fitting never enlarges an
+// image beyond 100 %.
 class ViewTransform : public QObject
 {
     Q_OBJECT
@@ -32,12 +30,12 @@ class ViewTransform : public QObject
 
 public:
     static constexpr qreal maximumScale = 16.0;
-    static constexpr qreal zoomStep = 1.25;  // scale factor of one zoom step
+    static constexpr qreal zoomStep = 1.25;
 
     explicit ViewTransform(QObject* parent = nullptr);
     ~ViewTransform() override;
 
-    // Starts showing a new image: fit to window, not rotated. An empty size means no image.
+    // Fit to window, not rotated. An empty size: no image.
     void showImage(QSize imageSize);
 
     void setViewportSize(QSizeF viewportSize);
@@ -46,15 +44,15 @@ public:
     Q_INVOKABLE void zoomIn();
     Q_INVOKABLE void zoomOut();
     Q_INVOKABLE void zoomBySteps(qreal steps);  // one step per mouse wheel notch; negative zooms out
-    Q_INVOKABLE void zoomBy(qreal factor);      // e.g. a pinch gesture
-    Q_INVOKABLE void showActualSize();          // 100 %
+    Q_INVOKABLE void zoomBy(qreal factor);
+    Q_INVOKABLE void showActualSize();
     Q_INVOKABLE void rotateClockwise();
     Q_INVOKABLE void rotateCounterclockwise();
 
     QSize imageSize() const;  // before rotation, in pixels
     QSizeF viewportSize() const;
     bool fitToWindow() const;
-    qreal scale() const;           // 1.0 = 100 %
+    qreal scale() const;
     int rotationAngle() const;     // clockwise: 0, 90, 180 or 270
     QSizeF displayedSize() const;  // the rotated, scaled image on screen
     bool canZoomIn() const;

@@ -20,7 +20,7 @@ std::optional<QString> sha256Of(const QString& filePath)
     }
 
     QCryptographicHash hash(QCryptographicHash::Sha256);
-    if (!hash.addData(&file))  // reads the file piece by piece
+    if (!hash.addData(&file))
     {
         return std::nullopt;
     }

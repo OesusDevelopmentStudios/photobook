@@ -20,7 +20,6 @@ using pictorio::image_loader::ImageInfo;
 using pictorio::image_loader::ImageLoader;
 using pictorio::image_loader::ImageLoadError;
 
-// Returns whatever the test sets in nextResult, without touching the file system.
 class FakeImageLoader : public ImageLoader
 {
 public:

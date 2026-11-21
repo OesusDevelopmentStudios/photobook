@@ -19,7 +19,6 @@ bool mayBeAnimated(const QString& mimeType)
     return mimeType == QLatin1String("image/gif") || mimeType == QLatin1String("image/webp");
 }
 
-// The details a local file gives
 Viewer::ImageDetails detailsOf(const pictorio::image_loader::ImageInfo& imageInfo)
 {
     const QFileInfo file(imageInfo.filePath);

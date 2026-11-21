@@ -14,10 +14,9 @@
 namespace pictorio::settings
 {
 
-// Settings in the application's config file (~/.config/pictoriorc).
+// In the application's config file, ~/.config/pictoriorc
 std::unique_ptr<Settings> createSettings();
 
-// Settings in the given file, e.g. a temporary one in tests.
 std::unique_ptr<Settings> createSettings(const QString& configFilePath);
 
 }  // namespace pictorio::settings

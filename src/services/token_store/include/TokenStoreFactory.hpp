@@ -12,7 +12,6 @@
 namespace pictorio::token_store
 {
 
-// The tokens in the system keyring, under the application's name.
 std::unique_ptr<TokenStore> createTokenStore();
 
 }  // namespace pictorio::token_store

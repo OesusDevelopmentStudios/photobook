@@ -12,8 +12,7 @@
 namespace pictorio::library_view
 {
 
-// How the library page is laid out, kept between runs: whether its sidebar is shown, and how large the tiles
-// of the grid are.
+// The library page's layout, kept between runs
 class LibraryView : public QObject
 {
     Q_OBJECT
@@ -29,7 +28,6 @@ public:
     static constexpr int maximumTileSize = 24;
     static constexpr int defaultTileSize = 10;
 
-    // The settings are not owned and must outlive the library view.
     explicit LibraryView(settings::Settings* settings, QObject* parent = nullptr);
 
     bool isSidebarVisible() const;  // shown until the user hides it

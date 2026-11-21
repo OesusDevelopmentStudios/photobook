@@ -74,44 +74,42 @@ public:
     // For the QML engine: images it loads from the server get the login token, and are cached on disk.
     QQmlNetworkAccessManagerFactory* networkAccessFactory() const;
 
-    // An image or folder chosen in a file dialog, which gives a URL
     Q_INVOKABLE void openImage(const QUrl& fileUrl);
     Q_INVOKABLE void openFolder(const QUrl& folderUrl);
-    // An image of the library grid, by its row; next and previous step through the library's results.
+    // Next and previous then step through the library's results.
     Q_INVOKABLE void openLibraryImage(int row);
-    // The local image on screen, or the images of its folder without subfolders, join the upload list.
+    // Into the upload list; a folder without its subfolders
     Q_INVOKABLE void uploadCurrentImage();
     Q_INVOKABLE void uploadCurrentFolder();
-    // The image on screen to the clipboard: a local file, or a library image downloaded first
     Q_INVOKABLE void copyCurrentImage();
-    // The file on screen in the file manager, selected in its folder: a local file, or a library image when the
-    // server runs on this computer
+    // A library image's only when the server runs on this computer
     Q_INVOKABLE void openCurrentImageFolder();
-    // The view's rotation of the image on screen, into its file: a local one here, a library image's by the server
+    // A local file here, a library image's by the server
     Q_INVOKABLE void saveCurrentRotation();
     // As the two above, for an image of the library grid by its row, without opening it
     Q_INVOKABLE void copyLibraryImage(int row);
     Q_INVOKABLE void openLibraryImageFolder(int row);
 
 private:
-    void showLibraryImage(int row);                        // from the server, in the viewer
+    void showLibraryImage(int row);
     void openFolderOf(const server_client::Image& image);  // only when the server runs on this computer
 
+    // Each service after those it uses: created after them, destroyed before them
     std::unique_ptr<settings::Settings> m_settings;
     std::unique_ptr<viewer::Viewer> m_viewer;
     std::unique_ptr<view_transform::ViewTransform> m_viewTransform;
     std::unique_ptr<navigator::Navigator> m_navigator;
-    std::unique_ptr<slideshow::Slideshow> m_slideshow;     // uses m_navigator and m_settings, so declared after them
-    std::unique_ptr<connection::Connection> m_connection;  // uses m_settings
-    std::unique_ptr<library::Library> m_library;           // uses m_connection
-    std::unique_ptr<library_view::LibraryView> m_libraryView;              // uses m_settings
-    std::unique_ptr<tag_editor::TagEditor> m_tagEditor;                    // uses m_connection
-    std::unique_ptr<tag_editor::BulkTagEditor> m_bulkTagEditor;            // uses m_connection
-    std::unique_ptr<tag_editor::UploadTagEditor> m_uploadTagEditor;        // uses m_connection
-    std::unique_ptr<uploader::Uploader> m_uploader;                        // uses m_connection and m_uploadTagEditor
-    std::unique_ptr<tag_editor::HiddenFilterEditor> m_hiddenFilterEditor;  // uses m_connection
-    std::unique_ptr<image_actions::ImageActions> m_imageActions;           // uses m_connection
-    std::optional<server_client::Image> m_libraryImageOnScreen;            // none while a local file is shown
+    std::unique_ptr<slideshow::Slideshow> m_slideshow;
+    std::unique_ptr<connection::Connection> m_connection;
+    std::unique_ptr<library::Library> m_library;
+    std::unique_ptr<library_view::LibraryView> m_libraryView;
+    std::unique_ptr<tag_editor::TagEditor> m_tagEditor;
+    std::unique_ptr<tag_editor::BulkTagEditor> m_bulkTagEditor;
+    std::unique_ptr<tag_editor::UploadTagEditor> m_uploadTagEditor;
+    std::unique_ptr<uploader::Uploader> m_uploader;
+    std::unique_ptr<tag_editor::HiddenFilterEditor> m_hiddenFilterEditor;
+    std::unique_ptr<image_actions::ImageActions> m_imageActions;
+    std::optional<server_client::Image> m_libraryImageOnScreen;  // none while a local file is shown
     std::shared_ptr<network_access::ServerCredentials> m_serverCredentials;
     std::unique_ptr<QQmlNetworkAccessManagerFactory> m_networkAccessFactory;
 };

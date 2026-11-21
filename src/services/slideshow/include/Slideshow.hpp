@@ -14,11 +14,8 @@
 namespace pictorio::slideshow
 {
 
-// Shows the images of the current folder one after another, in the chosen order, starting with the
-// image on screen and starting over after the last one. For library images the library's results are shown,
-// in the library's order; the chosen order applies to folders only. Moves with the navigator,
-// so moving by hand works during a slideshow too; every image change restarts the interval.
-// The interval and the last used order are kept in the settings.
+// Starts with the image on screen and starts over after the last one. The chosen order applies to folders;
+// library images keep the library's order. Moving by hand also restarts the interval.
 class Slideshow : public QObject
 {
     Q_OBJECT
@@ -35,7 +32,7 @@ public:
     {
         ByName,
         ByDate,
-        Random,  // a different order every time
+        Random,
     };
 
     Q_ENUM(Order)
@@ -44,7 +41,6 @@ public:
     static constexpr int maximumIntervalSeconds = 3600;
     static constexpr int defaultIntervalSeconds = 5;
 
-    // The navigator and the settings are not owned and must outlive the slideshow.
     Slideshow(navigator::Navigator* navigator, settings::Settings* settings, QObject* parent = nullptr);
     ~Slideshow() override;
 
@@ -57,7 +53,7 @@ public:
     bool isPaused() const;
     int intervalSeconds() const;
     void setIntervalSeconds(int intervalSeconds);  // limited to minimum..maximum
-    Order order() const;                           // of the running or the last slideshow
+    Order order() const;
 
 Q_SIGNALS:
     void stateChanged();

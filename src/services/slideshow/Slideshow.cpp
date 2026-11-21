@@ -34,7 +34,7 @@ Sorting sortingFor(Slideshow::Order order)
     return {};
 }
 
-// How each order is written in the settings
+// Stored in the settings: a renamed order would lose the user's choice.
 constexpr std::array<std::pair<Slideshow::Order, const char*>, 3> orderNames{{
     {Slideshow::Order::ByName, "name"},
     {Slideshow::Order::ByDate, "date"},
@@ -160,7 +160,7 @@ Slideshow::Order Slideshow::order() const
 void Slideshow::applyIntervalSeconds(int intervalSeconds)
 {
     const int limitedSeconds = std::clamp(intervalSeconds, minimumIntervalSeconds, maximumIntervalSeconds);
-    m_timer.setInterval(std::chrono::seconds(limitedSeconds));  // takes effect from the next image
+    m_timer.setInterval(std::chrono::seconds(limitedSeconds));
 }
 
 int Slideshow::minimumIntervalSecondsForQml() const

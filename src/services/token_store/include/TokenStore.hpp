@@ -28,14 +28,13 @@ struct TokenStoreError
 
 template <typename T> using StoreResult = std::expected<T, TokenStoreError>;
 
-// Keeps a server's login token in the system keyring (KWallet or the Secret Service), so the app stays
-// logged in after a restart. The token is never written to a plain file. Each server has its own entry.
+// In the system keyring, never in a plain file; one entry per server
 class TokenStore
 {
 public:
     virtual ~TokenStore();
 
-    // The token kept for the server; empty if there is none.
+    // Empty if none is kept
     virtual QFuture<StoreResult<QString>> readToken(const QString& serverKey) = 0;
     virtual QFuture<StoreResult<void>> writeToken(const QString& serverKey, const QString& token) = 0;
     // Nothing kept is fine too.

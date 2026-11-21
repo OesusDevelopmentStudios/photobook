@@ -20,8 +20,7 @@ namespace pictorio::network_access
 namespace
 {
 
-// An HTTP server on this computer that answers every request with the same thumbnail, and remembers
-// the requests it got.
+// Answers every request with the same thumbnail, and notes the requests
 class ThumbnailServer : public QTcpServer
 {
 public:

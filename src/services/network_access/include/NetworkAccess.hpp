@@ -16,15 +16,15 @@
 namespace pictorio::network_access
 {
 
-// The login for the server, for images that QML loads straight from it (e.g. the library's thumbnails).
-// QML loads images on other threads, so this may be used from any thread.
+// The login, for images QML loads straight from the server. QML loads images on other threads, so this may be
+// used from any thread.
 class ServerCredentials
 {
 public:
     void setLogin(const QUrl& serverUrl, const QString& token);
     void clear();
 
-    // The token for this address: only for the server's own addresses, never for any other.
+    // Empty for any address but the server's own
     QString tokenFor(const QUrl& url) const;
 
 private:

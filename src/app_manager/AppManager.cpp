@@ -44,7 +44,6 @@ Viewer::TakenAtSource takenAtSourceFor(TakenAtSource source)
     return Viewer::TakenAtSource::ImportTime;
 }
 
-// The details the viewer shows with a library image
 Viewer::ImageDetails detailsOf(const pictorio::server_client::Image& image)
 {
     Viewer::ImageDetails details;
@@ -95,7 +94,6 @@ AppManager::AppManager(QObject* parent)
         m_libraryImageOnScreen.reset();
     });
 
-    // Tags for many images at once: the selected ones, and each as the server has it after the change.
     connect(m_library.get(), &library::Library::selectionChanged, this, [this]() {
         m_bulkTagEditor->setImages(m_library->selectedImages());
     });
@@ -104,26 +102,24 @@ AppManager::AppManager(QObject* parent)
             m_library.get(),
             &library::Library::replaceImage);
 
-    // New images, and tags added to ones the server had: the grid shows them.
     connect(m_uploader.get(), &uploader::Uploader::finished, m_library.get(), &library::Library::reload);
 
     // Saved hidden filters change what the server leaves out of a search, so the search runs again.
     connect(
         m_hiddenFilterEditor.get(), &tag_editor::HiddenFilterEditor::saved, m_library.get(), &library::Library::reload);
 
-    // Saved tags: the grid and the viewer show the image as the server answered.
     connect(m_tagEditor.get(), &tag_editor::TagEditor::saved, this, [this](const server_client::Image& image) {
         m_library->replaceImage(image);
         m_libraryImageOnScreen = image;  // a tag that forms the path may have moved its file
         m_viewer->updateDetails(detailsOf(image));
     });
 
-    // A rotation saved into the file: the image is shown as the file now has it, no longer turned by the view.
+    // Now in the file, so no longer turned by the view
     connect(m_imageActions.get(),
             &image_actions::ImageActions::rotationSaved,
             m_viewer.get(),
             &viewer::Viewer::reloadImage);
-    // A library image's from its new address, which its revision changed; the grid gets its new thumbnail.
+    // The new revision is a new address for the file and its thumbnail.
     connect(m_imageActions.get(),
             &image_actions::ImageActions::libraryRotationSaved,
             this,
@@ -138,12 +134,10 @@ AppManager::AppManager(QObject* parent)
                 }
             });
 
-    // Every newly opened image starts fitted to the window and not rotated.
     connect(m_viewer.get(), &viewer::Viewer::currentImageChanged, m_viewTransform.get(), [this]() {
         m_viewTransform->showImage(m_viewer->imageDisplaySize());
     });
 
-    // Images QML loads from the server (the library's thumbnails) need the login too.
     connect(m_connection.get(), &connection::Connection::stateChanged, this, [this]() {
         m_serverCredentials->setLogin(QUrl(m_connection->serverAddress()), m_connection->token());
     });
