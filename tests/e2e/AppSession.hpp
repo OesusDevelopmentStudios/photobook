@@ -14,6 +14,7 @@
 #include <QImage>
 #include <QList>
 #include <QRandomGenerator>
+#include <QSize>
 #include <QString>
 #include <QStringList>
 #include <QTemporaryDir>
@@ -34,10 +35,11 @@
 namespace pictorio::e2e
 {
 
-// A small PNG of random pixels, so that every image is new to the server, which refuses a file it has.
-inline bool writeSampleImage(const QString& filePath)
+// A small image of random pixels, so that every image is new to the server, which refuses a file it has. Its type
+// comes from the file's suffix, e.g. PNG.
+inline bool writeSampleImage(const QString& filePath, QSize size)
 {
-    QImage image(16, 16, QImage::Format_RGB32);
+    QImage image(size, QImage::Format_RGB32);
     for (int y = 0; y < image.height(); ++y)
     {
         for (int x = 0; x < image.width(); ++x)
@@ -46,7 +48,7 @@ inline bool writeSampleImage(const QString& filePath)
         }
     }
 
-    return image.save(filePath, "PNG");
+    return image.save(filePath);
 }
 
 // The image files the server keeps for an uploaded file, by their path in its library folder, e.g.
@@ -110,10 +112,10 @@ public:
     }
 
     // A new sample image in this session's folder, e.g. "beach" for beach.png; empty if it could not be written
-    QString newSampleImage(const QString& stem)
+    QString newSampleImage(const QString& stem, const QString& suffix = QStringLiteral("png"), QSize size = {16, 16})
     {
-        const QString filePath = m_folder.filePath(stem + QStringLiteral(".png"));
-        return writeSampleImage(filePath) ? filePath : QString();
+        const QString filePath = m_folder.filePath(stem + QLatin1Char('.') + suffix);
+        return writeSampleImage(filePath, size) ? filePath : QString();
     }
 
     // As on the upload page: the tags typed into their rows, the file added, Start. How the file went.
