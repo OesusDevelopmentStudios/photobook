@@ -19,7 +19,6 @@ namespace
 
 using pictorio::image_loader::ImageLoadError;
 
-// Returns why the file cannot be read, or nothing if it can.
 std::optional<ImageLoadError> findFileAccessProblem(const QFileInfo& fileInfo)
 {
     if (!fileInfo.exists())

@@ -61,7 +61,6 @@ public:
         MessageRole,  // why it failed, or what else happened
     };
 
-    // connection and tagEditor are not owned; they must outlive the uploader.
     Uploader(connection::Connection* connection,
              tag_editor::UploadTagEditor* tagEditor,
              std::unique_ptr<Trash> trash,
@@ -100,7 +99,7 @@ Q_SIGNALS:
     void findingFilesChanged();
     void progressChanged();
     void moveOriginalsToTrashChanged();
-    void finished();  // the files are done, or the rest was cancelled: e.g. the library loads again
+    void finished();  // the files are done, or the rest was cancelled
 
 private:
     struct UploadFile

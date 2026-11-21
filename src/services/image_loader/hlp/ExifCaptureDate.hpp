@@ -11,8 +11,7 @@
 namespace pictorio::image_loader
 {
 
-// When the photo was taken, from the EXIF data (DateTimeOriginal, else DateTimeDigitized).
-// Invalid if the file has no such date or cannot be read. EXIF dates carry no time zone; they are
+// DateTimeOriginal, else DateTimeDigitized; invalid if neither can be read. EXIF dates carry no time zone:
 // read as local time. Thread-safe.
 QDateTime readExifCaptureDate(const QString& filePath);
 

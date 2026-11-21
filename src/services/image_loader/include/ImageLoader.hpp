@@ -16,30 +16,17 @@
 namespace pictorio::image_loader
 {
 
-// What the viewer needs to know about an image file before it displays it.
 struct ImageInfo
 {
-    // Absolute, cleaned-up path of the file
-    QString filePath;
-
-    // Size as the user sees it, i.e. after applying the EXIF orientation:
-    // a portrait photo stored sideways reports a portrait size here.
-    QSize displaySize;
-
-    // Rotation and/or mirroring stored in the file's EXIF data. The viewer must apply it.
-    QImageIOHandler::Transformations exifTransformation = QImageIOHandler::TransformationNone;
-
-    // Detected from the file content, not from the file name. Example: "image/jpeg"
-    QString mimeType;
-
-    // More than one frame, e.g. an animated GIF or WebP
+    QString filePath;   // absolute, cleaned up
+    QSize displaySize;  // after the EXIF orientation: a portrait photo stored sideways is portrait here
+    QImageIOHandler::Transformations exifTransformation = QImageIOHandler::TransformationNone;  // the viewer applies it
+    QString mimeType;  // from the file content, not its name
     bool animated = false;
-
-    // When the photo was taken, from the EXIF data. Invalid if the file does not say.
-    QDateTime captureDate;
+    QDateTime captureDate;  // invalid if the EXIF data does not say
 };
 
-// Why an image could not be loaded. Use describeError() for a message that can be shown to the user.
+// describeError() gives a message for the user.
 enum class ImageLoadError
 {
     FileNotFound,
@@ -49,7 +36,7 @@ enum class ImageLoadError
     InvalidImageData,   // the format is known but the file is damaged
 };
 
-// Reads the information the viewer needs from an image file. Does not decode the pixels.
+// Does not decode the pixels.
 class ImageLoader
 {
 public:
@@ -61,7 +48,6 @@ public:
     virtual QDateTime readCaptureDate(const QString& filePath) const = 0;
 };
 
-// Translated, user-facing explanation of a load error.
 QString describeError(ImageLoadError error);
 
 }  // namespace pictorio::image_loader

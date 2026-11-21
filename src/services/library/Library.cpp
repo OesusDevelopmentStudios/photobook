@@ -16,7 +16,7 @@ namespace
 
 using namespace pictorio::server_client;
 
-// The server's answer as a sentence for the user. A search the server cannot read says why.
+// A search the server cannot read says why.
 QString describeError(const ApiError& error)
 {
     if (error.code == networkErrorCode)

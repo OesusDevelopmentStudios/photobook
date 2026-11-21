@@ -19,7 +19,6 @@ QList<QUrl> serverUrlCandidates(const QString& typedAddress);
 // The device name the server lists for this login, e.g. "laptop (Pictorio 0.1.0)".
 QString deviceName();
 
-// The server's answer as a sentence for the user.
 QString describeServerError(const QString& code, const QString& title, const QString& detail);
 
 }  // namespace pictorio::connection

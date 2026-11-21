@@ -13,7 +13,6 @@
 namespace pictorio::folder_scanner
 {
 
-// Lists the local folder with QDir and accepts the image types Qt's image plugins can read.
 class QtFolderScanner : public FolderScanner
 {
 public:

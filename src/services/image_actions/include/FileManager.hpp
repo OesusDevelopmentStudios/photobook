@@ -13,13 +13,12 @@
 namespace pictorio::image_actions
 {
 
-// The user's file manager, e.g. Dolphin
 class FileManager
 {
 public:
     virtual ~FileManager() = default;
 
-    // A window of the file's folder with the file selected. The reason if none opened.
+    // The file selected in its folder. The reason if no window opened.
     virtual QFuture<std::expected<void, QString>> showFile(const QString& filePath) = 0;
 };
 

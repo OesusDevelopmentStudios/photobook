@@ -10,7 +10,6 @@
 namespace pictorio::image_loader
 {
 
-// ImageLoader based on QImageReader, so it supports every format Qt's image plugins support.
 class QtImageLoader : public ImageLoader
 {
 public:

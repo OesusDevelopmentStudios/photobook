@@ -21,7 +21,6 @@ namespace
 
 using pictorio::server_client::ApiError;
 
-// The server's refusal of a file as a sentence for the user
 QString describeError(const ApiError& error)
 {
     if (error.code == pictorio::server_client::networkErrorCode)

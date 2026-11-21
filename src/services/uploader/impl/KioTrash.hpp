@@ -10,7 +10,6 @@
 namespace pictorio::uploader
 {
 
-// The KDE trash, the one Dolphin shows.
 class KioTrash : public Trash
 {
 public:

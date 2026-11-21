@@ -17,9 +17,8 @@
 namespace pictorio::library
 {
 
-// The images of a search on the server, as a list for the library grid. The first page loads with the
-// search; the grid asks for more through canFetchMore() and fetchMore() as it scrolls. Follows the
-// connection: loads when the user logs in, empties when they log out.
+// The first page loads with the search; the grid asks for more through canFetchMore() and fetchMore() as it
+// scrolls. Loads when the user logs in, empties when they log out.
 class Library : public QAbstractListModel
 {
     Q_OBJECT
@@ -56,7 +55,6 @@ public:
 
     static constexpr int pageSize = 100;
 
-    // The connection is not owned and must outlive the library.
     explicit Library(connection::Connection* connection, QObject* parent = nullptr);
 
     // The server's search syntax, e.g. "category:photo summer -rating:nsfw"; empty: all images.

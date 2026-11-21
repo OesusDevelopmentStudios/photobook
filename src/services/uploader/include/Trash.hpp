@@ -13,7 +13,7 @@
 namespace pictorio::uploader
 {
 
-// The user's trash, from where a file can be restored. The uploader removes originals only this way.
+// Files can be restored from there: the uploader removes originals only this way.
 class Trash
 {
 public:

@@ -17,9 +17,7 @@
 namespace pictorio::image_actions
 {
 
-// What can be done with an image besides looking at it: copying it to the clipboard, so it can be pasted into
-// other apps, showing its file in the file manager, and saving a rotation into its file. Copying is announced
-// with copied(), saving with rotationSaved(); a failure of any with failed(), e.g. for a passive notification.
+// Copying is announced with copied(), saving with rotationSaved(); a failure of any with failed().
 class ImageActions : public QObject
 {
     Q_OBJECT
@@ -27,7 +25,6 @@ class ImageActions : public QObject
     Q_PROPERTY(bool busy READ isBusy NOTIFY busyChanged)  // waiting for the server: a download, or a rotation
 
 public:
-    // The connection is not owned and must outlive the actions.
     ImageActions(connection::Connection* connection,
                  std::unique_ptr<FileManager> fileManager,
                  QObject* parent = nullptr);
@@ -39,7 +36,6 @@ public:
     // The same without the URL, once the file has been downloaded from the server
     void copyLibraryImage(int imageId, const QString& mimeType);
 
-    // Its folder in the file manager, with the file selected
     void openContainingFolder(const QString& filePath);
 
     // Whether the rotation of an image of this type can be saved into its file without losing quality

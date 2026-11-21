@@ -19,16 +19,10 @@
 namespace pictorio::navigator
 {
 
-// Where the current image is among its neighbours, and moving to the next or previous image. The neighbours
-// are the images of a local folder, or the library's search results.
-//
-// Opening a file requests it at once and lists its folder in the background; until the list is ready, next
-// and previous are not available. The folder is in name order and there is no wrap-around at either end,
-// unless set otherwise (e.g. by a slideshow).
-//
-// Opening a library image steps through the library's results in the library's order; the folder order does
-// not apply. More pages load ahead as the end of the loaded results comes near. Wrapping back from the first
-// result to the last needs all results loaded.
+// The neighbours are a local folder's images, or the library's results. A folder is listed in the background:
+// until then, next and previous are not available. It is in name order, without wrap-around, unless set
+// otherwise (e.g. by a slideshow). Library images keep the library's order; pages load ahead near the end of
+// the loaded results, and wrapping from the first to the last needs all of them loaded.
 class Navigator : public QObject
 {
     Q_OBJECT
@@ -51,13 +45,12 @@ public:
     ~Navigator() override;
 
     void openImage(const QString& filePath);
-    // Lists the folder and then shows its first image in the current order.
+    // Its first image in the current order, once listed
     void openFolder(const QString& folderPath);
-    // No folder any more, e.g. for an image from the server: previous and next do nothing until an image or
-    // folder is opened again. A listing still on its way is ignored.
+    // Previous and next do nothing until an image or folder is opened again; a listing on its way is ignored.
     void clear();
-    // The image in the given row of the library's results. The library is not owned. Its results changing,
-    // e.g. by a new search, ends the browsing; the image on screen stays.
+    // The library is not owned. Its results changing, e.g. by a new search, ends the browsing; the image on
+    // screen stays.
     void openLibraryImage(library::Library* library, int row);
     void setSorting(const folder_scanner::Sorting& sorting);  // lists the folder again if it changed
     void setWrapAround(bool wrapAround);  // after the last image comes the first, and the other way round
@@ -71,8 +64,8 @@ public:
     bool isBrowsingLibrary() const;
 
 Q_SIGNALS:
-    void imageRequested(const QString& filePath);  // the image to show now
-    void libraryImageRequested(int row);           // the library image to show now
+    void imageRequested(const QString& filePath);
+    void libraryImageRequested(int row);
     void positionChanged();
     void folderHasNoImages(const QString& folderPath);  // after openFolder()
 

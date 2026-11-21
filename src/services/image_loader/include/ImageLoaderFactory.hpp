@@ -12,7 +12,6 @@
 namespace pictorio::image_loader
 {
 
-// Creates the image loader used by the application (based on Qt's image plugins).
 std::unique_ptr<ImageLoader> createImageLoader();
 
 }  // namespace pictorio::image_loader

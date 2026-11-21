@@ -27,14 +27,14 @@ struct Sorting
     friend bool operator==(const Sorting&, const Sorting&) = default;
 };
 
-// Lists the images in a folder. Thread-safe, so it can run in the background.
+// Thread-safe, so it can run in the background
 class FolderScanner
 {
 public:
     virtual ~FolderScanner();
 
-    // Absolute paths of the images directly in the folder (not in subfolders). Images are recognized
-    // by their file extension; hidden files are skipped. Empty if the folder does not exist.
+    // Absolute paths, not in subfolders. Images are recognized by their file extension; hidden files are
+    // skipped. Empty if the folder does not exist.
     virtual QStringList listImages(const QString& folderPath, const Sorting& sorting) const = 0;
 };
 

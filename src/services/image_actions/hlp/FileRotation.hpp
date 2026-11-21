@@ -12,7 +12,6 @@
 namespace pictorio::image_actions
 {
 
-// How a rotation is saved into a file of a type, without losing quality
 enum class RotationSaving
 {
     OrientationTag,  // only the EXIF orientation changes: JPEG and TIFF, whose tag Qt applies when showing them

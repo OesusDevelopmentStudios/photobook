@@ -19,8 +19,7 @@
 namespace pictorio::connection
 {
 
-// The connection to a pictorio-db server: finding it, logging in, staying logged in after a restart and
-// logging out. The pages show its state; the services that talk to the server use client().
+// The pages show its state; the services that talk to the server use client().
 class Connection : public QObject
 {
     Q_OBJECT
@@ -51,8 +50,8 @@ public:
     // Makes the client for a server address; tests answer from canned responses through it.
     using ServerClientFactory = std::function<std::unique_ptr<server_client::ServerClient>(const QUrl&)>;
 
-    // The settings are not owned and must outlive the connection. appSpecificMachineId: this computer's
-    // (utils/MachineId.hpp), to learn whether the server runs here too; empty: never asked.
+    // appSpecificMachineId: this computer's (utils/MachineId.hpp), to learn whether the server runs here too;
+    // empty: never asked.
     Connection(ServerClientFactory serverClientFactory,
                std::unique_ptr<token_store::TokenStore> tokenStore,
                settings::Settings* settings,
@@ -60,7 +59,7 @@ public:
                QObject* parent = nullptr);
     ~Connection() override;
 
-    // At start: logs in again with the token kept from the last run, if there is one.
+    // With the token kept from the last run, if there is one
     Q_INVOKABLE void restoreLogin();
     // "photos.example.org" or "raspberrypi.local:8737": without http:// or https://, https is tried first.
     Q_INVOKABLE void checkServer(const QString& typedAddress);
