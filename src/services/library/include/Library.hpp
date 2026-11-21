@@ -30,8 +30,6 @@ class Library : public QAbstractListModel
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged)
     Q_PROPERTY(QString effectiveQuery READ effectiveQuery NOTIFY effectiveQueryChanged)
     Q_PROPERTY(int count READ count NOTIFY countChanged)
-    Q_PROPERTY(int totalCount READ totalCount NOTIFY totalCountChanged)
-    Q_PROPERTY(int selectedCount READ selectedCount NOTIFY selectionChanged)
     Q_PROPERTY(bool selecting READ isSelecting NOTIFY selectingChanged)
 
 public:
@@ -92,9 +90,7 @@ public:
     // instead of it.
     Q_INVOKABLE void selectRange(int row, bool addToSelection);
     Q_INVOKABLE void clearSelection();
-    int selectedCount() const;
-    QList<int> selectedImageIds() const;  // in the order of the results
-    QList<server_client::Image> selectedImages() const;
+    QList<server_client::Image> selectedImages() const;  // in the order of the results
 
     int rowCount(const QModelIndex& parent = {}) const override;
     QVariant data(const QModelIndex& index, int role) const override;

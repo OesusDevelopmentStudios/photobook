@@ -13,7 +13,6 @@
 #include "Connection.hpp"
 #include "ServerClientFactory.hpp"
 #include "SettingsFactory.hpp"
-#include "TagEditorFactory.hpp"
 #include "TagSuggestions.hpp"
 #include "fakes/FakeServer.hpp"
 #include "fakes/FakeTokenStore.hpp"
@@ -123,7 +122,7 @@ void TestTagSuggestions::init()
         serverClientFactory, std::make_unique<fakes::FakeTokenStore>(keyring), m_settings.get());
     m_connection->restoreLogin();
     QTRY_COMPARE(m_connection->state(), Connection::State::LoggedIn);
-    m_suggestions = createTagSuggestions(m_connection.get());
+    m_suggestions = std::make_unique<TagSuggestions>(m_connection.get());
 }
 
 QStringList TestTagSuggestions::shownTags() const

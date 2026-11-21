@@ -218,22 +218,6 @@ void Library::clearSelection()
     setSelection({});
 }
 
-int Library::selectedCount() const
-{
-    return static_cast<int>(m_selectedImageIds.size());
-}
-
-QList<int> Library::selectedImageIds() const
-{
-    QList<int> imageIds;
-    for (const server_client::Image& image : selectedImages())
-    {
-        imageIds.append(image.id);
-    }
-
-    return imageIds;
-}
-
 QList<server_client::Image> Library::selectedImages() const
 {
     QList<server_client::Image> images;

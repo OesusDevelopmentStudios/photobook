@@ -28,9 +28,4 @@ std::unique_ptr<HiddenFilterEditor> createHiddenFilterEditor(connection::Connect
     return std::make_unique<HiddenFilterEditor>(connection);
 }
 
-std::unique_ptr<TagSuggestions> createTagSuggestions(connection::Connection* connection)
-{
-    return std::make_unique<TagSuggestions>(connection);
-}
-
 }  // namespace pictorio::tag_editor

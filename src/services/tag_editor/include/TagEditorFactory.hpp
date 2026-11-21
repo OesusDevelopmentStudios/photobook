@@ -10,7 +10,6 @@
 #include "BulkTagEditor.hpp"
 #include "HiddenFilterEditor.hpp"
 #include "TagEditor.hpp"
-#include "TagSuggestions.hpp"
 #include "UploadTagEditor.hpp"
 
 namespace pictorio::tag_editor
@@ -27,8 +26,5 @@ std::unique_ptr<UploadTagEditor> createUploadTagEditor(connection::Connection* c
 
 // The connection is not owned and must outlive the editor.
 std::unique_ptr<HiddenFilterEditor> createHiddenFilterEditor(connection::Connection* connection);
-
-// The connection is not owned and must outlive the suggestions.
-std::unique_ptr<TagSuggestions> createTagSuggestions(connection::Connection* connection);
 
 }  // namespace pictorio::tag_editor

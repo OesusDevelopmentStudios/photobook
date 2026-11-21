@@ -44,6 +44,18 @@ QString parameter(const HttpRequest& request, const QString& name)
 }
 
 // The cursor of the second page of the request's search, e.g. "page2:taken_at:summer".
+// The ids of the selected images, in the order of the results
+QList<int> selectedIds(const Library& library)
+{
+    QList<int> imageIds;
+    for (const server_client::Image& image : library.selectedImages())
+    {
+        imageIds.append(image.id);
+    }
+
+    return imageIds;
+}
+
 QString cursorFor(const HttpRequest& request)
 {
     return QStringLiteral("page2:%1:%2")
@@ -380,11 +392,11 @@ void TestLibrary::togglesTheSelectionOfAnImage()
     QSignalSpy selectionChanged(m_library.get(), &Library::selectionChanged);
 
     m_library->toggleSelected(1);
-    QCOMPARE(m_library->selectedImageIds(), QList<int>{2});
+    QCOMPARE(selectedIds(*m_library), QList<int>{2});
     QVERIFY(m_library->data(m_library->index(1), Library::SelectedRole).toBool());
 
     m_library->toggleSelected(1);
-    QCOMPARE(m_library->selectedCount(), 0);
+    QVERIFY(m_library->selectedImages().isEmpty());
     QCOMPARE(selectionChanged.count(), 2);
 }
 
@@ -399,11 +411,11 @@ void TestLibrary::selectsARange()
     m_library->toggleSelected(2);
     m_library->selectRange(0, false);
 
-    QCOMPARE(m_library->selectedImageIds(), QList<int>({1, 2, 3}));  // in the order of the results
+    QCOMPARE(selectedIds(*m_library), QList<int>({1, 2, 3}));  // in the order of the results
     QCOMPARE(m_library->selectedImages().last().originalFilename, QStringLiteral("photo_3.jpg"));
 
     m_library->selectRange(1, false);
-    QCOMPARE(m_library->selectedImageIds(), QList<int>({2, 3}));  // the range still starts at the third
+    QCOMPARE(selectedIds(*m_library), QList<int>({2, 3}));  // the range still starts at the third
 }
 
 // Ctrl+Shift+click
@@ -418,7 +430,7 @@ void TestLibrary::addsARangeToTheSelection()
 
     m_library->selectRange(1, true);
 
-    QCOMPARE(m_library->selectedImageIds(), QList<int>({1, 2, 3}));
+    QCOMPARE(selectedIds(*m_library), QList<int>({1, 2, 3}));
 }
 
 void TestLibrary::startsARangeAtTheClickedImage()
@@ -428,7 +440,7 @@ void TestLibrary::startsARangeAtTheClickedImage()
 
     m_library->selectRange(1, false);  // no range started yet
 
-    QCOMPARE(m_library->selectedImageIds(), QList<int>{2});
+    QCOMPARE(selectedIds(*m_library), QList<int>{2});
 }
 
 void TestLibrary::keepsTheSelectionWhilePagesLoad()
@@ -443,7 +455,7 @@ void TestLibrary::keepsTheSelectionWhilePagesLoad()
     retagged.tags = {QStringLiteral("general:sunset")};
     m_library->replaceImage(retagged);
 
-    QCOMPARE(m_library->selectedImageIds(), QList<int>{1});
+    QCOMPARE(selectedIds(*m_library), QList<int>{1});
 }
 
 void TestLibrary::emptiesTheSelectionForANewSearch()
@@ -455,7 +467,7 @@ void TestLibrary::emptiesTheSelectionForANewSearch()
 
     m_library->search(QStringLiteral("category:photo"));
 
-    QCOMPARE(m_library->selectedCount(), 0);
+    QVERIFY(m_library->selectedImages().isEmpty());
     QCOMPARE(selectionChanged.count(), 1);
 }
 
@@ -490,7 +502,7 @@ void TestLibrary::startsAndStopsSelecting()
     m_library->stopSelecting();
 
     QVERIFY(!m_library->isSelecting());
-    QCOMPARE(m_library->selectedCount(), 0);
+    QVERIFY(m_library->selectedImages().isEmpty());
     QCOMPARE(selectingChanged.count(), 2);
 }
 
@@ -507,7 +519,7 @@ void TestLibrary::startsSelectingWhenAnImageIsSelected()
     m_library->selectRange(1, false);
 
     QVERIFY(m_library->isSelecting());
-    QCOMPARE(m_library->selectedImageIds(), QList<int>{2});
+    QCOMPARE(selectedIds(*m_library), QList<int>{2});
 }
 
 void TestLibrary::goesOnSelectingAfterANewSearch()
@@ -519,7 +531,7 @@ void TestLibrary::goesOnSelectingAfterANewSearch()
     m_library->search(QStringLiteral("category:photo"));
 
     QVERIFY(m_library->isSelecting());
-    QCOMPARE(m_library->selectedCount(), 0);
+    QVERIFY(m_library->selectedImages().isEmpty());
 }
 
 void TestLibrary::stopsSelectingWhenLoggedOut()
@@ -531,7 +543,7 @@ void TestLibrary::stopsSelectingWhenLoggedOut()
     m_connection->logOut();
 
     QVERIFY(!m_library->isSelecting());
-    QCOMPARE(m_library->selectedCount(), 0);
+    QVERIFY(m_library->selectedImages().isEmpty());
 }
 
 }  // namespace pictorio::library

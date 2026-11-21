@@ -24,7 +24,6 @@ class TagSuggestions : public QAbstractListModel
 {
     Q_OBJECT
 
-    Q_PROPERTY(QString typedText READ typedText WRITE setTypedText NOTIFY typedTextChanged)
     Q_PROPERTY(QString namespaceName READ namespaceName WRITE setNamespaceName NOTIFY namespaceNameChanged)
     Q_PROPERTY(int count READ count NOTIFY countChanged)
 
@@ -42,7 +41,6 @@ public:
     // The connection is not owned and must outlive the suggestions.
     explicit TagSuggestions(connection::Connection* connection, QObject* parent = nullptr);
 
-    QString typedText() const;
     void setTypedText(const QString& text);  // empty: no suggestions, at once
 
     // Only tags in this namespace, e.g. for the field of the namespace's row; empty: tags in any namespace
@@ -60,7 +58,6 @@ public:
     QHash<int, QByteArray> roleNames() const override;
 
 Q_SIGNALS:
-    void typedTextChanged();
     void namespaceNameChanged();
     void countChanged();
 

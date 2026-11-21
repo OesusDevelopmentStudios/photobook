@@ -25,11 +25,6 @@ TagSuggestions::TagSuggestions(connection::Connection* connection, QObject* pare
     connect(&m_typingPause, &QTimer::timeout, this, &TagSuggestions::askServer);
 }
 
-QString TagSuggestions::typedText() const
-{
-    return m_typedText;
-}
-
 void TagSuggestions::setTypedText(const QString& text)
 {
     if (text == m_typedText)
@@ -48,8 +43,6 @@ void TagSuggestions::setTypedText(const QString& text)
     {
         m_typingPause.start();
     }
-
-    Q_EMIT typedTextChanged();
 }
 
 QString TagSuggestions::namespaceName() const
