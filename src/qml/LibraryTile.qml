@@ -12,8 +12,8 @@ import org.kde.ki18n
 
 // One image in the library grid, its thumbnail cropped square. Hovered, it is highlighted and shows its
 // details; clicked, it opens, or while selecting it is selected or not; Ctrl+ and Shift+clicked, it is selected
-// as in Dolphin; right-clicked, it asks for its menu. Kept light, as many are made while scrolling: the details exist only while the tile is hovered, and
-// the menu is the grid's.
+// as in Dolphin; right-clicked, it asks for its menu. Kept light, as many are made while scrolling: the details
+// exist only while the tile is hovered, and the menu is the grid's.
 Item {
     id: tile
 

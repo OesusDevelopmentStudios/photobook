@@ -91,8 +91,8 @@ Kirigami.ScrollablePage {
                 Layout.fillWidth: true
                 visible: page.serverKnown && page.connection.plainHttp
                 type: Kirigami.MessageType.Warning
-                // One literal, so the translation tools find the whole sentence
-                text: KI18n.i18nc("@info", "This server uses plain HTTP: your password and your images travel unencrypted. That is fine in your home network; from the internet, use HTTPS.")
+                text: KI18n.i18nc("@info", "This server uses plain HTTP: your password and your images travel "
+                                  + "unencrypted. That is fine in your home network; from the internet, use HTTPS.")
             }
 
             Controls.TextField {

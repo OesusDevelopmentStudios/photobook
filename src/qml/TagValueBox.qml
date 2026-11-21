@@ -7,8 +7,9 @@ import org.kde.kirigami as Kirigami
 import org.kde.ki18n
 
 // The dropdown of category or rating: "–" for none, then the values; for many images "Keep as is" first, shown
-// as the value they all share if they do. The ratings are fixed (an admin sets them on the server); category also takes a new value typed in, confirmed
-// with Enter. A value typed but not confirmed counts as a change. A changed value is bold.
+// as the value they all share if they do. The ratings are fixed (an admin sets them on the server); category
+// also takes a new value typed in, confirmed with Enter. A value typed but not confirmed counts as a change. A
+// changed value is bold.
 Controls.ComboBox {
     id: box
 

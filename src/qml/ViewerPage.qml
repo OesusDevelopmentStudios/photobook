@@ -338,10 +338,12 @@ Kirigami.Page {
 
         zoomAction();  // updates the bindings below, including imageFrame's position and size
 
+        const wantedX = imageFrame.x + relativeX * imageFrame.width - viewportPoint.x;
+        const wantedY = imageFrame.y + relativeY * imageFrame.height - viewportPoint.y;
         const maximumX = flickable.contentWidth - flickable.width;
         const maximumY = flickable.contentHeight - flickable.height;
-        flickable.contentX = Math.max(0, Math.min(imageFrame.x + relativeX * imageFrame.width - viewportPoint.x, maximumX));
-        flickable.contentY = Math.max(0, Math.min(imageFrame.y + relativeY * imageFrame.height - viewportPoint.y, maximumY));
+        flickable.contentX = Math.max(0, Math.min(wantedX, maximumX));
+        flickable.contentY = Math.max(0, Math.min(wantedY, maximumY));
     }
 
     function zoomAroundCenter(zoomAction: var) {
