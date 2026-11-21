@@ -43,7 +43,7 @@ public:
 
     void setTypedText(const QString& text);  // empty: no suggestions, at once
 
-    // Only tags in this namespace, e.g. for the field of the namespace's row; empty: tags in any namespace
+    // Empty: tags in any namespace
     QString namespaceName() const;
     void setNamespaceName(const QString& namespaceName);
 

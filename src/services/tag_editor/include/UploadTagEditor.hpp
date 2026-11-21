@@ -30,18 +30,16 @@ class UploadTagEditor : public TagRowsEditor
     Q_OBJECT
 
 public:
-    // The connection is not owned and must outlive the editor.
     explicit UploadTagEditor(connection::Connection* connection, QObject* parent = nullptr);
     ~UploadTagEditor() override;
 
-    Q_INVOKABLE void load();   // the server's namespaces and their values, e.g. when the upload page opens
-    Q_INVOKABLE void clear();  // no tags
+    Q_INVOKABLE void load();  // the server's namespaces and their values, e.g. when the upload page opens
+    Q_INVOKABLE void clear();
 
     // The tags to send, with what is typed and not added yet; nothing if one of those is refused.
     std::optional<QStringList> tagsToUpload();
     void setBusy(bool busy);  // while uploading: the tags stay as they are
 
-    // The rows' changes; see TagRowsEditor
     bool addTag(const QString& namespaceName, const QString& typedName) override;
     bool setSingleValue(const QString& namespaceName, const QString& typedName) override;  // empty: none
     void keepValue(const QString& namespaceName) override;  // none: new files have nothing to keep

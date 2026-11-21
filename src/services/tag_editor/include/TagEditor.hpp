@@ -39,7 +39,6 @@ class TagEditor : public TagRowsEditor
     Q_PROPERTY(bool saving READ isSaving NOTIFY savingChanged)
 
 public:
-    // The connection is not owned and must outlive the editor.
     explicit TagEditor(connection::Connection* connection, QObject* parent = nullptr);
     ~TagEditor() override;
 
@@ -50,7 +49,6 @@ public:
     Q_INVOKABLE void save();  // also adds what is typed and not added yet
     Q_INVOKABLE void cancel();
 
-    // The rows' changes; see TagRowsEditor
     bool addTag(const QString& namespaceName, const QString& typedName) override;
     bool setSingleValue(const QString& namespaceName, const QString& typedName) override;
     void keepValue(const QString& namespaceName) override;  // the image's own value again

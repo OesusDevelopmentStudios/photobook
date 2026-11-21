@@ -28,7 +28,6 @@ class TagRowsEditor : public QObject
     Q_PROPERTY(pictorio::tag_editor::TagSuggestions* suggestions READ suggestions CONSTANT)
 
 public:
-    // What sending the changes does to a tag, for showing it while editing
     enum class Change
     {
         Kept,

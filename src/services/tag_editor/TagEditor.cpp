@@ -29,7 +29,7 @@ QVariantMap tagEntry(const TagName& tag, TagEditor::Change change)
     return {
         {QStringLiteral("tag"), tag.text()},
         {QStringLiteral("name"), tag.name},
-        {QStringLiteral("change"), static_cast<int>(change)},  // a number, which QML compares with TagEditor.Change
+        {QStringLiteral("change"), static_cast<int>(change)},  // a number, which QML compares with TagRowsEditor.Change
     };
 }
 

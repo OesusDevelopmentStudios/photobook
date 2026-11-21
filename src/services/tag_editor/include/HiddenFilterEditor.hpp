@@ -38,7 +38,6 @@ public:
     static constexpr int maximumCount = 50;    // as the server allows
     static constexpr int maximumLength = 200;  // of one filter, as the server allows
 
-    // The connection is not owned and must outlive the editor.
     explicit HiddenFilterEditor(connection::Connection* connection, QObject* parent = nullptr);
     ~HiddenFilterEditor() override;
 
@@ -67,7 +66,7 @@ Q_SIGNALS:
     void filtersChanged();
     void loadingChanged();
     void savingChanged();
-    void saved();  // the server has the new filters
+    void saved();
 
 private:
     void setSavedFilters(const QStringList& filters);

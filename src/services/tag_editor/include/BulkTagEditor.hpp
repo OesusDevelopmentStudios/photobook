@@ -41,7 +41,6 @@ class BulkTagEditor : public TagRowsEditor
 public:
     static constexpr int maximumImageCount = 1000;  // the most the server changes at once
 
-    // The connection is not owned and must outlive the editor.
     explicit BulkTagEditor(connection::Connection* connection, QObject* parent = nullptr);
     ~BulkTagEditor() override;
 
@@ -51,7 +50,7 @@ public:
     Q_INVOKABLE void apply();  // also adds what is typed and not added yet
     Q_INVOKABLE void clear();
 
-    // The rows' changes, for every selected image; see TagRowsEditor
+    // For every selected image; see TagRowsEditor
     bool addTag(const QString& namespaceName, const QString& typedName) override;
     bool setSingleValue(const QString& namespaceName, const QString& typedName) override;
     void keepValue(const QString& namespaceName) override;  // "keep as is"
@@ -69,7 +68,7 @@ public:
 Q_SIGNALS:
     void imagesChanged();
     void applyingChanged();
-    void applied();                                        // the server has changed the images
+    void applied();
     void imageUpdated(const server_client::Image& image);  // one of them, as the server has it now
 
 private:
