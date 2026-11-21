@@ -11,7 +11,6 @@
 
 #include "fakes/FakeServer.hpp"
 
-// Answers of the images API, as a fake server sends them.
 namespace pictorio::fakes
 {
 

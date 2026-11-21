@@ -67,9 +67,7 @@ inline QStringList storedFiles(const EndToEndServer& server, const QString& orig
     return files;
 }
 
-// The app's services as AppManager wires them, for one user logged in to the test server: uploading,
-// the library's search, editing an image's tags and the hidden filters. Originals go to a fake trash, which only notes
-// them.
+// The app's services as AppManager wires them, for one user. Originals go to a fake trash, which only notes them.
 class AppSession
 {
 public:

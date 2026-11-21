@@ -44,10 +44,6 @@ QImage storedPixels(const QString& filePath)
 
 }  // namespace
 
-// Saving a rotation of a library image, as the viewer does: the server turns the image in its file, a JPEG
-// without losing quality, and the image stays the same image. The app sees it turned at the new revision's
-// addresses, even where it has the old ones cached. Runs only against the server that
-// tests/e2e/run_end_to_end_tests.py starts.
 class TestEndToEndRotation : public QObject
 {
     Q_OBJECT

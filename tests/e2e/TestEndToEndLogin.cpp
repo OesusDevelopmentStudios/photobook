@@ -37,8 +37,6 @@ int currentUserStatus(server_client::ServerClient& client)
 
 }  // namespace
 
-// Logging in to a real server, as the connect page does, and staying logged in after a restart. Runs only
-// against the server that tests/e2e/run_end_to_end_tests.py starts.
 class TestEndToEndLogin : public QObject
 {
     Q_OBJECT

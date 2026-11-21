@@ -11,7 +11,6 @@
 
 #include "FileManager.hpp"
 
-// A file manager for tests: it only notes the files, so no window ever opens.
 namespace pictorio::fakes
 {
 

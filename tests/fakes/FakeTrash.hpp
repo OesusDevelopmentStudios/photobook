@@ -11,7 +11,6 @@
 
 #include "Trash.hpp"
 
-// A trash for tests: it only notes the files, so nothing is ever moved.
 namespace pictorio::fakes
 {
 

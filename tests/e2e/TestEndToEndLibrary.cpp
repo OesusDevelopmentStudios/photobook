@@ -27,9 +27,7 @@ bool allStartWith(const QStringList& paths, const QString& folder)
 
 }  // namespace
 
-// An image's way into the library: uploaded with its tags, found by a search, and its file moved on the server
-// when a tag that forms its path changes. The server lays out files as {category}/{author}/{year}. Runs only
-// against the server that tests/e2e/run_end_to_end_tests.py starts.
+// The server lays out files as {category}/{author}/{year}.
 class TestEndToEndLibrary : public QObject
 {
     Q_OBJECT

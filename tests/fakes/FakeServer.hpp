@@ -14,7 +14,6 @@
 
 #include "HttpTransport.hpp"
 
-// A pictorio-db server for tests, answering through the server client's transport.
 namespace pictorio::fakes
 {
 

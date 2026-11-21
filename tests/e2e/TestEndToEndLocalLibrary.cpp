@@ -34,9 +34,7 @@ QString canonicalPath(const QString& path)
 
 }  // namespace
 
-// The app on the server's own computer learns where the library folder is, to show an image's file in the
-// file manager; on another computer it learns nothing. The server's machine ID is the script's file, read by
-// the app as this computer's. Runs only against the server that tests/e2e/run_end_to_end_tests.py starts.
+// The server's machine ID is the script's file, read by the app as this computer's.
 class TestEndToEndLocalLibrary : public QObject
 {
     Q_OBJECT

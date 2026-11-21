@@ -11,7 +11,6 @@
 
 #include "TokenStore.hpp"
 
-// A keyring for tests, so they never touch the user's real one.
 namespace pictorio::fakes
 {
 

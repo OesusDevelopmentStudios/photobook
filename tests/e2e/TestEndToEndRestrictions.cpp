@@ -37,10 +37,8 @@ template <typename T> server_client::Result<T> answerTo(QFuture<server_client::R
 
 }  // namespace
 
-// The user kid, whom an admin restricted from rating:nsfw: the app refuses that tag before sending anything,
-// the server refuses it too should a request get through, and kid never sees such images, not even by searching
-// for them. sample_user, who is not restricted, uploads the images: a night sky rated nsfw and a meadow rated
-// sfw. Runs only against the server that tests/e2e/run_end_to_end_tests.py starts.
+// kid is restricted from rating:nsfw. sample_user, who is not, uploads the images: a night sky rated nsfw and a
+// meadow rated sfw.
 class TestEndToEndRestrictions : public QObject
 {
     Q_OBJECT

@@ -24,9 +24,6 @@ using FileState = uploader::Uploader::FileState;
 
 }  // namespace
 
-// A file the server has already: its upload adds the new tags to the image there, and the file is stored only
-// once. Originals go to the trash, when asked, only once the server has the image, never after a failed upload.
-// Runs only against the server that tests/e2e/run_end_to_end_tests.py starts.
 class TestEndToEndDuplicates : public QObject
 {
     Q_OBJECT

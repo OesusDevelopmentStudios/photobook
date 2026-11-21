@@ -34,10 +34,8 @@ QStringList fileNamesOf(const QList<server_client::Image>& images)
 
 }  // namespace
 
-// Hidden filters saved on the settings page: the library leaves those images out until a search names their
-// tag. Two coast images, one of them in fog; the user hides the fog. The filters belong to the user, whom the
-// other end-to-end tests share, so each test leaves none behind. Runs only against the server that
-// tests/e2e/run_end_to_end_tests.py starts.
+// Two coast images, one of them in fog; the user hides the fog. The filters belong to the user, whom the other
+// end-to-end tests share, so each test leaves none behind.
 class TestEndToEndHiddenFilters : public QObject
 {
     Q_OBJECT
