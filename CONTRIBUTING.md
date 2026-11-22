@@ -1,7 +1,81 @@
 # Contributing to Photobook
 
-Readability comes first. The code should be easy to understand and maintain for someone who has
-never seen it before.
+Both AI and human made submissions are welcome. It is not required to specifically mark AI submissions but all need to followe the rules described below.
+
+## Building
+
+### Dependencies
+
+| Dependency | Minimum version |
+|---|---|
+| CMake | 3.25 |
+| C++23 compiler (GCC or Clang) | |
+| Qt (Core, Concurrent, DBus, Gui, Network, Qml, Quick, QuickControls2, Widgets; Test and QuickTest for the tests) | 6.8 |
+| KDE Frameworks (Extra CMake Modules, Kirigami, KI18n, KCoreAddons, KConfig, KIO) | 6.21 |
+| exiv2 | 0.28 |
+| QtKeychain (Qt 6 build) | 0.17 |
+| Kirigami Addons, needed at run time | 1.7 |
+| KDE desktop style for Qt Quick (qqc2-desktop-style), needed at run time | |
+| Qt and KDE image format plugins (qtimageformats, kimageformats), needed at run time for WebP, TIFF, AVIF, HEIF and JPEG XL | |
+
+Fedora:
+```sh
+sudo dnf install cmake gcc-c++ extra-cmake-modules \
+    qt6-qtbase-devel qt6-qtdeclarative-devel \
+    kf6-kirigami-devel kf6-ki18n-devel kf6-kcoreaddons-devel kf6-kconfig-devel kf6-kio-devel \
+    exiv2-devel qtkeychain-qt6-devel \
+    kf6-kirigami-addons kf6-qqc2-desktop-style qt6-qtimageformats kf6-kimageformats
+```
+
+Ubuntu:
+```sh
+sudo apt install cmake g++ extra-cmake-modules \
+    qt6-base-dev qt6-declarative-dev \
+    libkirigami-dev libkf6i18n-dev libkf6coreaddons-dev libkf6config-dev libkf6kio-dev \
+    libexiv2-dev qt6keychain-dev \
+    qml6-module-org-kde-kirigami qml6-module-org-kde-kirigamiaddons-components \
+    qml6-module-org-kde-desktop qt6-image-formats-plugins kimageformat6-plugins \
+    qml6-module-qtquick qml6-module-qtquick-controls qml6-module-qtquick-dialogs \
+    qml6-module-qtquick-layouts qml6-module-qtquick-shapes qml6-module-qtqml-workerscript \
+    qml6-module-qttest
+```
+
+Arch:
+```sh
+sudo pacman -S --needed cmake base-devel extra-cmake-modules \
+    qt6-base qt6-declarative \
+    kirigami ki18n kcoreaddons kconfig kio \
+    exiv2 qtkeychain-qt6 \
+    kirigami-addons qqc2-desktop-style qt6-imageformats kimageformats
+```
+
+### Build and run
+
+```sh
+cmake -B build
+cmake --build build
+./build/bin/photobook              # or with an image: ./build/bin/photobook beach.jpg
+```
+
+Build options:
+
+| Option | Default | Meaning |
+|---|---|---|
+| `BUILD_TESTING` | `ON` | Build the tests |
+| `PHOTOBOOK_WARNINGS_AS_ERRORS` | `ON` | Treat compiler warnings as errors. Turn off for packaging |
+
+Example: `cmake -B build -DBUILD_TESTING=OFF -DPHOTOBOOK_WARNINGS_AS_ERRORS=OFF`
+
+### Flatpak
+
+Needs `flatpak-builder` and the KDE runtime from Flathub
+(`flatpak install flathub org.kde.Sdk//6.11 org.kde.Platform//6.11`). From the repository root:
+
+```sh
+flatpak-builder --user --install --force-clean build-flatpak \
+    packaging/flatpak/io.github.oesusdevelopmentstudios.photobook.yml
+flatpak run io.github.oesusdevelopmentstudios.photobook
+```
 
 ## Workflow
 
