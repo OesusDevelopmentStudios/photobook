@@ -27,7 +27,6 @@ class Library : public QAbstractListModel
     Q_PROPERTY(Order order READ order WRITE setOrder NOTIFY searchChanged)
     Q_PROPERTY(bool loading READ isLoading NOTIFY loadingChanged)
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged)
-    Q_PROPERTY(QString effectiveQuery READ effectiveQuery NOTIFY effectiveQueryChanged)
     Q_PROPERTY(int count READ count NOTIFY countChanged)
     Q_PROPERTY(bool selecting READ isSelecting NOTIFY selectingChanged)
 
@@ -69,7 +68,7 @@ public:
     void setOrder(Order order);
     bool isLoading() const;
     QString errorMessage() const;
-    QString effectiveQuery() const;  // the search with the user's hidden-by-default filters added
+    QString effectiveQuery() const;  // the search with the hidden filters added; the app does not show it
     int count() const;               // loaded so far
     int totalCount() const;          // over all pages; -1 until the server has said, or if it could not
     bool hasMoreToLoad() const;      // the server has more results than the pages loaded so far
@@ -100,7 +99,6 @@ Q_SIGNALS:
     void searchChanged();
     void loadingChanged();
     void errorMessageChanged();
-    void effectiveQueryChanged();
     void countChanged();
     void totalCountChanged();
     void selectionChanged();

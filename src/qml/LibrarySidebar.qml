@@ -59,17 +59,6 @@ Rectangle {
             Controls.ToolTip.delay: Kirigami.Units.toolTipDelay
         }
 
-        // The user's hidden-by-default filters are added to the search on the server.
-        Controls.Label {
-            Layout.fillWidth: true
-            visible: sidebar.library.effectiveQuery.length > 0
-                     && sidebar.library.effectiveQuery !== sidebar.library.searchText
-            text: KI18n.i18nc("@info %1 is a search query", "Searched for: %1", sidebar.library.effectiveQuery)
-            font: Kirigami.Theme.smallFont
-            color: Kirigami.Theme.disabledTextColor
-            wrapMode: Text.Wrap
-        }
-
         ColumnLayout {
             Layout.fillWidth: true
             visible: !sidebar.selecting

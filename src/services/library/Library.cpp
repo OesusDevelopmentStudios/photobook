@@ -393,11 +393,7 @@ void Library::addPage(const server_client::ImagePage& page)
     m_nextCursor = page.nextCursor;
     m_complete = page.nextCursor.isEmpty();
     setLoading(false);
-    if (page.effectiveQuery != m_effectiveQuery)
-    {
-        m_effectiveQuery = page.effectiveQuery;
-        Q_EMIT effectiveQueryChanged();
-    }
+    m_effectiveQuery = page.effectiveQuery;
 
     if (!page.items.isEmpty())
     {

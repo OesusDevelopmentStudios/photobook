@@ -357,7 +357,7 @@ Kirigami.Page {
                 text: page.library.searchText.length > 0
                       ? KI18n.i18nc("@info:placeholder", "Nothing matches")
                       : KI18n.i18nc("@info:placeholder", "No images in the library yet")
-                explanation: page.library.searchText.length > 0 ? page.library.effectiveQuery : ""
+                explanation: page.library.searchText  // as typed: the hidden filters stay out of sight
             }
         }
     }
