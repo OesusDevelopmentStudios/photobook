@@ -6,6 +6,7 @@
 #pragma once
 
 #include <expected>
+#include <functional>
 #include <optional>
 
 #include <QDateTime>
@@ -170,6 +171,7 @@ struct ImageUpload
     std::optional<QDateTime> fileModified;  // sent as local wall-clock time, the date used without EXIF
     QString sha256;                         // hex; the server refuses the file if it arrived different
     QStringList tags;
+    std::function<void(double share)> onProgress;  // how much of the file is sent, 0 to 1; may be left empty
 };
 
 enum class ThumbnailSize

@@ -102,10 +102,11 @@ void TestEndToEndRestrictions::refusesUploadingARestrictedTag()
     // The same upload sent past the app's check
     const server_client::Result<server_client::Image> sent =
         answerTo(m_restrictedUser->connection().client()->uploadImage({filePath,
-                                                            QFileInfo(filePath).fileName(),
-                                                            std::nullopt,
-                                                            *utils::sha256Of(filePath),
-                                                            {QStringLiteral("rating:private")}}));
+                                                                       QFileInfo(filePath).fileName(),
+                                                                       std::nullopt,
+                                                                       *utils::sha256Of(filePath),
+                                                                       {QStringLiteral("rating:private")},
+                                                                       {}}));
     QVERIFY(!sent.has_value());
     QCOMPARE(sent.error().httpStatus, 403);
     QCOMPARE(sent.error().code, QStringLiteral("tag_restricted"));

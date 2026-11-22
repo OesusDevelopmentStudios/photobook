@@ -99,6 +99,7 @@ private Q_SLOTS:
     void listsTheFilesToUpload();
     void countsTheFilesStillWaiting();
     void countsTheFilesOfARun();
+    void measuresTheProgressInBytes();
     void addsAFolderWithOrWithoutSubfolders();
     void sendsOneFileAtATimeWithTheTags();
     void tellsHowEachFileWent();
@@ -121,6 +122,7 @@ private Q_SLOTS:
 
 private:
     QUrl fileNamed(const QString& relativePath);
+    QUrl fileOfSize(const QString& name, qsizetype bytes);
     QString pathOf(const QString& relativePath) const;
     QList<FileState> states() const;
     void uploadAndWait();
@@ -189,6 +191,18 @@ QUrl TestUploader::fileNamed(const QString& relativePath)
 
     file.write(relativePath.toUtf8());
     return QUrl::fromLocalFile(path);
+}
+
+QUrl TestUploader::fileOfSize(const QString& name, qsizetype bytes)
+{
+    const QUrl url = fileNamed(name);
+    QFile file(url.toLocalFile());
+    if (!file.open(QIODevice::WriteOnly) || file.write(QByteArray(bytes, 'x')) != bytes)
+    {
+        qFatal("Could not write test file %s", qPrintable(name));
+    }
+
+    return url;
 }
 
 QString TestUploader::pathOf(const QString& relativePath) const
@@ -261,6 +275,32 @@ void TestUploader::countsTheFilesOfARun()
     m_server->releaseAnswers();
     QTRY_VERIFY(!m_uploader->isRunning());
     QCOMPARE(m_uploader->filesDoneInRun(), 2);
+}
+
+// By the bytes sent, so that a large file moves it while it is sent. The server's progress is played here.
+void TestUploader::measuresTheProgressInBytes()
+{
+    m_uploader->addFiles({fileOfSize(QStringLiteral("clip.mp4"), 300), fileOfSize(QStringLiteral("beach.jpg"), 100)});
+    m_server->holdAnswers = true;
+    QCOMPARE(m_uploader->runProgress(), 0.0);
+
+    m_uploader->start();
+    QTRY_COMPARE(m_server->requestsTo("POST", imagesUrl).size(), 1);
+    QCOMPARE(m_uploader->currentFileName(), QStringLiteral("clip.mp4"));
+    QCOMPARE(m_uploader->runProgress(), 0.0);
+
+    m_server->requestsTo("POST", imagesUrl).last().form->onProgress(50, 100);  // half of clip.mp4
+    QCOMPARE(m_uploader->runProgress(), 150.0 / 400.0);
+
+    m_server->releaseAnswers();
+    QTRY_COMPARE(m_server->requestsTo("POST", imagesUrl).size(), 2);
+    QCOMPARE(m_uploader->currentFileName(), QStringLiteral("beach.jpg"));
+    QCOMPARE(m_uploader->runProgress(), 300.0 / 400.0);
+
+    m_server->releaseAnswers();
+    QTRY_VERIFY(!m_uploader->isRunning());
+    QCOMPARE(m_uploader->runProgress(), 1.0);
+    QCOMPARE(m_uploader->currentFileName(), QString());
 }
 
 void TestUploader::addsAFolderWithOrWithoutSubfolders()

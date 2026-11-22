@@ -44,6 +44,9 @@ class Uploader : public QAbstractListModel
     // The files of the last start(), and how many of them are done (also those that failed)
     Q_PROPERTY(int filesInRun READ filesInRun NOTIFY progressChanged)
     Q_PROPERTY(int filesDoneInRun READ filesDoneInRun NOTIFY progressChanged)
+    // How much of the last start()'s bytes is sent, 0 to 1, so that a large file moves it too
+    Q_PROPERTY(double runProgress READ runProgress NOTIFY runProgressChanged)
+    Q_PROPERTY(QString currentFileName READ currentFileName NOTIFY progressChanged)  // the one being sent
     Q_PROPERTY(bool moveOriginalsToTrash READ movesOriginalsToTrash WRITE setMoveOriginalsToTrash NOTIFY
                    moveOriginalsToTrashChanged)  // off by default
     // How the last upload went, after its files left the list
@@ -99,6 +102,8 @@ public:
     int failedCount() const;
     int filesInRun() const;
     int filesDoneInRun() const;
+    double runProgress() const;
+    QString currentFileName() const;
     bool movesOriginalsToTrash() const;
     void setMoveOriginalsToTrash(bool move);
     bool hasOutcome() const;
@@ -115,6 +120,7 @@ Q_SIGNALS:
     void runningChanged();
     void findingFilesChanged();
     void progressChanged();
+    void runProgressChanged();  // apart from progressChanged: it comes often while a file is sent
     void moveOriginalsToTrashChanged();
     void outcomeChanged();
     void finished();  // the files are done, or the rest was cancelled
@@ -147,6 +153,7 @@ private:
     void setState(int row, FileState state, const QString& message = {});
     int countIn(FileState state) const;
     void setRunning(bool running);
+    void setCurrentFileShare(double share);
 
     connection::Connection* m_connection;
     tag_editor::UploadTagEditor* m_tagEditor;
@@ -156,6 +163,10 @@ private:
     bool m_running = false;
     bool m_cancelled = false;
     int m_filesInRun = 0;
+    qint64 m_bytesInRun = 0;
+    qint64 m_bytesDoneInRun = 0;    // of the files that are done, whichever way they went
+    qint64 m_currentFileBytes = 0;  // of the file being sent
+    double m_currentFileShare = 0;  // how much of it is sent
     bool m_moveOriginalsToTrash = false;
     int m_foldersBeingListed = 0;
     std::optional<Outcome> m_outcome;

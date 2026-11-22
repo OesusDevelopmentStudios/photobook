@@ -11,6 +11,7 @@
 #include <KLocalizedString>
 #include <QFileInfo>
 #include <QJsonArray>
+#include <QPointer>
 #include <QtConcurrentRun>
 
 #include "FolderScanner.hpp"
@@ -143,6 +144,13 @@ void Uploader::start()
     m_tags = *tags;
     m_cancelled = false;
     m_filesInRun = countIn(FileState::Waiting);
+    m_bytesInRun = 0;
+    for (const UploadFile& file : std::as_const(m_files))
+    {
+        m_bytesInRun += file.state == FileState::Waiting ? QFileInfo(file.path).size() : 0;
+    }
+
+    m_bytesDoneInRun = 0;
     m_tagEditor->setBusy(true);  // the same tags for every file
     setRunning(true);
     uploadNext();
@@ -202,6 +210,25 @@ int Uploader::filesInRun() const
 int Uploader::filesDoneInRun() const
 {
     return m_filesInRun - countIn(FileState::Waiting) - countIn(FileState::Uploading);
+}
+
+// By the files instead if they are all empty, so that the bar still moves.
+double Uploader::runProgress() const
+{
+    if (m_bytesInRun == 0)
+    {
+        return m_filesInRun == 0 ? 0.0 : static_cast<double>(filesDoneInRun()) / m_filesInRun;
+    }
+
+    const double bytesSent = static_cast<double>(m_bytesDoneInRun) + m_currentFileShare * m_currentFileBytes;
+    return std::min(1.0, bytesSent / static_cast<double>(m_bytesInRun));
+}
+
+QString Uploader::currentFileName() const
+{
+    const auto sending =
+        std::ranges::find_if(m_files, [](const UploadFile& file) { return file.state == FileState::Uploading; });
+    return sending == m_files.end() ? QString() : QFileInfo(sending->path).fileName();
 }
 
 bool Uploader::movesOriginalsToTrash() const
@@ -311,15 +338,21 @@ void Uploader::appendFiles(const QStringList& filePaths)
 // The SHA-256 is computed in the background: large files take a while.
 void Uploader::uploadNext()
 {
+    m_bytesDoneInRun += m_currentFileBytes;  // the file before, if any
+    m_currentFileBytes = 0;
+    m_currentFileShare = 0;
     const auto waiting =
         std::ranges::find_if(m_files, [](const UploadFile& file) { return file.state == FileState::Waiting; });
     if (m_cancelled || waiting == m_files.end())
     {
+        Q_EMIT runProgressChanged();
         finish();
         return;
     }
 
     const int row = static_cast<int>(std::distance(m_files.begin(), waiting));
+    m_currentFileBytes = QFileInfo(waiting->path).size();
+    Q_EMIT runProgressChanged();
     setState(row, FileState::Uploading);
     QtConcurrent::run(utils::sha256Of, waiting->path).then(this, [this, row](const std::optional<QString>& sha256) {
         if (!sha256.has_value())
@@ -348,6 +381,12 @@ void Uploader::send(int row, const QString& sha256)
     upload.fileModified = file.lastModified();  // the date of the photo, if it has none of its own
     upload.sha256 = sha256;
     upload.tags = m_tags;
+    upload.onProgress = [self = QPointer<Uploader>(this)](double share) {
+        if (self)
+        {
+            self->setCurrentFileShare(share);
+        }
+    };
     client->uploadImage(upload).then(
         this, [this, row, sha256](const server_client::Result<server_client::Image>& answer) {
             if (answer.has_value())
@@ -484,6 +523,12 @@ int Uploader::countIn(FileState state) const
 {
     return static_cast<int>(
         std::ranges::count_if(m_files, [state](const UploadFile& file) { return file.state == state; }));
+}
+
+void Uploader::setCurrentFileShare(double share)
+{
+    m_currentFileShare = share;
+    Q_EMIT runProgressChanged();
 }
 
 void Uploader::setRunning(bool running)

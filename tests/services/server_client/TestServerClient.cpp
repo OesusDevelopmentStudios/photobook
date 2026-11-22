@@ -162,6 +162,7 @@ private Q_SLOTS:
     void readsOneImage();
     void uploadsAFileWithItsMetadata();
     void refusesToUploadAFileItCannotRead();
+    void tellsHowMuchOfAnUploadIsSent();
     void keepsTheDuplicateImageInTheError();
     void changesTheTagsOfAnImage();
     void changesTheTagsOfManyImages();
@@ -548,6 +549,26 @@ void TestServerClient::refusesToUploadAFileItCannotRead()
     QVERIFY(m_transport->requests.isEmpty());  // nothing was sent
 }
 
+// As a share of the request, which is the file and a little more; nothing while its size is not known yet.
+void TestServerClient::tellsHowMuchOfAnUploadIsSent()
+{
+    QTemporaryDir folder;
+    m_transport->nextResponse = answer(201, beachImageJson());
+    ImageUpload upload;
+    upload.filePath = writeFile(folder, QStringLiteral("beach.jpg"), "fake jpeg bytes");
+    upload.originalFilename = QStringLiteral("beach.jpg");
+    QList<double> shares;
+    upload.onProgress = [&shares](double share) { shares.append(share); };
+
+    QVERIFY(valueOf(m_client->uploadImage(upload)).has_value());
+    const MultipartForm form = *m_transport->lastRequest().form;
+    form.onProgress(0, 0);
+    form.onProgress(50, 200);
+    form.onProgress(200, 200);
+
+    QCOMPARE(shares, QList<double>({0.25, 1.0}));
+}
+
 void TestServerClient::keepsTheDuplicateImageInTheError()
 {
     QTemporaryDir folder;
@@ -786,11 +807,14 @@ void TestServerClient::realTransportUploadsTheFileAsMultipart()
     ImageUpload upload;
     upload.filePath = writeFile(folder, QStringLiteral("upload.jpg"), "fake jpeg bytes");
     upload.originalFilename = QStringLiteral("ławka.jpg");  // a non-ASCII name must arrive intact
+    double sent = 0;
+    upload.onProgress = [&sent](double share) { sent = share; };
 
     const QFuture<Result<Image>> future = client->uploadImage(upload);
 
     QTRY_VERIFY(future.isFinished());
     QVERIFY(future.result().has_value());
+    QCOMPARE(sent, 1.0);  // Qt told how the body went
     QVERIFY(received.startsWith("POST /api/v1/images HTTP/1.1"));
     const QByteArray request = received.toLower();  // header names are case-insensitive; Qt writes them lower case
     QVERIFY(request.contains("content-type: multipart/form-data; boundary="));

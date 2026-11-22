@@ -103,6 +103,11 @@ QtHttpTransport::sendForm(const QNetworkRequest& networkRequest, const QByteArra
 
     QNetworkReply* reply = m_network.sendCustomRequest(networkRequest, method, multiPart.get());
     multiPart.release()->setParent(reply);  // lives as long as the request
+    if (form.onProgress)
+    {
+        QObject::connect(reply, &QNetworkReply::uploadProgress, reply, form.onProgress);
+    }
+
     return finished(reply);
 }
 

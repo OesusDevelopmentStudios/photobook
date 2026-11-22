@@ -359,6 +359,30 @@ Kirigami.Page {
                 onToggled: page.uploader.moveOriginalsToTrash = checked
             }
 
+            // By the bytes sent, so that a large file moves it too
+            ColumnLayout {
+                Layout.fillWidth: true
+                visible: page.uploader.running
+                spacing: Kirigami.Units.smallSpacing
+
+                Controls.Label {
+                    objectName: "uploadingFile"
+                    Layout.fillWidth: true
+                    text: KI18n.i18nc("@info %1 and %2 are numbers, %3 a file name", "Uploading %1 of %2 · %3",
+                                      Math.min(page.uploader.filesDoneInRun + 1, page.uploader.filesInRun),
+                                      page.uploader.filesInRun, page.uploader.currentFileName)
+                    elide: Text.ElideMiddle
+                }
+
+                Controls.ProgressBar {
+                    objectName: "uploadProgress"
+                    Layout.fillWidth: true
+                    from: 0
+                    to: 1
+                    value: page.uploader.runProgress
+                }
+            }
+
             RowLayout {
                 Layout.fillWidth: true
                 spacing: Kirigami.Units.smallSpacing

@@ -272,6 +272,16 @@ QFuture<Result<Image>> RestServerClient::uploadImage(const ImageUpload& upload)
     form.fileField = "file";
     form.filePath = upload.filePath;
     form.fileName = upload.originalFilename;
+    if (upload.onProgress)
+    {
+        form.onProgress = [onProgress = upload.onProgress](qint64 bytesSent, qint64 bytesTotal) {
+            if (bytesTotal > 0)  // unknown until the body is ready
+            {
+                onProgress(static_cast<double>(bytesSent) / static_cast<double>(bytesTotal));
+            }
+        };
+    }
+
     return sendForm(QStringLiteral("/images"), form).then([](const HttpResponse& response) {
         return jsonAnswer(response, statusCreated, imageFrom);
     });

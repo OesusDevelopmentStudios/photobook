@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <functional>
 #include <optional>
 
 #include <QByteArray>
@@ -24,6 +25,8 @@ struct MultipartForm
     QByteArray fileField;
     QString filePath;
     QString fileName;  // as the server sees it
+    // Told how much of the body is sent while it is sent, in the transport's thread; may be left empty.
+    std::function<void(qint64 bytesSent, qint64 bytesTotal)> onProgress;
 };
 
 struct HttpRequest
