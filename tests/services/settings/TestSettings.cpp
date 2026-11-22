@@ -59,7 +59,7 @@ void TestSettings::keepsValuesAfterRestart()
         settings->setSlideshowIntervalSeconds(12);
         settings->setSlideshowOrder(QStringLiteral("date"));
         settings->setServerUrl(QUrl(QStringLiteral("https://photos.example.org")));
-        settings->setServerUsername(QStringLiteral("kid"));
+        settings->setServerUsername(QStringLiteral("restrictedUser"));
         settings->setLibrarySidebarVisible(false);
         settings->setLibraryTileSize(14);
     }
@@ -69,7 +69,7 @@ void TestSettings::keepsValuesAfterRestart()
     QCOMPARE(settingsAfterRestart->slideshowIntervalSeconds(), 12);
     QCOMPARE(settingsAfterRestart->slideshowOrder(), QStringLiteral("date"));
     QCOMPARE(settingsAfterRestart->serverUrl(), QUrl(QStringLiteral("https://photos.example.org")));
-    QCOMPARE(settingsAfterRestart->serverUsername(), QStringLiteral("kid"));
+    QCOMPARE(settingsAfterRestart->serverUsername(), QStringLiteral("restrictedUser"));
     QCOMPARE(settingsAfterRestart->librarySidebarVisible(), false);
     QCOMPARE(settingsAfterRestart->libraryTileSize(), 14);
 }
@@ -81,7 +81,7 @@ void TestSettings::writesReadableConfigFile()
     settings->setSlideshowIntervalSeconds(7);
     settings->setSlideshowOrder(QStringLiteral("random"));
     settings->setServerUrl(QUrl(QStringLiteral("http://raspberrypi.local:8737")));
-    settings->setServerUsername(QStringLiteral("kid"));
+    settings->setServerUsername(QStringLiteral("restrictedUser"));
     settings->setLibrarySidebarVisible(false);
     settings->setLibraryTileSize(12);
 
@@ -93,7 +93,7 @@ void TestSettings::writesReadableConfigFile()
     QCOMPARE(slideshowGroup.readEntry("IntervalSeconds", 0), 7);
     QCOMPARE(slideshowGroup.readEntry("Order", QString()), QStringLiteral("random"));
     QCOMPARE(serverGroup.readEntry("Url", QString()), QStringLiteral("http://raspberrypi.local:8737"));
-    QCOMPARE(serverGroup.readEntry("Username", QString()), QStringLiteral("kid"));
+    QCOMPARE(serverGroup.readEntry("Username", QString()), QStringLiteral("restrictedUser"));
     QCOMPARE(libraryGroup.readEntry("SidebarVisible", QString()), QStringLiteral("false"));
     QCOMPARE(libraryGroup.readEntry("TileSize", 0), 12);
     QVERIFY(!serverGroup.keyList().contains(QStringLiteral("Token")));  // the token belongs in the keyring

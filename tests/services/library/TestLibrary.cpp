@@ -115,11 +115,11 @@ void TestLibrary::init()
     m_settings = settings::createSettings(m_folder->filePath(QStringLiteral("photobookrc")));
     m_settings->setServerUrl(QUrl(serverUrl));
     m_server = std::make_shared<FakeServer>();
-    const QJsonObject kid{{QStringLiteral("id"), 2},
-                          {QStringLiteral("username"), QStringLiteral("kid")},
+    const QJsonObject restrictedUser{{QStringLiteral("id"), 2},
+                          {QStringLiteral("username"), QStringLiteral("restrictedUser")},
                           {QStringLiteral("role"), QStringLiteral("user")},
                           {QStringLiteral("restricted_tags"), QJsonArray()}};
-    m_server->answer("GET", serverUrl + QStringLiteral("/api/v1/auth/me"), jsonResponse(200, kid));
+    m_server->answer("GET", serverUrl + QStringLiteral("/api/v1/auth/me"), jsonResponse(200, restrictedUser));
     m_server->answerWith("GET", imagesUrl, [](const HttpRequest& request) {
         if (parameter(request, QStringLiteral("q")) == QLatin1String("category:photo"))
         {
@@ -139,7 +139,7 @@ void TestLibrary::init()
         const bool photos = parameter(request, QStringLiteral("q")) == QLatin1String("category:photo");
         return jsonResponse(200,
                             {{QStringLiteral("count"), photos ? 1 : 3},
-                             {QStringLiteral("effective_query"), QStringLiteral("-rating:nsfw")}});
+                             {QStringLiteral("effective_query"), QStringLiteral("-rating:private")}});
     });
 
     auto keyring = std::make_shared<fakes::Keyring>();
@@ -174,7 +174,7 @@ void TestLibrary::loadsTheFirstPageOnceLoggedIn()
     QCOMPARE(parameter(request, QStringLiteral("limit")), QStringLiteral("100"));
     QCOMPARE(parameter(request, QStringLiteral("sort")), QStringLiteral("taken_at"));
     QCOMPARE(parameter(request, QStringLiteral("order")), QStringLiteral("desc"));
-    QCOMPARE(m_library->effectiveQuery(), QStringLiteral("-rating:nsfw"));
+    QCOMPARE(m_library->effectiveQuery(), QStringLiteral("-rating:private"));
     QVERIFY(m_library->canFetchMore({}));
     QVERIFY(m_library->hasMoreToLoad());
 }

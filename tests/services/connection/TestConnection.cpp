@@ -33,8 +33,8 @@ const QString serverUrl = QStringLiteral("https://photos.example.org");
 const QString localUrl = serverUrl + QStringLiteral("/api/v1/server/local");
 
 const QByteArray serverInfoJson = R"({"name":"photobook-db","version":"0.1.0","api_version":1,"setup_required":false})";
-const QByteArray loginJson = R"({"token_id":3,"token":"pk_new","user":{"id":2,"username":"kid","role":"user"}})";
-const QByteArray currentUserJson = R"({"id":2,"username":"kid","role":"user","restricted_tags":["rating:nsfw"]})";
+const QByteArray loginJson = R"({"token_id":3,"token":"pk_new","user":{"id":2,"username":"restrictedUser","role":"user"}})";
+const QByteArray currentUserJson = R"({"id":2,"username":"restrictedUser","role":"user","restricted_tags":["rating:private"]})";
 const QByteArray devicesJson = R"([{"token_id":3,"device_name":"laptop","created_at":"2026-11-15T19:22:03Z",
     "last_used_at":"2026-11-15T19:22:04Z","expires_at":null,"is_current":true}])";
 
@@ -73,7 +73,7 @@ private Q_SLOTS:
 private:
     // machineId: this computer's app-specific ID; empty: none known
     std::unique_ptr<Connection> createConnection(const QString& machineId = {});
-    void logInAsKid(Connection& connection);
+    void logInAsrestrictedUser(Connection& connection);
 
     std::unique_ptr<QTemporaryDir> m_folder;
     std::unique_ptr<settings::Settings> m_settings;
@@ -103,11 +103,11 @@ std::unique_ptr<Connection> TestConnection::createConnection(const QString& mach
         serverClientFactory, std::make_unique<FakeTokenStore>(m_keyring), m_settings.get(), machineId);
 }
 
-void TestConnection::logInAsKid(Connection& connection)
+void TestConnection::logInAsrestrictedUser(Connection& connection)
 {
     connection.checkServer(serverUrl);
     QTRY_COMPARE(connection.state(), Connection::State::ServerFound);
-    connection.logIn(QStringLiteral("kid"), QStringLiteral("correct horse"));
+    connection.logIn(QStringLiteral("restrictedUser"), QStringLiteral("correct horse"));
     QTRY_COMPARE(connection.state(), Connection::State::LoggedIn);
 }
 
@@ -184,14 +184,14 @@ void TestConnection::logsInAndKeepsTheLogin()
 {
     const auto connection = createConnection();
 
-    logInAsKid(*connection);
+    logInAsrestrictedUser(*connection);
 
-    QCOMPARE(connection->username(), QStringLiteral("kid"));
+    QCOMPARE(connection->username(), QStringLiteral("restrictedUser"));
     QCOMPARE(m_keyring->tokens.value(serverUrl), QStringLiteral("pk_new"));
     QCOMPARE(connection->token(), QStringLiteral("pk_new"));
     QCOMPARE(m_settings->serverUrl(), QUrl(serverUrl));
-    QCOMPARE(m_settings->serverUsername(), QStringLiteral("kid"));
-    QTRY_COMPARE(connection->restrictedTags(), QStringList({QStringLiteral("rating:nsfw")}));
+    QCOMPARE(m_settings->serverUsername(), QStringLiteral("restrictedUser"));
+    QTRY_COMPARE(connection->restrictedTags(), QStringList({QStringLiteral("rating:private")}));
     const QList<HttpRequest> meRequests = m_server->requestsTo("GET", serverUrl + QStringLiteral("/api/v1/auth/me"));
     QCOMPARE(fakes::authorizationOf(meRequests.last()), QByteArray("Bearer pk_new"));
     QVERIFY(connection->keyringWarning().isEmpty());
@@ -204,7 +204,7 @@ void TestConnection::staysOnTheLoginAfterAWrongPassword()
     connection->checkServer(serverUrl);
     QTRY_COMPARE(connection->state(), Connection::State::ServerFound);
 
-    connection->logIn(QStringLiteral("kid"), QStringLiteral("wrong"));
+    connection->logIn(QStringLiteral("restrictedUser"), QStringLiteral("wrong"));
 
     QTRY_COMPARE(connection->errorMessage(), QStringLiteral("Wrong username or password."));
     QCOMPARE(connection->state(), Connection::State::ServerFound);
@@ -216,7 +216,7 @@ void TestConnection::logsInWithoutAKeyring()
     m_keyring->available = false;
     const auto connection = createConnection();
 
-    logInAsKid(*connection);
+    logInAsrestrictedUser(*connection);
 
     QTRY_VERIFY(connection->keyringWarning().contains(QStringLiteral("log in again")));
     QCOMPARE(connection->state(), Connection::State::LoggedIn);  // until the app ends
@@ -234,14 +234,14 @@ void TestConnection::startsWithoutServerIfNoneIsRemembered()
 void TestConnection::restoresTheLoginAtStart()
 {
     m_settings->setServerUrl(QUrl(serverUrl));
-    m_settings->setServerUsername(QStringLiteral("kid"));
+    m_settings->setServerUsername(QStringLiteral("restrictedUser"));
     m_keyring->tokens.insert(serverUrl, QStringLiteral("pk_kept"));
     const auto connection = createConnection();
 
     connection->restoreLogin();
 
     QTRY_COMPARE(connection->state(), Connection::State::LoggedIn);
-    QCOMPARE(connection->restrictedTags(), QStringList({QStringLiteral("rating:nsfw")}));
+    QCOMPARE(connection->restrictedTags(), QStringList({QStringLiteral("rating:private")}));
     QVERIFY(m_server->requestsTo("POST", serverUrl + QStringLiteral("/api/v1/auth/tokens")).isEmpty());  // no password
     const QList<HttpRequest> meRequests = m_server->requestsTo("GET", serverUrl + QStringLiteral("/api/v1/auth/me"));
     QCOMPARE(fakes::authorizationOf(meRequests.last()), QByteArray("Bearer pk_kept"));
@@ -250,7 +250,7 @@ void TestConnection::restoresTheLoginAtStart()
 void TestConnection::asksToLogInAgainWhenTheLoginHasEnded()
 {
     m_settings->setServerUrl(QUrl(serverUrl));
-    m_settings->setServerUsername(QStringLiteral("kid"));
+    m_settings->setServerUsername(QStringLiteral("restrictedUser"));
     m_keyring->tokens.insert(serverUrl, QStringLiteral("pk_revoked"));
     m_server->answer("GET", serverUrl + QStringLiteral("/api/v1/auth/me"), problem(401, "not_authenticated"));
     const auto connection = createConnection();
@@ -259,7 +259,7 @@ void TestConnection::asksToLogInAgainWhenTheLoginHasEnded()
 
     QTRY_COMPARE(connection->state(), Connection::State::ServerFound);
     QCOMPARE(connection->errorMessage(), QStringLiteral("Your login has ended. Log in again."));
-    QCOMPARE(connection->username(), QStringLiteral("kid"));  // filled in for the next login
+    QCOMPARE(connection->username(), QStringLiteral("restrictedUser"));  // filled in for the next login
     QVERIFY(m_keyring->tokens.isEmpty());
 }
 
@@ -280,7 +280,7 @@ void TestConnection::staysOfflineWhenTheServerDoesNotAnswer()
 void TestConnection::logsOutAndEndsThisDevicesLogin()
 {
     const auto connection = createConnection();
-    logInAsKid(*connection);
+    logInAsrestrictedUser(*connection);
 
     connection->logOut();
 
@@ -295,13 +295,13 @@ void TestConnection::logsOutAndEndsThisDevicesLogin()
 
 void TestConnection::learnsWhereTheLibraryIsWhenTheServerRunsHere()
 {
-    m_server->answer("GET", localUrl, response(200, R"({"library_dir":"/home/kid/Pictures/photobook-library"})"));
+    m_server->answer("GET", localUrl, response(200, R"({"library_dir":"/home/restrictedUser/Pictures/photobook-library"})"));
     const auto connection = createConnection(QStringLiteral("9d623a36"));
     QSignalSpy changed(connection.get(), &Connection::localLibraryDirChanged);
 
-    logInAsKid(*connection);
+    logInAsrestrictedUser(*connection);
 
-    QTRY_COMPARE(connection->localLibraryDir(), QStringLiteral("/home/kid/Pictures/photobook-library"));
+    QTRY_COMPARE(connection->localLibraryDir(), QStringLiteral("/home/restrictedUser/Pictures/photobook-library"));
     QCOMPARE(changed.size(), 1);
     const QUrl asked = m_server->requestsTo("GET", localUrl).first().url;
     QCOMPARE(QUrlQuery(asked).queryItemValue(QStringLiteral("machine")), QStringLiteral("9d623a36"));
@@ -309,14 +309,14 @@ void TestConnection::learnsWhereTheLibraryIsWhenTheServerRunsHere()
 
 void TestConnection::learnsItWhenTheLoginIsRestored()
 {
-    m_server->answer("GET", localUrl, response(200, R"({"library_dir":"/home/kid/Pictures/photobook-library"})"));
+    m_server->answer("GET", localUrl, response(200, R"({"library_dir":"/home/restrictedUser/Pictures/photobook-library"})"));
     m_settings->setServerUrl(QUrl(serverUrl));
     m_keyring->tokens.insert(serverUrl, QStringLiteral("pk_kept"));
     const auto connection = createConnection(QStringLiteral("9d623a36"));
 
     connection->restoreLogin();
 
-    QTRY_COMPARE(connection->localLibraryDir(), QStringLiteral("/home/kid/Pictures/photobook-library"));
+    QTRY_COMPARE(connection->localLibraryDir(), QStringLiteral("/home/restrictedUser/Pictures/photobook-library"));
 }
 
 void TestConnection::knowsNoFolderOfAServerElsewhere()
@@ -324,7 +324,7 @@ void TestConnection::knowsNoFolderOfAServerElsewhere()
     m_server->answer("GET", localUrl, problem(404, "not_same_machine"));
     const auto connection = createConnection(QStringLiteral("9d623a36"));
 
-    logInAsKid(*connection);
+    logInAsrestrictedUser(*connection);
 
     QTRY_COMPARE(m_server->requestsTo("GET", localUrl).size(), 1);
     QTest::qWait(50);  // the answer arrives after the request
@@ -336,7 +336,7 @@ void TestConnection::doesNotAskWithoutAMachineId()
 {
     const auto connection = createConnection();
 
-    logInAsKid(*connection);
+    logInAsrestrictedUser(*connection);
 
     QTest::qWait(50);
     QVERIFY(m_server->requestsTo("GET", localUrl).isEmpty());
@@ -345,9 +345,9 @@ void TestConnection::doesNotAskWithoutAMachineId()
 
 void TestConnection::forgetsTheFolderOnLogout()
 {
-    m_server->answer("GET", localUrl, response(200, R"({"library_dir":"/home/kid/Pictures/photobook-library"})"));
+    m_server->answer("GET", localUrl, response(200, R"({"library_dir":"/home/restrictedUser/Pictures/photobook-library"})"));
     const auto connection = createConnection(QStringLiteral("9d623a36"));
-    logInAsKid(*connection);
+    logInAsrestrictedUser(*connection);
     QTRY_VERIFY(!connection->localLibraryDir().isEmpty());
 
     connection->logOut();

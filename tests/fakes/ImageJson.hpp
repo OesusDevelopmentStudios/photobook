@@ -56,7 +56,7 @@ inline server_client::HttpResponse imagePageJson(const QList<int>& imageIds, con
                             {QStringLiteral("items"), items},
                             {QStringLiteral("next_cursor"),
                              nextCursor.isEmpty() ? QJsonValue(QJsonValue::Null) : QJsonValue(nextCursor)},
-                            {QStringLiteral("effective_query"), QStringLiteral("-rating:nsfw")},
+                            {QStringLiteral("effective_query"), QStringLiteral("-rating:private")},
                         });
 }
 

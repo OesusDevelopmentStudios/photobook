@@ -6,7 +6,7 @@ import QtTest
 import io.github.oesusdevelopmentstudios.photobook
 import photobook.tests
 
-// The server has "rating:nsfw" and "category:refs" saved and keeps what is saved; the page loads them on opening.
+// The server has "rating:private" and "category:refs" saved and keeps what is saved; the page loads them on opening.
 Item {
     id: root
 
@@ -69,7 +69,7 @@ Item {
         function test_showsTheSavedFilters() {
             const page = shownPage();
 
-            compare(shownFilters(page), ["rating:nsfw", "category:refs"]);
+            compare(shownFilters(page), ["rating:private", "category:refs"]);
             verify(!findChild(page, "saveFilters").enabled, "nothing to save");
             verify(!findChild(page, "noFilters").visible);
         }
@@ -79,12 +79,12 @@ Item {
 
             mouseClick(chipAt(page, 0).indicator);
 
-            compare(shownFilters(page), ["-rating:nsfw", "category:refs"]);
+            compare(shownFilters(page), ["-rating:private", "category:refs"]);
             verify(findChild(page, "saveFilters").enabled);
 
             mouseClick(findChild(page, "cancelFilters"));
 
-            compare(shownFilters(page), ["rating:nsfw", "category:refs"]);
+            compare(shownFilters(page), ["rating:private", "category:refs"]);
             verify(!findChild(page, "saveFilters").enabled);
         }
 
@@ -93,7 +93,7 @@ Item {
 
             typeFilter(page, "character:*");
 
-            compare(shownFilters(page), ["rating:nsfw", "category:refs", "+character:*"]);
+            compare(shownFilters(page), ["rating:private", "category:refs", "+character:*"]);
             compare(findChild(page, "addFilter").text, "", "the field empties once added");
         }
 
@@ -108,17 +108,17 @@ Item {
             keyClick(Qt.Key_Down);
             keyClick(Qt.Key_Return);
 
-            compare(shownFilters(page), ["rating:nsfw", "category:refs", "+character:sample_hero"]);
+            compare(shownFilters(page), ["rating:private", "category:refs", "+character:sample_hero"]);
         }
 
         function test_saysWhyAFilterIsRefused() {
             const page = shownPage();
 
-            typeFilter(page, "-rating:nsfw");
+            typeFilter(page, "-rating:private");
 
             verify(findChild(page, "errorMessage").visible);
-            compare(shownFilters(page), ["rating:nsfw", "category:refs"]);
-            compare(findChild(page, "addFilter").text, "-rating:nsfw", "kept, to correct");
+            compare(shownFilters(page), ["rating:private", "category:refs"]);
+            compare(findChild(page, "addFilter").text, "-rating:private", "kept, to correct");
         }
 
         function test_savesTheChanges() {
@@ -129,7 +129,7 @@ Item {
             mouseClick(findChild(page, "saveFilters"));
 
             tryCompare(editor, "saving", false);
-            compare(shownFilters(page), ["rating:nsfw", "character:*"]);
+            compare(shownFilters(page), ["rating:private", "character:*"]);
             verify(!findChild(page, "saveFilters").enabled, "nothing left to save");
         }
 

@@ -106,7 +106,7 @@ void TestEndToEndLogin::learnsWhatIsRestrictedForTheUser()
 
     // Asked for right after logging in
     QTRY_COMPARE_WITH_TIMEOUT(
-        connection->restrictedTags(), QStringList({QStringLiteral("rating:nsfw")}), answerTimeout);
+        connection->restrictedTags(), QStringList({QStringLiteral("rating:private")}), answerTimeout);
 }
 
 void TestEndToEndLogin::staysLoggedInAfterARestart()

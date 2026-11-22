@@ -54,7 +54,7 @@ ColumnLayout {
         Layout.fillWidth: true
         editor: settings.editor
         namespaceName: ""  // a whole search term
-        placeholderText: KI18n.i18nc("@info:placeholder", "Add a filter, e.g. rating:nsfw…")
+        placeholderText: KI18n.i18nc("@info:placeholder", "Add a filter, e.g. rating:private…")
     }
 
     Kirigami.InlineMessage {

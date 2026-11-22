@@ -91,7 +91,7 @@ void TestLibraryNavigation::init()
                      serverUrl + QStringLiteral("/api/v1/auth/me"),
                      fakes::jsonResponse(200,
                                          {{QStringLiteral("id"), 2},
-                                          {QStringLiteral("username"), QStringLiteral("kid")},
+                                          {QStringLiteral("username"), QStringLiteral("restrictedUser")},
                                           {QStringLiteral("role"), QStringLiteral("user")},
                                           {QStringLiteral("restricted_tags"), QJsonArray()}}));
     m_server->answerWith("GET", imagesUrl, [](const HttpRequest& request) {
@@ -112,7 +112,7 @@ void TestLibraryNavigation::init()
                      countUrl,
                      fakes::jsonResponse(200,
                                          {{QStringLiteral("count"), resultCount},
-                                          {QStringLiteral("effective_query"), QStringLiteral("-rating:nsfw")}}));
+                                          {QStringLiteral("effective_query"), QStringLiteral("-rating:private")}}));
 
     auto keyring = std::make_shared<fakes::Keyring>();
     keyring->tokens.insert(serverUrl, QStringLiteral("pk_kept"));

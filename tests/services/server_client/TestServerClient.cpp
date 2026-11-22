@@ -244,7 +244,7 @@ void TestServerClient::readsTheServerInfo()
 
 void TestServerClient::asksWhereTheLibraryIsOnThisComputer()
 {
-    m_transport->nextResponse = answer(200, R"({"library_dir":"/home/kid/Pictures/photobook-library"})");
+    m_transport->nextResponse = answer(200, R"({"library_dir":"/home/restrictedUser/Pictures/photobook-library"})");
 
     const Result<LocalLibrary> library = valueOf(m_client->localLibrary(QStringLiteral("9d623a36")));
 
@@ -252,45 +252,45 @@ void TestServerClient::asksWhereTheLibraryIsOnThisComputer()
     QCOMPARE(url.path(), QStringLiteral("/api/v1/server/local"));
     QCOMPARE(serverSideValue(url, "machine"), QStringLiteral("9d623a36"));
     QVERIFY(library.has_value());
-    QCOMPARE(library->libraryDir, QStringLiteral("/home/kid/Pictures/photobook-library"));
+    QCOMPARE(library->libraryDir, QStringLiteral("/home/restrictedUser/Pictures/photobook-library"));
 }
 
 void TestServerClient::logsInAndReadsTheToken()
 {
     m_transport->nextResponse = answer(201, R"({"token_id":3,"token":"pk_new",
-                                                "user":{"id":2,"username":"kid","role":"user"}})");
+                                                "user":{"id":2,"username":"restrictedUser","role":"user"}})");
 
     const Result<Login> login =
-        valueOf(m_client->logIn(QStringLiteral("kid"), QStringLiteral("correct horse"), QStringLiteral("laptop")));
+        valueOf(m_client->logIn(QStringLiteral("restrictedUser"), QStringLiteral("correct horse"), QStringLiteral("laptop")));
 
     const HttpRequest request = m_transport->lastRequest();
     QCOMPARE(request.method, QByteArray("POST"));
     QCOMPARE(request.url.path(), QStringLiteral("/api/v1/auth/tokens"));
     QCOMPARE(headerOf(request, "Content-Type"), QByteArray("application/json"));
     QCOMPARE(jsonBodyOf(request),
-             QJsonObject({{QStringLiteral("username"), QStringLiteral("kid")},
+             QJsonObject({{QStringLiteral("username"), QStringLiteral("restrictedUser")},
                           {QStringLiteral("password"), QStringLiteral("correct horse")},
                           {QStringLiteral("device_name"), QStringLiteral("laptop")}}));
     QVERIFY(login.has_value());
     QCOMPARE(login->tokenId, 3);
     QCOMPARE(login->token, QStringLiteral("pk_new"));
     QCOMPARE(login->user.id, 2);
-    QCOMPARE(login->user.username, QStringLiteral("kid"));
+    QCOMPARE(login->user.username, QStringLiteral("restrictedUser"));
     QVERIFY(login->user.role == Role::User);
 }
 
 void TestServerClient::readsTheCurrentUser()
 {
-    m_transport->nextResponse = answer(200, R"({"id":1,"username":"apo","role":"admin",
-                                                "restricted_tags":["rating:nsfw","character:*"]})");
+    m_transport->nextResponse = answer(200, R"({"id":1,"username":"normalUser","role":"admin",
+                                                "restricted_tags":["rating:private","character:*"]})");
 
     const Result<CurrentUser> currentUser = valueOf(m_client->currentUser());
 
     QCOMPARE(m_transport->lastRequest().url.path(), QStringLiteral("/api/v1/auth/me"));
     QVERIFY(currentUser.has_value());
-    QCOMPARE(currentUser->user.username, QStringLiteral("apo"));
+    QCOMPARE(currentUser->user.username, QStringLiteral("normalUser"));
     QVERIFY(currentUser->user.role == Role::Admin);
-    QCOMPARE(currentUser->restrictedTags, QStringList({QStringLiteral("rating:nsfw"), QStringLiteral("character:*")}));
+    QCOMPARE(currentUser->restrictedTags, QStringList({QStringLiteral("rating:private"), QStringLiteral("character:*")}));
 }
 
 void TestServerClient::readsTheDevices()
@@ -388,10 +388,10 @@ void TestServerClient::reportsAnswersThatAreNotJson()
 
 void TestServerClient::namesTheFieldThatIsMissing()
 {
-    m_transport->nextResponse = answer(201, R"({"token_id":3,"token":"pk_new","user":{"id":2,"username":"kid"}})");
+    m_transport->nextResponse = answer(201, R"({"token_id":3,"token":"pk_new","user":{"id":2,"username":"restrictedUser"}})");
 
     const Result<Login> result =
-        valueOf(m_client->logIn(QStringLiteral("kid"), QStringLiteral("correct horse"), QStringLiteral("laptop")));
+        valueOf(m_client->logIn(QStringLiteral("restrictedUser"), QStringLiteral("correct horse"), QStringLiteral("laptop")));
 
     QVERIFY(!result.has_value());
     QCOMPARE(result.error().code, invalidResponseCode);
@@ -400,7 +400,7 @@ void TestServerClient::namesTheFieldThatIsMissing()
 
 void TestServerClient::refusesAnUnknownRole()
 {
-    m_transport->nextResponse = answer(200, R"({"id":1,"username":"apo","role":"owner","restricted_tags":[]})");
+    m_transport->nextResponse = answer(200, R"({"id":1,"username":"normalUser","role":"owner","restricted_tags":[]})");
 
     const Result<CurrentUser> result = valueOf(m_client->currentUser());
 
@@ -436,13 +436,13 @@ void TestServerClient::searchesWithEveryParameter()
 void TestServerClient::readsAPageOfImages()
 {
     m_transport->nextResponse = answer(200, R"({"items":[)" + beachImageJson() + R"(],
-        "next_cursor":"eyJ0IjoiMjAyNSJ9","effective_query":"category:photo -rating:nsfw"})");
+        "next_cursor":"eyJ0IjoiMjAyNSJ9","effective_query":"category:photo -rating:private"})");
 
     const Result<ImagePage> page = valueOf(m_client->searchImages(ImageQuery()));
 
     QVERIFY(page.has_value());
     QCOMPARE(page->nextCursor, QStringLiteral("eyJ0IjoiMjAyNSJ9"));
-    QCOMPARE(page->effectiveQuery, QStringLiteral("category:photo -rating:nsfw"));
+    QCOMPARE(page->effectiveQuery, QStringLiteral("category:photo -rating:private"));
     QCOMPARE(page->items.size(), 1);
     const Image beach = page->items.at(0);
     QCOMPARE(beach.id, 5);
@@ -474,7 +474,7 @@ void TestServerClient::hasNoCursorOnTheLastPage()
 
 void TestServerClient::countsTheImagesASearchFinds()
 {
-    m_transport->nextResponse = answer(200, R"({"count":11230,"effective_query":"summer -rating:nsfw"})");
+    m_transport->nextResponse = answer(200, R"({"count":11230,"effective_query":"summer -rating:private"})");
     ImageQuery query;
     query.text = QStringLiteral("summer");
     query.sortBy = SortBy::Random;  // not part of a count
@@ -490,7 +490,7 @@ void TestServerClient::countsTheImagesASearchFinds()
     QVERIFY(!url.query().contains(QStringLiteral("sort")));
     QVERIFY(!url.query().contains(QStringLiteral("cursor")));
     QCOMPARE(found->count, 11230);
-    QCOMPARE(found->effectiveQuery, QStringLiteral("summer -rating:nsfw"));
+    QCOMPARE(found->effectiveQuery, QStringLiteral("summer -rating:private"));
 }
 
 void TestServerClient::readsOneImage()
@@ -666,7 +666,7 @@ void TestServerClient::readsTheNamespaces()
     m_transport->nextResponse = answer(200, R"({"items":[
         {"name":"category","single_value":true,"is_builtin":true,"in_path_template":true,"allowed_values":null},
         {"name":"rating","single_value":true,"is_builtin":true,"in_path_template":false,
-         "allowed_values":["sfw","nsfw"]},
+         "allowed_values":["public","private"]},
         {"name":"weather","single_value":false,"is_builtin":false,"in_path_template":false,"allowed_values":null}]})");
 
     const Result<QList<Namespace>> namespaces = valueOf(m_client->namespaces());
@@ -678,27 +678,27 @@ void TestServerClient::readsTheNamespaces()
     QCOMPARE(category.name, QStringLiteral("category"));
     QVERIFY(category.singleValue && category.isBuiltin && category.inPathTemplate);
     QCOMPARE(category.allowedValues, std::nullopt);  // any name
-    QCOMPARE(namespaces->at(1).allowedValues, QStringList({QStringLiteral("sfw"), QStringLiteral("nsfw")}));
+    QCOMPARE(namespaces->at(1).allowedValues, QStringList({QStringLiteral("public"), QStringLiteral("private")}));
     QVERIFY(!namespaces->at(2).singleValue);
 }
 
 void TestServerClient::readsAndReplacesThePreferences()
 {
-    m_transport->nextResponse = answer(200, R"({"hidden_filters":["rating:nsfw"]})");
+    m_transport->nextResponse = answer(200, R"({"hidden_filters":["rating:private"]})");
     const Result<Preferences> stored = valueOf(m_client->preferences());
     QCOMPARE(m_transport->lastRequest().url.path(), QStringLiteral("/api/v1/preferences"));
-    QCOMPARE(stored->hiddenFilters, QStringList({QStringLiteral("rating:nsfw")}));
+    QCOMPARE(stored->hiddenFilters, QStringList({QStringLiteral("rating:private")}));
 
-    m_transport->nextResponse = answer(200, R"({"hidden_filters":["rating:nsfw","category:refs"]})");
+    m_transport->nextResponse = answer(200, R"({"hidden_filters":["rating:private","category:refs"]})");
     Preferences changed;
-    changed.hiddenFilters = {QStringLiteral("rating:nsfw"), QStringLiteral("category:refs")};
+    changed.hiddenFilters = {QStringLiteral("rating:private"), QStringLiteral("category:refs")};
     const Result<Preferences> saved = valueOf(m_client->setPreferences(changed));
 
     const HttpRequest request = m_transport->lastRequest();
     QCOMPARE(request.method, QByteArray("PUT"));
     QCOMPARE(jsonBodyOf(request),
              QJsonObject({{QStringLiteral("hidden_filters"),
-                           QJsonArray({QStringLiteral("rating:nsfw"), QStringLiteral("category:refs")})}}));
+                           QJsonArray({QStringLiteral("rating:private"), QStringLiteral("category:refs")})}}));
     QCOMPARE(saved->hiddenFilters, changed.hiddenFilters);
 }
 

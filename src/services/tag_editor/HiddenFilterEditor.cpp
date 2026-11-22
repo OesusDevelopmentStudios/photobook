@@ -154,7 +154,7 @@ bool HiddenFilterEditor::addTag(const QString& namespaceName, const QString& typ
     if (!SearchTerm::parse(filter, m_namespaces->names()).has_value())
     {
         setErrorMessage(i18nc("@info %1 is what the user typed",
-                              "\"%1\" is not one search term, such as rating:nsfw, rating:nsfw|questionable or "
+                              "\"%1\" is not one search term, such as rating:private, rating:private|restricted or "
                               "character:*.",
                               filter));
         return false;

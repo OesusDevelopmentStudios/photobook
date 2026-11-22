@@ -67,7 +67,7 @@ QStringList shownFilters(const HiddenFilterEditor& editor)
 
 }  // namespace
 
-// The user's hidden filters. The server has "rating:nsfw" and "category:refs" saved.
+// The user's hidden filters. The server has "rating:private" and "category:refs" saved.
 class TestHiddenFilterEditor : public QObject
 {
     Q_OBJECT
@@ -118,7 +118,7 @@ void TestHiddenFilterEditor::init()
                      serverUrl + QStringLiteral("/api/v1/auth/me"),
                      fakes::jsonResponse(200,
                                          {{QStringLiteral("id"), 2},
-                                          {QStringLiteral("username"), QStringLiteral("kid")},
+                                          {QStringLiteral("username"), QStringLiteral("restrictedUser")},
                                           {QStringLiteral("role"), QStringLiteral("user")},
                                           {QStringLiteral("restricted_tags"), QJsonArray()}}));
     m_server->answer("GET",
@@ -133,7 +133,7 @@ void TestHiddenFilterEditor::init()
                      serverUrl + QStringLiteral("/api/v1/tags"),
                      fakes::jsonResponse(200, {{QStringLiteral("items"), QJsonArray()}}));
     m_server->answer(
-        "GET", preferencesUrl, preferencesJson({QStringLiteral("rating:nsfw"), QStringLiteral("category:refs")}));
+        "GET", preferencesUrl, preferencesJson({QStringLiteral("rating:private"), QStringLiteral("category:refs")}));
     // The server keeps what it is sent.
     m_server->answerWith("PUT", preferencesUrl, [](const server_client::HttpRequest& request) {
         return fakes::jsonResponse(200, QJsonDocument::fromJson(request.body).object());
@@ -155,7 +155,7 @@ void TestHiddenFilterEditor::init()
 
 void TestHiddenFilterEditor::loadsTheSavedFilters()
 {
-    QCOMPARE(shownFilters(*m_editor), QStringList({QStringLiteral("rating:nsfw"), QStringLiteral("category:refs")}));
+    QCOMPARE(shownFilters(*m_editor), QStringList({QStringLiteral("rating:private"), QStringLiteral("category:refs")}));
     QVERIFY(!m_editor->hasChanges());
     QVERIFY(!m_editor->isBusy());
     QVERIFY(m_editor->errorMessage().isEmpty());
@@ -168,7 +168,7 @@ void TestHiddenFilterEditor::addsAFilter()
     QVERIFY(m_editor->addTag({}, QStringLiteral(" character:sample_hero ")));
 
     QCOMPARE(shownFilters(*m_editor),
-             QStringList({QStringLiteral("rating:nsfw"),
+             QStringList({QStringLiteral("rating:private"),
                           QStringLiteral("category:refs"),
                           QStringLiteral("+character:sample_hero")}));
     QVERIFY(m_editor->hasChanges());
@@ -178,27 +178,27 @@ void TestHiddenFilterEditor::addsAFilter()
 
 void TestHiddenFilterEditor::acceptsAnyOneSearchTerm()
 {
-    const QStringList terms{QStringLiteral("rating:nsfw|questionable"),
+    const QStringList terms{QStringLiteral("rating:private|restricted"),
                             QStringLiteral("character:*"),
                             QStringLiteral("general:nude,photo"),
-                            QStringLiteral("(rating:nsfw,general:photo)|category:refs")};
+                            QStringLiteral("(rating:private,general:photo)|category:refs")};
     for (const QString& term : terms)
     {
         QVERIFY2(m_editor->addTag({}, term), qPrintable(m_editor->errorMessage()));
     }
 
     QCOMPARE(m_editor->filtersAfterChanges(),
-             QStringList({QStringLiteral("rating:nsfw"), QStringLiteral("category:refs")}) + terms);
+             QStringList({QStringLiteral("rating:private"), QStringLiteral("category:refs")}) + terms);
 }
 
 void TestHiddenFilterEditor::refusesWhatIsNotOneSearchTerm_data()
 {
     QTest::addColumn<QString>("typed");
 
-    QTest::newRow("two terms") << QStringLiteral("rating:nsfw category:refs");
+    QTest::newRow("two terms") << QStringLiteral("rating:private category:refs");
     QTest::newRow("empty operand") << QStringLiteral("general:a,,b");
-    QTest::newRow("unbalanced") << QStringLiteral("(rating:nsfw|category:refs");
-    QTest::newRow("leading minus") << QStringLiteral("-rating:nsfw");
+    QTest::newRow("unbalanced") << QStringLiteral("(rating:private|category:refs");
+    QTest::newRow("leading minus") << QStringLiteral("-rating:private");
     QTest::newRow("too long") << QStringLiteral("general:") + QString(HiddenFilterEditor::maximumLength, u'a');
 }
 
@@ -227,7 +227,7 @@ void TestHiddenFilterEditor::refusesMoreFiltersThanTheServerKeeps()
 
 void TestHiddenFilterEditor::addsARepeatOnlyOnce()
 {
-    QVERIFY(m_editor->addTag({}, QStringLiteral("rating:nsfw")));  // saved already
+    QVERIFY(m_editor->addTag({}, QStringLiteral("rating:private")));  // saved already
     QVERIFY(!m_editor->hasChanges());
 
     QVERIFY(m_editor->addTag({}, QStringLiteral("character:*")));
@@ -235,20 +235,20 @@ void TestHiddenFilterEditor::addsARepeatOnlyOnce()
 
     QCOMPARE(
         m_editor->filtersAfterChanges(),
-        QStringList({QStringLiteral("rating:nsfw"), QStringLiteral("category:refs"), QStringLiteral("character:*")}));
+        QStringList({QStringLiteral("rating:private"), QStringLiteral("category:refs"), QStringLiteral("character:*")}));
 }
 
 void TestHiddenFilterEditor::removesAndRestoresAFilter()
 {
-    QVERIFY(m_editor->removeTag(QStringLiteral("rating:nsfw")));
+    QVERIFY(m_editor->removeTag(QStringLiteral("rating:private")));
 
-    QCOMPARE(shownFilters(*m_editor), QStringList({QStringLiteral("-rating:nsfw"), QStringLiteral("category:refs")}));
+    QCOMPARE(shownFilters(*m_editor), QStringList({QStringLiteral("-rating:private"), QStringLiteral("category:refs")}));
     QCOMPARE(m_editor->filtersAfterChanges(), QStringList({QStringLiteral("category:refs")}));
     QVERIFY(m_editor->hasChanges());
 
-    QVERIFY(m_editor->restoreTag(QStringLiteral("rating:nsfw")));
+    QVERIFY(m_editor->restoreTag(QStringLiteral("rating:private")));
 
-    QCOMPARE(shownFilters(*m_editor), QStringList({QStringLiteral("rating:nsfw"), QStringLiteral("category:refs")}));
+    QCOMPARE(shownFilters(*m_editor), QStringList({QStringLiteral("rating:private"), QStringLiteral("category:refs")}));
     QVERIFY(!m_editor->hasChanges());
 
     // Typing a removed filter again keeps it, too.
@@ -263,15 +263,15 @@ void TestHiddenFilterEditor::dropsAnAddedFilterOnRemove()
 
     QVERIFY(m_editor->removeTag(QStringLiteral("character:*")));
 
-    QCOMPARE(shownFilters(*m_editor), QStringList({QStringLiteral("rating:nsfw"), QStringLiteral("category:refs")}));
+    QCOMPARE(shownFilters(*m_editor), QStringList({QStringLiteral("rating:private"), QStringLiteral("category:refs")}));
     QVERIFY(!m_editor->hasChanges());
 }
 
 void TestHiddenFilterEditor::savesTheFiltersAfterTheChanges()
 {
     QSignalSpy saved(m_editor.get(), &HiddenFilterEditor::saved);
-    QVERIFY(m_editor->removeTag(QStringLiteral("rating:nsfw")));
-    QVERIFY(m_editor->addTag({}, QStringLiteral("rating:nsfw|questionable")));
+    QVERIFY(m_editor->removeTag(QStringLiteral("rating:private")));
+    QVERIFY(m_editor->addTag({}, QStringLiteral("rating:private|restricted")));
 
     m_editor->save();
 
@@ -279,9 +279,9 @@ void TestHiddenFilterEditor::savesTheFiltersAfterTheChanges()
     const QList<server_client::HttpRequest> puts = m_server->requestsTo("PUT", preferencesUrl);
     QCOMPARE(puts.size(), 1);  // all changes at once
     QCOMPARE(QJsonDocument::fromJson(puts.first().body).object().value(QStringLiteral("hidden_filters")).toArray(),
-             QJsonArray({QStringLiteral("category:refs"), QStringLiteral("rating:nsfw|questionable")}));
+             QJsonArray({QStringLiteral("category:refs"), QStringLiteral("rating:private|restricted")}));
     QCOMPARE(shownFilters(*m_editor),
-             QStringList({QStringLiteral("category:refs"), QStringLiteral("rating:nsfw|questionable")}));
+             QStringList({QStringLiteral("category:refs"), QStringLiteral("rating:private|restricted")}));
     QVERIFY(!m_editor->hasChanges());
     QVERIFY(!m_editor->isBusy());
 }
@@ -297,20 +297,20 @@ void TestHiddenFilterEditor::addsWhatIsTypedWhenSaving()
     QTRY_COMPARE(m_server->requestsTo("PUT", preferencesUrl).size(), 1);
     QTRY_COMPARE(
         m_editor->filtersAfterChanges(),
-        QStringList({QStringLiteral("rating:nsfw"), QStringLiteral("category:refs"), QStringLiteral("character:*")}));
+        QStringList({QStringLiteral("rating:private"), QStringLiteral("category:refs"), QStringLiteral("character:*")}));
     QVERIFY(m_editor->typedName({}).isEmpty());
     QVERIFY(typedNamesChanged.size() > 0);  // the field empties
 }
 
 void TestHiddenFilterEditor::savesNothingIfWhatIsTypedIsRefused()
 {
-    QVERIFY(m_editor->removeTag(QStringLiteral("rating:nsfw")));
-    m_editor->setTypedName({}, QStringLiteral("rating:nsfw category:refs"));
+    QVERIFY(m_editor->removeTag(QStringLiteral("rating:private")));
+    m_editor->setTypedName({}, QStringLiteral("rating:private category:refs"));
 
     m_editor->save();
 
     QVERIFY(!m_editor->errorMessage().isEmpty());
-    QCOMPARE(m_editor->typedName({}), QStringLiteral("rating:nsfw category:refs"));  // stays, to correct
+    QCOMPARE(m_editor->typedName({}), QStringLiteral("rating:private category:refs"));  // stays, to correct
     QVERIFY(m_server->requestsTo("PUT", preferencesUrl).isEmpty());
 }
 
@@ -338,7 +338,7 @@ void TestHiddenFilterEditor::changesNothingWhileSaving()
     QVERIFY(m_editor->isBusy());
 
     QVERIFY(!m_editor->addTag({}, QStringLiteral("general:beach")));
-    QVERIFY(!m_editor->removeTag(QStringLiteral("rating:nsfw")));
+    QVERIFY(!m_editor->removeTag(QStringLiteral("rating:private")));
     m_editor->cancel();
     QVERIFY(m_editor->hasChanges());
 
@@ -346,19 +346,19 @@ void TestHiddenFilterEditor::changesNothingWhileSaving()
     QTRY_VERIFY(!m_editor->isSaving());
     QCOMPARE(
         m_editor->filtersAfterChanges(),
-        QStringList({QStringLiteral("rating:nsfw"), QStringLiteral("category:refs"), QStringLiteral("character:*")}));
+        QStringList({QStringLiteral("rating:private"), QStringLiteral("category:refs"), QStringLiteral("character:*")}));
 }
 
 void TestHiddenFilterEditor::cancelDropsTheChanges()
 {
     QVERIFY(m_editor->addTag({}, QStringLiteral("character:*")));
-    QVERIFY(m_editor->removeTag(QStringLiteral("rating:nsfw")));
+    QVERIFY(m_editor->removeTag(QStringLiteral("rating:private")));
     m_editor->setTypedName({}, QStringLiteral("general:bea"));
-    QVERIFY(!m_editor->addTag({}, QStringLiteral("-rating:nsfw")));  // leaves a message
+    QVERIFY(!m_editor->addTag({}, QStringLiteral("-rating:private")));  // leaves a message
 
     m_editor->cancel();
 
-    QCOMPARE(shownFilters(*m_editor), QStringList({QStringLiteral("rating:nsfw"), QStringLiteral("category:refs")}));
+    QCOMPARE(shownFilters(*m_editor), QStringList({QStringLiteral("rating:private"), QStringLiteral("category:refs")}));
     QVERIFY(!m_editor->hasChanges());
     QVERIFY(m_editor->typedName({}).isEmpty());
     QVERIFY(m_editor->errorMessage().isEmpty());

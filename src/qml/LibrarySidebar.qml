@@ -54,7 +54,7 @@ Rectangle {
                 }
             }
 
-            Controls.ToolTip.text: KI18n.i18nc("@info:tooltip", "For example: category:photo summer -rating:nsfw")
+            Controls.ToolTip.text: KI18n.i18nc("@info:tooltip", "For example: category:photo summer -rating:private")
             Controls.ToolTip.visible: hovered && text.length === 0
             Controls.ToolTip.delay: Kirigami.Units.toolTipDelay
         }

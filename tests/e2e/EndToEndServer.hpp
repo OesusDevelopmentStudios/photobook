@@ -25,7 +25,7 @@ namespace photobook::e2e
 
 // The accounts tests/e2e/run_end_to_end_tests.py creates, all with the same password
 inline const QString userName = QStringLiteral("sample_user");
-inline const QString restrictedUserName = QStringLiteral("kid");  // restricted from rating:nsfw
+inline const QString restrictedUserName = QStringLiteral("restrictedUser");  // restricted from rating:private
 
 // A real server answers over the network, more slowly than the fakes of the unit tests.
 constexpr std::chrono::milliseconds answerTimeout{10'000};

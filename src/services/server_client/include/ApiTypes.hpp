@@ -129,7 +129,7 @@ enum class SortOrder
 
 struct ImageQuery
 {
-    QString text;  // the search syntax, e.g. "category:photo -rating:nsfw"; empty: all images
+    QString text;  // the search syntax, e.g. "category:photo -rating:private"; empty: all images
     SortBy sortBy = SortBy::TakenAt;
     SortOrder order = SortOrder::Descending;  // ignored for random
     std::optional<qint64> seed;               // for random; without one the server picks it
@@ -197,7 +197,7 @@ struct Namespace
 
 struct Preferences
 {
-    QStringList hiddenFilters;  // search terms hidden unless searched for, e.g. "rating:nsfw"
+    QStringList hiddenFilters;  // search terms hidden unless searched for, e.g. "rating:private"
 };
 
 }  // namespace photobook::server_client

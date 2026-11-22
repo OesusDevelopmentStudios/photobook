@@ -52,7 +52,7 @@ public:
 
     int count() const;
     Q_INVOKABLE QString nameAt(int row) const;  // without the namespace; empty for a row that is not there
-    Q_INVOKABLE QString tagAt(int row) const;   // with the namespace, e.g. "rating:nsfw"; empty likewise
+    Q_INVOKABLE QString tagAt(int row) const;   // with the namespace, e.g. "rating:private"; empty likewise
     int rowCount(const QModelIndex& parent = {}) const override;
     QVariant data(const QModelIndex& index, int role) const override;
     QHash<int, QByteArray> roleNames() const override;

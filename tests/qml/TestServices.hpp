@@ -159,7 +159,7 @@ private:
                        api + QStringLiteral("/auth/me"),
                        fakes::jsonResponse(200,
                                            {{QStringLiteral("id"), 2},
-                                            {QStringLiteral("username"), QStringLiteral("kid")},
+                                            {QStringLiteral("username"), QStringLiteral("restrictedUser")},
                                             {QStringLiteral("role"), QStringLiteral("user")},
                                             {QStringLiteral("restricted_tags"), QJsonArray()}}));
         server->answer("GET",
@@ -182,7 +182,7 @@ private:
             api + QStringLiteral("/preferences"),
             fakes::jsonResponse(200,
                                 {{QStringLiteral("hidden_filters"),
-                                  QJsonArray{QStringLiteral("rating:nsfw"), QStringLiteral("category:refs")}}}));
+                                  QJsonArray{QStringLiteral("rating:private"), QStringLiteral("category:refs")}}}));
         server->answerWith("PUT", api + QStringLiteral("/preferences"), [](const server_client::HttpRequest& request) {
             return fakes::jsonResponse(200, QJsonDocument::fromJson(request.body).object());
         });

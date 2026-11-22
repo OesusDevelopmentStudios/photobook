@@ -87,7 +87,7 @@ server_client::HttpResponse answerFor(const HttpRequest& request)
 
 }  // namespace
 
-// Sending files to the server. The user "kid" is restricted from rating:nsfw.
+// Sending files to the server. The user "restrictedUser" is restricted from rating:private.
 class TestUploader : public QObject
 {
     Q_OBJECT
@@ -148,9 +148,9 @@ void TestUploader::init()
         serverUrl + QStringLiteral("/api/v1/auth/me"),
         fakes::jsonResponse(200,
                             {{QStringLiteral("id"), 2},
-                             {QStringLiteral("username"), QStringLiteral("kid")},
+                             {QStringLiteral("username"), QStringLiteral("restrictedUser")},
                              {QStringLiteral("role"), QStringLiteral("user")},
-                             {QStringLiteral("restricted_tags"), QJsonArray{QStringLiteral("rating:nsfw")}}}));
+                             {QStringLiteral("restricted_tags"), QJsonArray{QStringLiteral("rating:private")}}}));
     m_server->answerWith("POST", imagesUrl, answerFor);
     m_server->answer("PATCH", imagesUrl + QStringLiteral("/5"), fakes::jsonResponse(200, fakes::imageJson(5)));
 

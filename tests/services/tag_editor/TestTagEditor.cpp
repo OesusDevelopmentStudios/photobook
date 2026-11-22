@@ -101,8 +101,8 @@ QHash<QString, TagEditor::Change> changesShown(const TagEditor& editor)
 
 }  // namespace
 
-// The user "kid" is restricted from rating:nsfw, and from images that are both nude and a photo. The server
-// has a custom one-tag namespace "weather", and the ratings sfw and nsfw.
+// The user "restrictedUser" is restricted from rating:private, and from images that are both nude and a photo. The server
+// has a custom one-tag namespace "weather", and the ratings public and private.
 class TestTagEditor : public QObject
 {
     Q_OBJECT
@@ -167,10 +167,10 @@ void TestTagEditor::init()
         serverUrl + QStringLiteral("/api/v1/auth/me"),
         fakes::jsonResponse(200,
                             {{QStringLiteral("id"), 2},
-                             {QStringLiteral("username"), QStringLiteral("kid")},
+                             {QStringLiteral("username"), QStringLiteral("restrictedUser")},
                              {QStringLiteral("role"), QStringLiteral("user")},
                              {QStringLiteral("restricted_tags"),
-                              QJsonArray{QStringLiteral("rating:nsfw"), QStringLiteral("general:nude,photo")}}}));
+                              QJsonArray{QStringLiteral("rating:private"), QStringLiteral("general:nude,photo")}}}));
     m_server->answer(
         "GET",
         serverUrl + QStringLiteral("/api/v1/namespaces"),
@@ -180,7 +180,7 @@ void TestTagEditor::init()
               QJsonArray{namespaceJson(QStringLiteral("category"), true),
                          namespaceJson(QStringLiteral("author"), false),
                          namespaceJson(
-                             QStringLiteral("rating"), true, QJsonArray{QStringLiteral("sfw"), QStringLiteral("nsfw")}),
+                             QStringLiteral("rating"), true, QJsonArray{QStringLiteral("public"), QStringLiteral("private")}),
                          namespaceJson(QStringLiteral("general"), false),
                          namespaceJson(QStringLiteral("weather"), true)}}}));
     // The categories in use, most used first
@@ -332,9 +332,9 @@ void TestTagEditor::refusesARestrictedTag()
 {
     startEditingTheBeachPhoto();
 
-    QVERIFY(!m_editor->setSingleValue(QStringLiteral("rating"), QStringLiteral("nsfw")));
+    QVERIFY(!m_editor->setSingleValue(QStringLiteral("rating"), QStringLiteral("private")));
 
-    QVERIFY(m_editor->errorMessage().contains(QStringLiteral("rating:nsfw")));
+    QVERIFY(m_editor->errorMessage().contains(QStringLiteral("rating:private")));
     QVERIFY(!m_editor->hasChanges());
     QVERIFY(m_server->requestsTo("PATCH", imageUrl).isEmpty());
 }
@@ -409,7 +409,7 @@ void TestTagEditor::offersTheAllowedRatings()
 
     QVERIFY(rating.value(QStringLiteral("fixedValues")).toBool());
     QCOMPARE(rating.value(QStringLiteral("options")).toStringList(),
-             QStringList({QStringLiteral("sfw"), QStringLiteral("nsfw")}));
+             QStringList({QStringLiteral("public"), QStringLiteral("private")}));
 }
 
 void TestTagEditor::refusesAValueThatIsNotAllowed()
@@ -418,7 +418,7 @@ void TestTagEditor::refusesAValueThatIsNotAllowed()
 
     QVERIFY(!m_editor->setSingleValue(QStringLiteral("rating"), QStringLiteral("maybe")));
 
-    QVERIFY(m_editor->errorMessage().contains(QStringLiteral("sfw, nsfw")));
+    QVERIFY(m_editor->errorMessage().contains(QStringLiteral("public, private")));
 }
 
 // Pick one of those in use, or type a new one

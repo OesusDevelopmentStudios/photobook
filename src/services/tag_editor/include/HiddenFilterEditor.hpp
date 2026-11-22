@@ -20,7 +20,7 @@ namespace photobook::tag_editor
 class Namespaces;
 
 // The user's hidden-by-default filters: search terms whose images the library leaves out unless a search names
-// them, e.g. "rating:nsfw" or "character:*". Kept on the server for the user. Changes are collected and sent
+// them, e.g. "rating:private" or "character:*". Kept on the server for the user. Changes are collected and sent
 // together with save(); cancel() drops them. A term the server would refuse is refused at once, with the reason.
 //
 // It has one add field and no namespace rows, so that the chips and the add field of the tag rows work with it:
@@ -45,7 +45,7 @@ public:
     Q_INVOKABLE void save();  // also adds what is typed and not added yet
     Q_INVOKABLE void cancel();
 
-    // namespaceName must be empty: typedName is a whole term, e.g. "rating:nsfw|questionable".
+    // namespaceName must be empty: typedName is a whole term, e.g. "rating:private|restricted".
     bool addTag(const QString& namespaceName, const QString& typedName) override;
     bool setSingleValue(const QString& namespaceName, const QString& typedName) override;  // no dropdowns: false
     void keepValue(const QString& namespaceName) override;                                 // no dropdowns

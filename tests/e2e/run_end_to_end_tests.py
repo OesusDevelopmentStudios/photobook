@@ -40,7 +40,7 @@ ADMIN = "admin"
 # The accounts the tests log in with, as in tests/e2e/EndToEndServer.hpp
 USERS = {
     "sample_user": [],
-    "kid": ["rating:nsfw"],  # restricted
+    "restrictedUser": ["rating:private"],  # restricted
 }
 SERVER_START_TIMEOUT = 60  # seconds; the first start creates the database
 

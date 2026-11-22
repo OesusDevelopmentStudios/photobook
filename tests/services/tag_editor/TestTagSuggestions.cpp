@@ -107,7 +107,7 @@ void TestTagSuggestions::init()
                      serverUrl + QStringLiteral("/api/v1/auth/me"),
                      fakes::jsonResponse(200,
                                          {{QStringLiteral("id"), 2},
-                                          {QStringLiteral("username"), QStringLiteral("kid")},
+                                          {QStringLiteral("username"), QStringLiteral("restrictedUser")},
                                           {QStringLiteral("role"), QStringLiteral("user")},
                                           {QStringLiteral("restricted_tags"), QJsonArray()}}));
     m_server->answerWith(

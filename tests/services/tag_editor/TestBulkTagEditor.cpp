@@ -117,7 +117,7 @@ QJsonObject bodyOf(const HttpRequest& request)
 
 }  // namespace
 
-// Tags of many images at once. The user "kid" is restricted from rating:nsfw, and from images that are both
+// Tags of many images at once. The user "restrictedUser" is restricted from rating:private, and from images that are both
 // nude and a photo.
 class TestBulkTagEditor : public QObject
 {
@@ -172,10 +172,10 @@ void TestBulkTagEditor::init()
         serverUrl + QStringLiteral("/api/v1/auth/me"),
         fakes::jsonResponse(200,
                             {{QStringLiteral("id"), 2},
-                             {QStringLiteral("username"), QStringLiteral("kid")},
+                             {QStringLiteral("username"), QStringLiteral("restrictedUser")},
                              {QStringLiteral("role"), QStringLiteral("user")},
                              {QStringLiteral("restricted_tags"),
-                              QJsonArray{QStringLiteral("rating:nsfw"), QStringLiteral("general:nude,photo")}}}));
+                              QJsonArray{QStringLiteral("rating:private"), QStringLiteral("general:nude,photo")}}}));
     m_server->answer(
         "GET",
         serverUrl + QStringLiteral("/api/v1/namespaces"),
@@ -184,7 +184,7 @@ void TestBulkTagEditor::init()
             {{QStringLiteral("items"),
               QJsonArray{namespaceJson(QStringLiteral("category"), true),
                          namespaceJson(
-                             QStringLiteral("rating"), true, QJsonArray{QStringLiteral("sfw"), QStringLiteral("nsfw")}),
+                             QStringLiteral("rating"), true, QJsonArray{QStringLiteral("public"), QStringLiteral("private")}),
                          namespaceJson(QStringLiteral("general"), false),
                          namespaceJson(QStringLiteral("weather"), true)}}}));
     m_server->answer("GET",

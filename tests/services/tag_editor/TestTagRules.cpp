@@ -25,7 +25,7 @@ const QSet<QString> namespaces{
     QStringLiteral("general"),
 };
 
-// Tags as the server writes them, e.g. "rating:nsfw"
+// Tags as the server writes them, e.g. "rating:private"
 QList<TagName> tagsFrom(const QStringList& texts)
 {
     QList<TagName> tags;
@@ -176,17 +176,17 @@ void TestTagRules::worksOutTheTagsAfterAChange()
 
 void TestTagRules::replacesTheTagOfASingleValueNamespace()
 {
-    const QList<TagName> current = tagsFrom({QStringLiteral("category:photo"), QStringLiteral("author:kid")});
+    const QList<TagName> current = tagsFrom({QStringLiteral("category:photo"), QStringLiteral("author:restrictedUser")});
     const QSet<QString> singleValue{QStringLiteral("category")};
 
     const QList<TagName> newCategory =
         tagsAfterChange(current, tagsFrom({QStringLiteral("category:artwork")}), {}, singleValue);
     const QList<TagName> secondAuthor =
-        tagsAfterChange(current, tagsFrom({QStringLiteral("author:apo")}), {}, singleValue);
+        tagsAfterChange(current, tagsFrom({QStringLiteral("author:normalUser")}), {}, singleValue);
 
-    QCOMPARE(newCategory, tagsFrom({QStringLiteral("author:kid"), QStringLiteral("category:artwork")}));
+    QCOMPARE(newCategory, tagsFrom({QStringLiteral("author:restrictedUser"), QStringLiteral("category:artwork")}));
     QCOMPARE(secondAuthor,
-             tagsFrom({QStringLiteral("category:photo"), QStringLiteral("author:kid"), QStringLiteral("author:apo")}));
+             tagsFrom({QStringLiteral("category:photo"), QStringLiteral("author:restrictedUser"), QStringLiteral("author:normalUser")}));
 }
 
 void TestTagRules::matchesTerms_data()
@@ -200,9 +200,9 @@ void TestTagRules::matchesTerms_data()
     };
 
     // Restricted terms
-    row("a tag", "rating:nsfw", {QStringLiteral("rating:nsfw")}, true);
-    row("another tag", "rating:nsfw", {QStringLiteral("rating:sfw")}, false);
-    row("either tag", "rating:nsfw|questionable", {QStringLiteral("rating:questionable")}, true);
+    row("a tag", "rating:private", {QStringLiteral("rating:private")}, true);
+    row("another tag", "rating:private", {QStringLiteral("rating:public")}, false);
+    row("either tag", "rating:private|restricted", {QStringLiteral("rating:restricted")}, true);
     row("any of a namespace", "character:*", {QStringLiteral("character:sample_hero")}, true);
     row("namespace is not a name", "character:*", {QStringLiteral("general:character")}, false);
     row("name starting with", "author:sample*", {QStringLiteral("author:sample_artist")}, true);
@@ -221,24 +221,24 @@ void TestTagRules::matchesTerms_data()
         {QStringLiteral("general:tag_1"), QStringLiteral("general:tag_3")},
         false);
     row("own prefix wins", "category:artwork|author:x", {QStringLiteral("author:x")}, true);
-    row("negated term", "-rating:nsfw|questionable", {QStringLiteral("rating:sfw")}, true);
-    row("negated term, matching", "-rating:nsfw|questionable", {QStringLiteral("rating:nsfw")}, false);
+    row("negated term", "-rating:private|restricted", {QStringLiteral("rating:public")}, true);
+    row("negated term, matching", "-rating:private|restricted", {QStringLiteral("rating:private")}, false);
     row("negated operand",
-        "(category:photo,-rating:nsfw)|category:artwork",
-        {QStringLiteral("category:photo"), QStringLiteral("rating:sfw")},
+        "(category:photo,-rating:private)|category:artwork",
+        {QStringLiteral("category:photo"), QStringLiteral("rating:public")},
         true);
     row("negated operand, matching",
-        "(category:photo,-rating:nsfw)|category:artwork",
-        {QStringLiteral("category:photo"), QStringLiteral("rating:nsfw")},
+        "(category:photo,-rating:private)|category:artwork",
+        {QStringLiteral("category:photo"), QStringLiteral("rating:private")},
         false);
     row("other side of the or",
-        "(category:photo,-rating:nsfw)|category:artwork",
-        {QStringLiteral("category:artwork"), QStringLiteral("rating:nsfw")},
+        "(category:photo,-rating:private)|category:artwork",
+        {QStringLiteral("category:artwork"), QStringLiteral("rating:private")},
         true);
 
     // Prefixes
     row("not a namespace", "re:zero", {QStringLiteral("general:re:zero")}, true);
-    row("prefix in capitals", "Rating:NSFW", {QStringLiteral("rating:nsfw")}, true);
+    row("prefix in capitals", "Rating:private", {QStringLiteral("rating:private")}, true);
 }
 
 void TestTagRules::matchesTerms()
@@ -322,13 +322,13 @@ void TestTagRules::namesTheTagsATermMentions()
 void TestTagRules::namesTheRestrictedTagsOfAnImage()
 {
     const QStringList restrictions{
-        QStringLiteral("rating:nsfw"), QStringLiteral("general:nude,photo"), QStringLiteral("character:*")};
+        QStringLiteral("rating:private"), QStringLiteral("general:nude,photo"), QStringLiteral("character:*")};
     const QList<TagName> image =
-        tagsFrom({QStringLiteral("rating:nsfw"), QStringLiteral("general:photo"), QStringLiteral("general:nude")});
+        tagsFrom({QStringLiteral("rating:private"), QStringLiteral("general:photo"), QStringLiteral("general:nude")});
 
     QCOMPARE(
         restrictedTagsAmong(restrictions, namespaces, image, QDateTime()),
-        QStringList({QStringLiteral("general:nude"), QStringLiteral("general:photo"), QStringLiteral("rating:nsfw")}));
+        QStringList({QStringLiteral("general:nude"), QStringLiteral("general:photo"), QStringLiteral("rating:private")}));
     QVERIFY(restrictedTagsAmong(restrictions, namespaces, tagsFrom({QStringLiteral("general:photo")}), QDateTime())
                 .isEmpty());
 }

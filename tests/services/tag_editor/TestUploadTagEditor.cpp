@@ -68,7 +68,7 @@ QVariantMap rowOf(const UploadTagEditor& editor, const QString& namespaceName)
 
 }  // namespace
 
-// The tags of an upload. The user "kid" is restricted from rating:nsfw, and from images that are both nude and a
+// The tags of an upload. The user "restrictedUser" is restricted from rating:private, and from images that are both nude and a
 // photo.
 class TestUploadTagEditor : public QObject
 {
@@ -117,10 +117,10 @@ void TestUploadTagEditor::init()
         serverUrl + QStringLiteral("/api/v1/auth/me"),
         fakes::jsonResponse(200,
                             {{QStringLiteral("id"), 2},
-                             {QStringLiteral("username"), QStringLiteral("kid")},
+                             {QStringLiteral("username"), QStringLiteral("restrictedUser")},
                              {QStringLiteral("role"), QStringLiteral("user")},
                              {QStringLiteral("restricted_tags"),
-                              QJsonArray{QStringLiteral("rating:nsfw"), QStringLiteral("general:nude,photo")}}}));
+                              QJsonArray{QStringLiteral("rating:private"), QStringLiteral("general:nude,photo")}}}));
     m_server->answer(
         "GET",
         serverUrl + QStringLiteral("/api/v1/namespaces"),
@@ -130,7 +130,7 @@ void TestUploadTagEditor::init()
               QJsonArray{namespaceJson(QStringLiteral("category"), true),
                          namespaceJson(QStringLiteral("author"), false),
                          namespaceJson(
-                             QStringLiteral("rating"), true, QJsonArray{QStringLiteral("sfw"), QStringLiteral("nsfw")}),
+                             QStringLiteral("rating"), true, QJsonArray{QStringLiteral("public"), QStringLiteral("private")}),
                          namespaceJson(QStringLiteral("general"), false)}}}));
     m_server->answer("GET",
                      serverUrl + QStringLiteral("/api/v1/tags"),
@@ -148,7 +148,7 @@ void TestUploadTagEditor::init()
     m_editor = createUploadTagEditor(m_connection.get());
     m_editor->load();
     QTRY_COMPARE(rowOf(*m_editor, QStringLiteral("rating")).value(QStringLiteral("options")).toStringList(),
-                 QStringList({QStringLiteral("sfw"), QStringLiteral("nsfw")}));
+                 QStringList({QStringLiteral("public"), QStringLiteral("private")}));
 }
 
 void TestUploadTagEditor::startsWithoutTags()
@@ -210,9 +210,9 @@ void TestUploadTagEditor::removesATag()
 
 void TestUploadTagEditor::refusesARestrictedTag()
 {
-    QVERIFY(!m_editor->setSingleValue(QStringLiteral("rating"), QStringLiteral("nsfw")));
+    QVERIFY(!m_editor->setSingleValue(QStringLiteral("rating"), QStringLiteral("private")));
 
-    QVERIFY(m_editor->errorMessage().contains(QStringLiteral("rating:nsfw")));
+    QVERIFY(m_editor->errorMessage().contains(QStringLiteral("rating:private")));
     QCOMPARE(m_editor->tagsToUpload(), QStringList());
 }
 
@@ -229,7 +229,7 @@ void TestUploadTagEditor::refusesAValueThatIsNotAllowed()
 {
     QVERIFY(!m_editor->setSingleValue(QStringLiteral("rating"), QStringLiteral("maybe")));
 
-    QVERIFY(m_editor->errorMessage().contains(QStringLiteral("sfw, nsfw")));
+    QVERIFY(m_editor->errorMessage().contains(QStringLiteral("public, private")));
 }
 
 // Typed, not added yet: sent as well, as the user expects
@@ -268,7 +268,7 @@ void TestUploadTagEditor::keepsTheTagsWhileBusy()
 void TestUploadTagEditor::clearDropsTheTags()
 {
     m_editor->addTag(QStringLiteral("general"), QStringLiteral("beach"));
-    m_editor->setTypedName(QStringLiteral("author"), QStringLiteral("kid"));
+    m_editor->setTypedName(QStringLiteral("author"), QStringLiteral("restrictedUser"));
 
     m_editor->clear();
 

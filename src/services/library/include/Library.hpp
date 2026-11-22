@@ -57,7 +57,7 @@ public:
 
     explicit Library(connection::Connection* connection, QObject* parent = nullptr);
 
-    // The server's search syntax, e.g. "category:photo summer -rating:nsfw"; empty: all images.
+    // The server's search syntax, e.g. "category:photo summer -rating:private"; empty: all images.
     Q_INVOKABLE void search(const QString& text);
     // The same search from the start, e.g. after an upload.
     Q_INVOKABLE void reload();

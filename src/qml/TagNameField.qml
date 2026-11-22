@@ -12,7 +12,7 @@ import org.kde.ki18n
 
 // Enter adds the highlighted suggestion, or what was typed. What is typed counts as a change until it is added.
 // Without a namespace (the hidden filters) suggestions come from every namespace and are added as whole tags,
-// e.g. "rating:nsfw".
+// e.g. "rating:private".
 Controls.TextField {
     id: field
 
