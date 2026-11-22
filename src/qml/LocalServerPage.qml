@@ -16,7 +16,7 @@ Kirigami.ScrollablePage {
     readonly property string installCommand:
         "curl -fsSL https://github.com/OesusDevelopmentStudios/photobook-db/releases/latest/download/install.sh | sh"
     readonly property url guideUrl:
-        "https://github.com/OesusDevelopmentStudios/photobook-db/blob/master/docs/local-server.md"
+        "https://github.com/OesusDevelopmentStudios/photobook-db/blob/master/docs/install-guide.md"
     // The port chosen when installing; the script's default until changed. Plain HTTP: the server has no HTTPS.
     readonly property bool portValid: portField.acceptableInput
     readonly property string serverAddress: "http://localhost:" + portField.text
