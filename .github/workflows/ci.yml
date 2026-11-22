@@ -30,7 +30,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           repository: OesusDevelopmentStudios/photobook-db
-          ref: a89052f652c973297c149abe56aa326bce08da25
+          ref: edd774ac627898333f963df57bd174365f3e8f5d
           path: photobook-db
 
       # flatpak-builder needs a session bus; the container has none, nor the machine-id to start one itself.
