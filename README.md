@@ -17,6 +17,14 @@ Photobook is an image viewer and photo library for KDE Plasma.
   photos. To set up a server, see
   [photobook-db's install guide](https://github.com/OesusDevelopmentStudios/photobook-db#install).
 
+## Install
+
+Download `photobook-0.1.0.flatpak` from the [latest release](https://github.com/OesusDevelopmentStudios/photobook/releases/latest)
+and install it for your user. The KDE runtime it needs comes from Flathub:
+
+    flatpak install --user photobook-0.1.0.flatpak
+
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the code layout, the coding style, building instructions and how to run the tests.

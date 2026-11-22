@@ -44,5 +44,9 @@ application's license, so that app stores may redistribute this text freely.
   <url type="bugtracker">https://github.com/OesusDevelopmentStudios/photobook/issues</url>
   <url type="vcs-browser">https://github.com/OesusDevelopmentStudios/photobook</url>
 
+  <releases>
+    <release version="0.1.0" date="2026-11-22"/>
+  </releases>
+
   <content_rating type="oars-1.1"/>
 </component>
