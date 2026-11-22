@@ -113,6 +113,11 @@ private Q_SLOTS:
     void trashesOnlyWhatTheServerHas();
     void trashesOnlyAfterTheServerAnswers();
     void keepsTheStateWhenTheTrashFails();
+    void startsAfreshWhenEveryFileMadeIt();
+    void keepsTheFailedFilesAndTheTags();
+    void sendsTheFailedFilesAgain();
+    void dropsTheFilesWithAProblemOnTheNextUpload();
+    void keepsTheOutcomeUntilDismissed();
 
 private:
     QUrl fileNamed(const QString& relativePath);
@@ -234,13 +239,13 @@ void TestUploader::countsTheFilesStillWaiting()
     uploadAndWait();
     m_uploader->addFiles({fileNamed(QStringLiteral("sunset.jpg"))});
 
-    QCOMPARE(m_uploader->waitingCount(), 1);  // the failed one is not sent again
+    QCOMPARE(m_uploader->waitingCount(), 2);  // the new one, and the failed one again
 }
 
 // For the progress of an upload: an earlier run's files do not count.
 void TestUploader::countsTheFilesOfARun()
 {
-    m_uploader->addFiles({fileNamed(QStringLiteral("notes.png"))});
+    m_uploader->addFiles({fileNamed(QStringLiteral("dog.jpg"))});
     uploadAndWait();
     m_uploader->addFiles({fileNamed(QStringLiteral("beach.jpg")), fileNamed(QStringLiteral("sunset.jpg"))});
     m_server->holdAnswers = true;
@@ -249,7 +254,7 @@ void TestUploader::countsTheFilesOfARun()
 
     QCOMPARE(m_uploader->filesInRun(), 2);
     QCOMPARE(m_uploader->filesDoneInRun(), 0);
-    QTRY_COMPARE(m_server->requestsTo("POST", imagesUrl).size(), 2);  // notes.png, then beach.jpg
+    QTRY_COMPARE(m_server->requestsTo("POST", imagesUrl).size(), 2);  // dog.jpg, then beach.jpg
     m_server->releaseAnswers();
     QTRY_COMPARE(m_uploader->filesDoneInRun(), 1);
     QTRY_COMPARE(m_server->requestsTo("POST", imagesUrl).size(), 3);
@@ -299,13 +304,18 @@ void TestUploader::sendsOneFileAtATimeWithTheTags()
 void TestUploader::tellsHowEachFileWent()
 {
     m_uploader->addFiles({fileNamed(QStringLiteral("notes.png")), fileNamed(QStringLiteral("beach.jpg"))});
+    m_server->holdAnswers = true;
+    m_uploader->start();
+    QTRY_COMPARE(m_server->requestsTo("POST", imagesUrl).size(), 1);
+    m_server->releaseAnswers();
+    QTRY_COMPARE(m_server->requestsTo("POST", imagesUrl).size(), 2);
 
-    uploadAndWait();
-
-    QCOMPARE(states(), QList<FileState>({FileState::Failed, FileState::Uploaded}));
+    QCOMPARE(states(), QList<FileState>({FileState::Failed, FileState::Uploading}));
     QVERIFY(!m_uploader->index(0).data(Uploader::MessageRole).toString().isEmpty());
-    QCOMPARE(m_uploader->uploadedCount(), 1);
-    QCOMPARE(m_uploader->failedCount(), 1);
+    m_server->releaseAnswers();
+    QTRY_VERIFY(!m_uploader->isRunning());
+    QCOMPARE(m_uploader->outcomeUploaded(), 1);
+    QCOMPARE(m_uploader->outcomeFailed(), 1);
 }
 
 // So the upload's tags apply to every file of it, new or not
@@ -315,7 +325,7 @@ void TestUploader::addsTheTagsToADuplicate()
 
     uploadAndWait();
 
-    QCOMPARE(states(), QList<FileState>{FileState::AlreadyThere});
+    QCOMPARE(m_uploader->outcomeAlreadyThere(), 1);
     const QList<HttpRequest> tagChanges = m_server->requestsTo("PATCH", imagesUrl + QStringLiteral("/5"));
     QCOMPARE(tagChanges.size(), 1);
     QCOMPARE(QJsonDocument::fromJson(tagChanges.first().body).object().value(QStringLiteral("add_tags")).toArray(),
@@ -329,8 +339,7 @@ void TestUploader::reportsADuplicateItCannotSee()
 
     uploadAndWait();
 
-    QCOMPARE(states(), QList<FileState>{FileState::AlreadyThere});
-    QCOMPARE(m_uploader->alreadyThereCount(), 1);
+    QCOMPARE(m_uploader->outcomeAlreadyThere(), 1);
     QVERIFY(m_server->requestsTo("PATCH", imagesUrl + QStringLiteral("/6")).isEmpty());
 }
 
@@ -357,7 +366,9 @@ void TestUploader::stopsAfterTheCurrentFileWhenCancelled()
     m_server->releaseAnswers();
 
     QTRY_COMPARE(finished.count(), 1);
-    QCOMPARE(states(), QList<FileState>({FileState::Uploaded, FileState::Waiting}));
+    // The one sent left the list; the rest keeps its tags.
+    QCOMPARE(states(), QList<FileState>{FileState::Waiting});
+    QCOMPARE(m_tagEditor->tagsToUpload(), QStringList{QStringLiteral("general:beach")});
     QCOMPARE(m_server->requestsTo("POST", imagesUrl).size(), 1);
 }
 
@@ -402,8 +413,7 @@ void TestUploader::keepsTheListWhileSending()
     QTRY_COMPARE(m_server->requestsTo("POST", imagesUrl).size(), 1);
     m_server->releaseAnswers();
     QTRY_VERIFY(!m_uploader->isRunning());
-    m_uploader->removeFile(0);
-    QCOMPARE(m_uploader->count(), 0);
+    QCOMPARE(m_uploader->count(), 0);  // it made it
 }
 
 void TestUploader::keepsTheOriginalsByDefault()
@@ -412,7 +422,8 @@ void TestUploader::keepsTheOriginalsByDefault()
 
     uploadAndWait();
 
-    QCOMPARE(states(), QList<FileState>({FileState::Uploaded, FileState::AlreadyThere}));
+    QCOMPARE(m_uploader->outcomeUploaded(), 1);
+    QCOMPARE(m_uploader->outcomeAlreadyThere(), 1);
     QVERIFY(m_trashCan->files.isEmpty());
 }
 
@@ -458,9 +469,92 @@ void TestUploader::keepsTheStateWhenTheTrashFails()
 
     uploadAndWait();
 
-    QCOMPARE(states(), QList<FileState>({FileState::Uploaded, FileState::AlreadyThere}));
+    QCOMPARE(states(), QList<FileState>({FileState::Uploaded, FileState::AlreadyThere}));  // kept for the message
     QVERIFY(m_uploader->index(0).data(Uploader::MessageRole).toString().contains(QStringLiteral("No trash here")));
     QVERIFY(m_uploader->index(1).data(Uploader::MessageRole).toString().contains(QStringLiteral("No trash here")));
+    QCOMPARE(m_uploader->waitingCount(), 0);  // not sent again
+}
+
+void TestUploader::startsAfreshWhenEveryFileMadeIt()
+{
+    m_uploader->addFiles({fileNamed(QStringLiteral("beach.jpg")), fileNamed(QStringLiteral("copy.jpg"))});
+    m_uploader->setMoveOriginalsToTrash(true);
+
+    uploadAndWait();
+
+    QCOMPARE(m_uploader->count(), 0);
+    QVERIFY(!m_tagEditor->hasChanges());
+    QVERIFY(!m_uploader->movesOriginalsToTrash());
+    QVERIFY(m_uploader->hasOutcome());
+    QCOMPARE(m_uploader->outcomeUploaded(), 1);
+    QCOMPARE(m_uploader->outcomeAlreadyThere(), 1);
+    QCOMPARE(m_uploader->outcomeFailed(), 0);
+}
+
+// So that Start can send them again with the same tags
+void TestUploader::keepsTheFailedFilesAndTheTags()
+{
+    m_uploader->addFiles({fileNamed(QStringLiteral("beach.jpg")), fileNamed(QStringLiteral("notes.png"))});
+    m_uploader->setMoveOriginalsToTrash(true);
+
+    uploadAndWait();
+
+    QCOMPARE(states(), QList<FileState>{FileState::Failed});
+    QCOMPARE(m_uploader->index(0).data(Uploader::FileNameRole).toString(), QStringLiteral("notes.png"));
+    QVERIFY(!m_uploader->index(0).data(Uploader::MessageRole).toString().isEmpty());
+    QCOMPARE(m_tagEditor->tagsToUpload(), QStringList{QStringLiteral("general:beach")});
+    QVERIFY(m_uploader->movesOriginalsToTrash());
+    QCOMPARE(m_uploader->outcomeUploaded(), 1);
+    QCOMPARE(m_uploader->outcomeFailed(), 1);
+}
+
+void TestUploader::sendsTheFailedFilesAgain()
+{
+    m_uploader->addFiles({fileNamed(QStringLiteral("notes.png"))});
+    uploadAndWait();
+    QCOMPARE(m_uploader->waitingCount(), 1);
+
+    uploadAndWait();
+
+    const QList<HttpRequest> uploads = m_server->requestsTo("POST", imagesUrl);
+    QCOMPARE(uploads.size(), 2);
+    QCOMPARE(uploads.last().form->fileName, QStringLiteral("notes.png"));
+    QCOMPARE(m_uploader->outcomeFailed(), 1);  // of this upload only
+}
+
+void TestUploader::dropsTheFilesWithAProblemOnTheNextUpload()
+{
+    m_uploader->addFiles({fileNamed(QStringLiteral("beach.jpg"))});
+    m_uploader->setMoveOriginalsToTrash(true);
+    m_trashCan->works = false;
+    uploadAndWait();
+    QCOMPARE(m_uploader->count(), 1);
+    m_uploader->addFiles({fileNamed(QStringLiteral("sunset.jpg"))});
+
+    uploadAndWait();
+
+    QCOMPARE(m_server->requestsTo("POST", imagesUrl).size(), 2);  // beach.jpg was not sent again
+    QCOMPARE(m_uploader->outcomeUploaded(), 1);
+}
+
+void TestUploader::keepsTheOutcomeUntilDismissed()
+{
+    QVERIFY(!m_uploader->hasOutcome());
+    m_uploader->addFiles({fileNamed(QStringLiteral("notes.png"))});
+    uploadAndWait();
+    QVERIFY(m_uploader->hasOutcome());
+
+    m_server->holdAnswers = true;
+    m_uploader->start();
+    QVERIFY(!m_uploader->hasOutcome());  // a new upload has none yet
+    QTRY_COMPARE(m_server->requestsTo("POST", imagesUrl).size(), 2);
+    m_server->releaseAnswers();
+    QTRY_VERIFY(m_uploader->hasOutcome());
+
+    m_uploader->dismissOutcome();
+
+    QVERIFY(!m_uploader->hasOutcome());
+    QCOMPARE(m_uploader->outcomeFailed(), 0);
 }
 
 }  // namespace photobook::uploader

@@ -119,7 +119,7 @@ void Uploader::clear()
 
 void Uploader::start()
 {
-    if (m_running || countIn(FileState::Waiting) == 0)
+    if (m_running || waitingCount() == 0)
     {
         return;
     }
@@ -130,6 +130,16 @@ void Uploader::start()
         return;  // a tag was refused; the tag editor says why
     }
 
+    removeFilesThatMadeIt(true);  // the last upload's, kept for their message
+    for (int row = 0; row < count(); ++row)
+    {
+        if (m_files.at(row).state == FileState::Failed)
+        {
+            setState(row, FileState::Waiting);
+        }
+    }
+
+    setOutcome(std::nullopt);
     m_tags = *tags;
     m_cancelled = false;
     m_filesInRun = countIn(FileState::Waiting);
@@ -141,6 +151,11 @@ void Uploader::start()
 void Uploader::cancel()
 {
     m_cancelled = m_running;
+}
+
+void Uploader::dismissOutcome()
+{
+    setOutcome(std::nullopt);
 }
 
 int Uploader::count() const
@@ -160,7 +175,7 @@ bool Uploader::isFindingFiles() const
 
 int Uploader::waitingCount() const
 {
-    return countIn(FileState::Waiting);
+    return countIn(FileState::Waiting) + countIn(FileState::Failed);
 }
 
 int Uploader::uploadedCount() const
@@ -201,6 +216,26 @@ void Uploader::setMoveOriginalsToTrash(bool move)
         m_moveOriginalsToTrash = move;
         Q_EMIT moveOriginalsToTrashChanged();
     }
+}
+
+bool Uploader::hasOutcome() const
+{
+    return m_outcome.has_value();
+}
+
+int Uploader::outcomeUploaded() const
+{
+    return m_outcome.value_or(Outcome{}).uploaded;
+}
+
+int Uploader::outcomeAlreadyThere() const
+{
+    return m_outcome.value_or(Outcome{}).alreadyThere;
+}
+
+int Uploader::outcomeFailed() const
+{
+    return m_outcome.value_or(Outcome{}).failed;
 }
 
 int Uploader::rowCount(const QModelIndex& parent) const
@@ -394,10 +429,47 @@ void Uploader::fail(int row, const QString& message)
 
 void Uploader::finish()
 {
+    setOutcome(Outcome{.uploaded = countIn(FileState::Uploaded),
+                       .alreadyThere = countIn(FileState::AlreadyThere),
+                       .failed = countIn(FileState::Failed)});
+    removeFilesThatMadeIt(false);
     m_cancelled = false;
     m_tagEditor->setBusy(false);
+    if (m_files.isEmpty())  // everything is on the server: ready for the next upload
+    {
+        m_tagEditor->clear();
+        setMoveOriginalsToTrash(false);
+    }
+
     setRunning(false);
     Q_EMIT finished();
+}
+
+void Uploader::removeFilesThatMadeIt(bool alsoThoseWithAMessage)
+{
+    const auto madeIt = [alsoThoseWithAMessage](const UploadFile& file) {
+        const bool onTheServer = file.state == FileState::Uploaded || file.state == FileState::AlreadyThere;
+        return onTheServer && (alsoThoseWithAMessage || file.message.isEmpty());
+    };
+    if (std::ranges::none_of(m_files, madeIt))
+    {
+        return;
+    }
+
+    beginResetModel();
+    m_files.removeIf(madeIt);
+    endResetModel();
+    Q_EMIT countChanged();
+    Q_EMIT progressChanged();
+}
+
+void Uploader::setOutcome(const std::optional<Outcome>& outcome)
+{
+    if (outcome.has_value() || m_outcome.has_value())
+    {
+        m_outcome = outcome;
+        Q_EMIT outcomeChanged();
+    }
 }
 
 void Uploader::setState(int row, FileState state, const QString& message)

@@ -142,6 +142,14 @@ public:
             return {uploader::Uploader::FileState::Failed, QStringLiteral("The upload did not end")};
         }
 
+        // A file that made it without a problem has left the list; the upload's outcome tells which way.
+        if (m_uploader->count() == 0)
+        {
+            return {m_uploader->outcomeUploaded() == 1 ? uploader::Uploader::FileState::Uploaded
+                                                       : uploader::Uploader::FileState::AlreadyThere,
+                    QString()};
+        }
+
         const QModelIndex row = m_uploader->index(0);
         return {row.data(uploader::Uploader::StateRole).value<uploader::Uploader::FileState>(),
                 row.data(uploader::Uploader::MessageRole).toString()};

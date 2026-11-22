@@ -32,6 +32,13 @@ Kirigami.Page {
                 page.cancelling = false;
             }
         }
+
+        // Every file made it and the uploader started afresh: so does the page's own option.
+        function onFinished() {
+            if (page.uploader.count === 0) {
+                includeSubfoldersBox.checked = false;
+            }
+        }
     }
 
     // The folder's images, and with "Include subfolders" also those below it. Listed in the background.
@@ -53,18 +60,17 @@ Kirigami.Page {
         return KI18n.i18nc("@info:status of a file", "Waiting");
     }
 
-    // How the files went so far, e.g. "40 uploaded, 1 already on the server, 1 failed"
-    function summaryText(): string {
+    // How the files went, e.g. "40 uploaded, 1 already on the server, 1 failed"
+    function summaryText(uploaded: int, alreadyThere: int, failed: int): string {
         const parts = [];
-        if (uploader.uploadedCount > 0) {
-            parts.push(KI18n.i18ncp("@info", "%1 uploaded", "%1 uploaded", uploader.uploadedCount));
+        if (uploaded > 0) {
+            parts.push(KI18n.i18ncp("@info", "%1 uploaded", "%1 uploaded", uploaded));
         }
-        if (uploader.alreadyThereCount > 0) {
-            parts.push(KI18n.i18ncp("@info", "%1 already on the server", "%1 already on the server",
-                                    uploader.alreadyThereCount));
+        if (alreadyThere > 0) {
+            parts.push(KI18n.i18ncp("@info", "%1 already on the server", "%1 already on the server", alreadyThere));
         }
-        if (uploader.failedCount > 0) {
-            parts.push(KI18n.i18ncp("@info", "%1 failed", "%1 failed", uploader.failedCount));
+        if (failed > 0) {
+            parts.push(KI18n.i18ncp("@info", "%1 failed", "%1 failed", failed));
         }
         return parts.join(KI18n.i18nc("@info Between the parts of a list", ", "));
     }
@@ -86,6 +92,28 @@ Kirigami.Page {
             height: Math.max(pageScroll.availableHeight, implicitHeight)
             spacing: Kirigami.Units.largeSpacing
 
+            // How the last upload went; its files left the list, except those that failed or have a problem.
+            Kirigami.InlineMessage {
+                objectName: "outcome"
+                Layout.fillWidth: true
+                visible: page.uploader.hasOutcome
+                type: page.uploader.outcomeFailed > 0 ? Kirigami.MessageType.Warning : Kirigami.MessageType.Positive
+                text: page.uploader.outcomeFailed > 0
+                      ? KI18n.i18nc("@info %1 is how the files went", "%1. The files that failed are still listed: "
+                                    + "Start Upload tries them again.",
+                                    page.summaryText(page.uploader.outcomeUploaded, page.uploader.outcomeAlreadyThere,
+                                                     page.uploader.outcomeFailed))
+                      : page.summaryText(page.uploader.outcomeUploaded, page.uploader.outcomeAlreadyThere, 0)
+                actions: [
+                    Kirigami.Action {
+                        icon.name: "dialog-close"
+                        text: KI18n.i18nc("@action:button", "Close")
+                        displayHint: Kirigami.DisplayHint.IconOnly
+                        onTriggered: page.uploader.dismissOutcome()
+                    }
+                ]
+            }
+
             RowLayout {
                 Layout.fillWidth: true
                 spacing: Kirigami.Units.smallSpacing
@@ -102,6 +130,14 @@ Kirigami.Page {
                     text: KI18n.i18nc("@action:button", "Add Folder…")
                     enabled: !page.uploader.running
                     onClicked: folderDialog.open()
+                }
+
+                Controls.Button {
+                    objectName: "clearList"
+                    icon.name: "edit-clear-list"
+                    text: KI18n.i18nc("@action:button", "Clear List")
+                    enabled: !page.uploader.running && page.uploader.count > 0
+                    onClicked: page.uploader.clear()
                 }
 
                 Controls.CheckBox {
@@ -327,11 +363,19 @@ Kirigami.Page {
                 Layout.fillWidth: true
                 spacing: Kirigami.Units.smallSpacing
 
+                // While sending; afterwards the message at the top tells it.
                 Controls.Label {
                     objectName: "summary"
                     Layout.fillWidth: true
-                    text: page.summaryText()
+                    visible: page.uploader.running
+                    text: page.summaryText(page.uploader.uploadedCount, page.uploader.alreadyThereCount,
+                                           page.uploader.failedCount)
                     elide: Text.ElideRight
+                }
+
+                Item {
+                    Layout.fillWidth: true
+                    visible: !page.uploader.running  // keeps the buttons at the right
                 }
 
                 Controls.Button {

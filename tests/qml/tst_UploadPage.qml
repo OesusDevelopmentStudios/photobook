@@ -33,6 +33,7 @@ Item {
 
         function init() {
             TestServices.uploader.clear();
+            TestServices.uploader.dismissOutcome();
             TestServices.uploader.moveOriginalsToTrash = false;
         }
 
@@ -72,6 +73,20 @@ Item {
             compare(rowAt(list, 0).fileName, "sunset.jpg");
         }
 
+        function test_clearsTheList() {
+            const page = shownPage();
+            const clearList = findChild(page, "clearList");
+            verify(!clearList.enabled, "nothing to clear");
+            TestServices.uploader.addFiles([TestServices.sampleFile("beach.jpg"),
+                                            TestServices.sampleFile("day2/sunset.jpg")]);
+
+            mouseClick(clearList);
+
+            compare(TestServices.uploader.count, 0);
+            verify(findChild(page, "emptyPlaceholder").visible);
+            verify(!clearList.enabled);
+        }
+
         function test_addsSubfoldersOnlyWhenTicked() {
             const page = shownPage();
 
@@ -101,11 +116,25 @@ Item {
 
             mouseClick(findChild(page, "startUpload"));
 
-            tryCompare(TestServices.uploader, "failedCount", 2);
             tryCompare(TestServices.uploader, "running", false);
-            compare(findChild(page, "summary").text, "2 failed");
-            verify(!findChild(page, "startUpload").enabled);  // nothing is waiting any more
+            const outcome = findChild(page, "outcome");
+            verify(outcome.visible);
+            verify(outcome.text.startsWith("2 failed."), outcome.text);
+            verify(!findChild(page, "summary").visible, "the message tells it now");
+            compare(findChild(page, "fileList").count, 2);  // failed: still listed
+            verify(findChild(page, "startUpload").enabled, "to try them again");
             verify(!findChild(page, "cancelUpload").enabled);
+        }
+
+        function test_closesTheOutcome() {
+            const page = shownPage();
+            TestServices.uploader.addFiles([TestServices.sampleFile("beach.jpg")]);
+            mouseClick(findChild(page, "startUpload"));
+            tryCompare(TestServices.uploader, "hasOutcome", true);
+
+            TestServices.uploader.dismissOutcome();  // what the message's close button does
+
+            verify(!findChild(page, "outcome").visible);
         }
 
         // A window too small for the page: it scrolls, and nothing overlaps.

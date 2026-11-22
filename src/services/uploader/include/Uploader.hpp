@@ -6,6 +6,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 
 #include <QAbstractListModel>
 #include <QList>
@@ -24,6 +25,10 @@ namespace photobook::uploader
 // is on the server after 201 Created, or after a 409 duplicate with the same SHA-256; for a duplicate the
 // upload's tags are added to the image the server has. Only then, and only if asked, does the original go to the
 // trash. Any other answer leaves the file as it is, with the reason, and the next file goes on.
+//
+// When the upload ends, the files that made it without a problem leave the list; failed ones stay to be sent
+// again, and so do files with a problem to tell (e.g. the trash failed) until the next upload. If none is left,
+// the tags and options start afresh too. How the upload went is kept for the page until it is dismissed.
 class Uploader : public QAbstractListModel
 {
     Q_OBJECT
@@ -31,7 +36,8 @@ class Uploader : public QAbstractListModel
     Q_PROPERTY(int count READ count NOTIFY countChanged)
     Q_PROPERTY(bool running READ isRunning NOTIFY runningChanged)
     Q_PROPERTY(bool findingFiles READ isFindingFiles NOTIFY findingFilesChanged)  // a folder is being listed
-    Q_PROPERTY(int waitingCount READ waitingCount NOTIFY progressChanged)         // what start() would send
+    // What start() would send: the files waiting and those that failed
+    Q_PROPERTY(int waitingCount READ waitingCount NOTIFY progressChanged)
     Q_PROPERTY(int uploadedCount READ uploadedCount NOTIFY progressChanged)
     Q_PROPERTY(int alreadyThereCount READ alreadyThereCount NOTIFY progressChanged)
     Q_PROPERTY(int failedCount READ failedCount NOTIFY progressChanged)
@@ -40,6 +46,11 @@ class Uploader : public QAbstractListModel
     Q_PROPERTY(int filesDoneInRun READ filesDoneInRun NOTIFY progressChanged)
     Q_PROPERTY(bool moveOriginalsToTrash READ movesOriginalsToTrash WRITE setMoveOriginalsToTrash NOTIFY
                    moveOriginalsToTrashChanged)  // off by default
+    // How the last upload went, after its files left the list
+    Q_PROPERTY(bool hasOutcome READ hasOutcome NOTIFY outcomeChanged)
+    Q_PROPERTY(int outcomeUploaded READ outcomeUploaded NOTIFY outcomeChanged)
+    Q_PROPERTY(int outcomeAlreadyThere READ outcomeAlreadyThere NOTIFY outcomeChanged)
+    Q_PROPERTY(int outcomeFailed READ outcomeFailed NOTIFY outcomeChanged)
 
 public:
     enum class FileState
@@ -73,9 +84,11 @@ public:
     Q_INVOKABLE void removeFile(int row);  // not while running
     Q_INVOKABLE void clear();              // not while running
 
-    // Sends the files still waiting, with the tag editor's tags; nothing if one of those is refused.
+    // Sends the files still waiting and those that failed, with the tag editor's tags; nothing if one of those
+    // is refused.
     Q_INVOKABLE void start();
     Q_INVOKABLE void cancel();  // after the current file
+    Q_INVOKABLE void dismissOutcome();
 
     int count() const;
     bool isRunning() const;
@@ -88,6 +101,10 @@ public:
     int filesDoneInRun() const;
     bool movesOriginalsToTrash() const;
     void setMoveOriginalsToTrash(bool move);
+    bool hasOutcome() const;
+    int outcomeUploaded() const;
+    int outcomeAlreadyThere() const;
+    int outcomeFailed() const;
 
     int rowCount(const QModelIndex& parent = {}) const override;
     QVariant data(const QModelIndex& index, int role) const override;
@@ -99,6 +116,7 @@ Q_SIGNALS:
     void findingFilesChanged();
     void progressChanged();
     void moveOriginalsToTrashChanged();
+    void outcomeChanged();
     void finished();  // the files are done, or the rest was cancelled
 
 private:
@@ -109,6 +127,13 @@ private:
         QString message;
     };
 
+    struct Outcome
+    {
+        int uploaded = 0;
+        int alreadyThere = 0;
+        int failed = 0;
+    };
+
     void appendFiles(const QStringList& filePaths);
     void uploadNext();
     void send(int row, const QString& sha256);
@@ -117,6 +142,8 @@ private:
     void addMessage(int row, const QString& message);
     void fail(int row, const QString& message);
     void finish();
+    void removeFilesThatMadeIt(bool alsoThoseWithAMessage);
+    void setOutcome(const std::optional<Outcome>& outcome);
     void setState(int row, FileState state, const QString& message = {});
     int countIn(FileState state) const;
     void setRunning(bool running);
@@ -131,6 +158,7 @@ private:
     int m_filesInRun = 0;
     bool m_moveOriginalsToTrash = false;
     int m_foldersBeingListed = 0;
+    std::optional<Outcome> m_outcome;
 };
 
 }  // namespace photobook::uploader
