@@ -52,6 +52,8 @@ private Q_SLOTS:
     void asksForAnAddress();
     void refusesWhatIsNotAPhotobookServer();
     void pointsToTheSetupPageOfANewServer();
+    void linksToTheWebAdmin();
+    void linksToTheWebAdminUnderTheServersPath();
 
     void logsInAndKeepsTheLogin();
     void staysOnTheLoginAfterAWrongPassword();
@@ -178,6 +180,30 @@ void TestConnection::pointsToTheSetupPageOfANewServer()
 
     QTRY_COMPARE(connection->state(), Connection::State::NoServer);
     QVERIFY(connection->errorMessage().contains(QStringLiteral("https://photos.example.org/admin/setup")));
+}
+
+void TestConnection::linksToTheWebAdmin()
+{
+    const auto connection = createConnection();
+    QVERIFY(connection->webAdminUrl().isEmpty());  // no server yet
+
+    connection->checkServer(serverUrl);
+
+    QTRY_COMPARE(connection->state(), Connection::State::ServerFound);
+    QCOMPARE(connection->webAdminUrl(), QUrl(QStringLiteral("https://photos.example.org/admin/login")));
+}
+
+// Behind a reverse proxy the server may live under a path of its own.
+void TestConnection::linksToTheWebAdminUnderTheServersPath()
+{
+    const QString proxiedUrl = QStringLiteral("https://example.org/photobook");
+    m_server->answer("GET", proxiedUrl + QStringLiteral("/api/v1/server/info"), response(200, serverInfoJson));
+    const auto connection = createConnection();
+
+    connection->checkServer(proxiedUrl + QLatin1Char('/'));
+
+    QTRY_COMPARE(connection->state(), Connection::State::ServerFound);
+    QCOMPARE(connection->webAdminUrl(), QUrl(QStringLiteral("https://example.org/photobook/admin/login")));
 }
 
 void TestConnection::logsInAndKeepsTheLogin()

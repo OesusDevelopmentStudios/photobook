@@ -13,6 +13,7 @@ namespace
 {
 
 using namespace photobook::server_client;
+using photobook::connection::serverPage;
 using photobook::token_store::StoreResult;
 using photobook::token_store::TokenStoreError;
 
@@ -39,11 +40,9 @@ QString problemWithServer(const QUrl& serverUrl, const ServerInfo& info)
 
     if (info.setupRequired)
     {
-        const QString setupPage =
-            serverUrl.adjusted(QUrl::StripTrailingSlash).toDisplayString() + QStringLiteral("/admin/setup");
         return i18nc("@info %1 is a web address",
                      "The server is not set up yet. Open %1 in a browser to create its admin account.",
-                     setupPage);
+                     serverPage(serverUrl, QStringLiteral("/admin/setup")).toDisplayString());
     }
 
     return {};
@@ -205,6 +204,11 @@ Connection::State Connection::state() const
 QString Connection::serverAddress() const
 {
     return m_serverUrl.toDisplayString();
+}
+
+QUrl Connection::webAdminUrl() const
+{
+    return m_serverUrl.isEmpty() ? QUrl() : serverPage(m_serverUrl, QStringLiteral("/admin/login"));
 }
 
 QString Connection::serverDescription() const

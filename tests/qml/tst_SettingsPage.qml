@@ -170,6 +170,30 @@ Item {
             compare(TestServices.accountConnection.state, Connection.State.LoggedIn);
         }
 
+        // In the middle of the page's scroll area. Waits for the layout to settle: a scroll bar may come and go.
+        function verifyInTheMiddle(item: Item, page: SettingsPage) {
+            const flickable = page.flickable;
+            const offMiddle = () => item.mapToItem(page, item.width / 2, 0).x
+                                    - flickable.mapToItem(page, flickable.width / 2, 0).x;
+            tryVerify(() => Math.abs(offMiddle()) < 1, 5000, item.objectName + " is not in the middle");
+        }
+
+        function test_putsLogOutInTheMiddle() {
+            const page = shownPage();
+
+            verifyInTheMiddle(findChild(page, "logOut"), page);
+        }
+
+        // Not clicked: that would open the test machine's browser.
+        function test_offersTheWebAdminToEveryAccount() {
+            const page = shownPage();
+            const button = findChild(page, "openWebAdmin");
+
+            verify(button.visible && button.enabled);
+            verifyInTheMiddle(button, page);
+            verify(String(TestServices.accountConnection.webAdminUrl).endsWith("/admin/login"));
+        }
+
         Component {
             id: spyComponent
 

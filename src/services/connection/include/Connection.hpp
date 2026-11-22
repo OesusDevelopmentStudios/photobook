@@ -26,6 +26,7 @@ class Connection : public QObject
 
     Q_PROPERTY(State state READ state NOTIFY stateChanged)
     Q_PROPERTY(QString serverAddress READ serverAddress NOTIFY serverChanged)
+    Q_PROPERTY(QUrl webAdminUrl READ webAdminUrl NOTIFY serverChanged)
     Q_PROPERTY(QString serverDescription READ serverDescription NOTIFY serverChanged)
     Q_PROPERTY(bool plainHttp READ isPlainHttp NOTIFY serverChanged)
     Q_PROPERTY(QString username READ username NOTIFY userChanged)
@@ -71,6 +72,7 @@ public:
 
     State state() const;
     QString serverAddress() const;
+    QUrl webAdminUrl() const;           // the web admin's login page; empty without a server
     QString serverDescription() const;  // e.g. "photobook-db 0.1.0"
     bool isPlainHttp() const;           // passwords and images travel unencrypted
     QString username() const;

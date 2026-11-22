@@ -51,6 +51,13 @@ QList<QUrl> serverUrlCandidates(const QString& typedAddress)
     return candidates;
 }
 
+QUrl serverPage(const QUrl& serverUrl, const QString& path)
+{
+    QUrl page = serverUrl.adjusted(QUrl::StripTrailingSlash | QUrl::RemoveQuery | QUrl::RemoveFragment);
+    page.setPath(page.path() + path);
+    return page;
+}
+
 QString deviceName()
 {
     const QString version = QCoreApplication::applicationVersion();
