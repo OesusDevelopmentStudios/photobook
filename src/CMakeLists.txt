@@ -1,7 +1,7 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# SPDX-FileCopyrightText: 2026 OesusDevelopmentStudios
+#SPDX - License - Identifier : GPL - 3.0 - or -later
+#SPDX - FileCopyrightText : 2026 OesusDevelopmentStudios
 
-# Shared helpers. A static library, so that tests can link the same code as the application.
+#Shared helpers.A static library, so that tests can link the same code as the application.
 add_library(photobook_utils STATIC
     utils/AppIdentity.cpp
     utils/CommandLine.cpp
@@ -9,7 +9,7 @@ add_library(photobook_utils STATIC
     utils/MachineId.cpp
 )
 
-# Lets every target that links photobook_utils write #include "utils/AppIdentity.hpp".
+#Lets every target that links photobook_utils write #include "utils/AppIdentity.hpp".
 target_include_directories(photobook_utils PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
@@ -43,12 +43,12 @@ add_subdirectory(services/uploader)
 add_subdirectory(services/network_access)
 add_subdirectory(services/image_actions)
 
-# The user interface: the QML files and the C++ types they use, the AppManager and through it the services. A
-# static library that is also a QML module, so the application and the QML tests use the same one. The URI is
-# the app ID; main.cpp loads Main.qml from it with loadFromModule().
+#The user interface : the QML files and the C++ types they use, the AppManager and through it the services.A
+#static library that is also a QML module, so the application and the QML tests use the same one.The URI is
+#the app ID; main.cpp loads Main.qml from it with loadFromModule().
 qt_add_library(photobook_ui STATIC)
 
-# QML modules go into folders named after their URI under one root, where qmllint and the QML tests find them.
+#QML modules go into folders named after their URI under one root, where qmllint and the QML tests find them.
 set(QT_QML_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/qml)
 
 set(qmlFiles
@@ -75,7 +75,7 @@ set(qmlFiles
     qml/UploadIndicator.qml
 )
 
-# At the module's root, though they are in qml/ here: only files at the root see the module's C++ types.
+#At the module 's root, though they are in qml/ here: only files at the root see the module' s C++ types.
 foreach(qmlFile ${qmlFiles})
     get_filename_component(fileName ${qmlFile} NAME)
     set_source_files_properties(${qmlFile} PROPERTIES QT_RESOURCE_ALIAS ${fileName})
@@ -92,13 +92,13 @@ qt_add_qml_module(photobook_ui
     QML_FILES ${qmlFiles}
 )
 
-# Qt gives the module's generated targets (resources, plugin) the folders of generated headers, and they can be
-# built before those exist; with warnings as errors, a missing include folder would stop the build.
+#Qt gives the module 's generated targets (resources, plugin) the folders of generated headers, and they can be
+#built before those exist; with warnings as errors, a missing include folder would stop the build.
 foreach(generatingTarget photobook_ui photobook_uiplugin)
     file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${generatingTarget}_autogen/include)
 endforeach()
 
-# Qt's generated QML type registration includes the headers by file name only.
+#Qt's generated QML type registration includes the headers by file name only.
 target_include_directories(photobook_ui PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/app_manager
 )
@@ -121,7 +121,7 @@ target_link_libraries(photobook_ui PUBLIC
     Qt6::QuickControls2
 )
 
-# The application. main.cpp only wires things together; logic lives in the libraries above.
+#The application.main.cpp only wires things together; logic lives in the libraries above.
 add_executable(photobook main.cpp)
 
 target_link_libraries(photobook PRIVATE
