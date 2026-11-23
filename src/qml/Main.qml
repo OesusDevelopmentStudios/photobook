@@ -344,6 +344,7 @@ Kirigami.ApplicationWindow {
                 root.appManager.openLibraryImage(row);
                 root.showViewer();
             }
+            onAlbumOpenRequested: row => root.appManager.openAlbum(row)  // the viewer once its first image is there
             onImageCopyRequested: row => root.appManager.copyLibraryImage(row)
             onImageFolderRequested: row => root.appManager.openLibraryImageFolder(row)
             onStopSelectingRequested: root.afterChangesSettled(root.appManager.bulkTagEditor,
@@ -396,6 +397,22 @@ Kirigami.ApplicationWindow {
         }
 
         function onFailed(message: string) {
+            root.showPassiveNotification(message);
+        }
+    }
+
+    // An album opens in the viewer at its first image; Back returns to the Albums tab. Not if the user went
+    // elsewhere while it loaded.
+    Connections {
+        target: root.appManager
+
+        function onAlbumOpened() {
+            if (root.pageStack.currentItem instanceof LibraryPage) {
+                root.showViewer();
+            }
+        }
+
+        function onAlbumNotOpened(message: string) {
             root.showPassiveNotification(message);
         }
     }

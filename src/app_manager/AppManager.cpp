@@ -114,6 +114,8 @@ AppManager::AppManager(QObject* parent)
             &library::Library::replaceImage);
 
     connect(m_uploader.get(), &uploader::Uploader::finished, m_library.get(), &library::Library::reload);
+    // Uploads go on in the background, also while the Albums tab is shown; it reloads itself when shown.
+    connect(m_uploader.get(), &uploader::Uploader::finished, m_albums.get(), &library::Albums::reload);
 
     // Saved hidden filters change what the server leaves out of a search, so the search runs again.
     connect(
