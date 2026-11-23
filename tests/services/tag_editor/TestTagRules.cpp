@@ -7,6 +7,7 @@
 #include <QTest>
 
 #include "hlp/Restrictions.hpp"
+#include "hlp/SearchOperand.hpp"
 #include "hlp/SearchTerm.hpp"
 #include "hlp/TagNames.hpp"
 
@@ -24,6 +25,12 @@ const QSet<QString> namespaces{
     QStringLiteral("album"),
     QStringLiteral("general"),
 };
+
+// '^' marks the cursor in a search written for a test: the search without it, and where it was
+std::pair<QString, qsizetype> searchAndCursor(const QString& marked)
+{
+    return {QString(marked).remove(QLatin1Char('^')), marked.indexOf(QLatin1Char('^'))};
+}
 
 // Tags as the server writes them, e.g. "rating:private"
 QList<TagName> tagsFrom(const QStringList& texts)
@@ -66,6 +73,13 @@ private Q_SLOTS:
     void refusesInvalidTerms();
     void namesTheTagsATermMentions();
     void namesTheRestrictedTagsOfAnImage();
+
+    void findsTheOperandUnderTheCursor_data();
+    void findsTheOperandUnderTheCursor();
+    void findsNoOperandWhereNoTagIsTyped_data();
+    void findsNoOperandWhereNoTagIsTyped();
+    void putsAChosenTagInPlaceOfTheOperand_data();
+    void putsAChosenTagInPlaceOfTheOperand();
 };
 
 void TestTagRules::initTestCase()
@@ -331,6 +345,117 @@ void TestTagRules::namesTheRestrictedTagsOfAnImage()
         QStringList({QStringLiteral("general:nude"), QStringLiteral("general:photo"), QStringLiteral("rating:private")}));
     QVERIFY(restrictedTagsAmong(restrictions, namespaces, tagsFrom({QStringLiteral("general:photo")}), QDateTime())
                 .isEmpty());
+}
+
+// The tag being typed in a search, for suggestions: the grammar's examples
+void TestTagRules::findsTheOperandUnderTheCursor_data()
+{
+    QTest::addColumn<QString>("search");         // '^' is the cursor
+    QTest::addColumn<QString>("typed");          // up to the cursor
+    QTest::addColumn<QString>("operand");        // all of it, as a choice replaces it
+    QTest::addColumn<QString>("namespaceName");  // in force; empty: none
+    QTest::addColumn<bool>("endsTerm");
+
+    const auto row = [](const char* search, const char* typed, const char* operand, const char* ns, bool endsTerm) {
+        QTest::newRow(search) << QString::fromUtf8(search) << QString::fromUtf8(typed) << QString::fromUtf8(operand)
+                              << QString::fromUtf8(ns) << endsTerm;
+    };
+    row("summ^", "summ", "summ", "", true);
+    row("category:photo summ^", "summ", "summ", "", true);
+    row("-su^", "su", "su", "", true);
+    row("sci-f^", "sci-f", "sci-f", "", true);  // a '-' inside a name is part of it
+    row("re:ze^", "re:ze", "re:ze", "", true);  // "re" is no namespace
+    row("rating^", "rating", "rating", "", true);
+    row("rating:^", "", "", "rating", true);
+    row("Rating:p^", "p", "p", "rating", true);
+    row("author:sa^", "sa", "sa", "author", true);
+    row("weather:su^", "su", "su", "weather", true);     // a custom namespace
+    row("rating:private|p^", "p", "p", "rating", true);  // the term's prefix holds for all of it
+    row("-rating:private|-p^", "p", "p", "rating", true);
+    row("category:photo,-sun^", "sun", "sun", "category", true);
+    row("rating:(private|p^", "p", "p", "rating", true);  // a group still open
+    row("(author:sam|be^", "be", "be", "", true);         // an operand's prefix holds for it alone
+    row("(author:sam|be^)", "be", "be", "", false);
+    row("author:(sam|weather:su^)", "su", "su", "weather", false);
+    row("rating:(private|public),sun^", "sun", "sun", "rating", true);
+    row("su^mmer|beach", "su", "summer", "", false);
+    row("summer ^", "", "", "", true);
+    row("summer ^beach", "", "beach", "", true);
+    row("category:photo ^summer", "", "summer", "", true);
+}
+
+void TestTagRules::findsTheOperandUnderTheCursor()
+{
+    QFETCH(QString, search);
+    QFETCH(QString, typed);
+    QFETCH(QString, operand);
+    QFETCH(QString, namespaceName);
+    QFETCH(bool, endsTerm);
+    const auto [text, cursor] = searchAndCursor(search);
+
+    const std::optional<SearchOperand> found =
+        searchOperandAt(text, cursor, namespaces + QSet<QString>{QStringLiteral("weather")});
+
+    QVERIFY(found.has_value());
+    QCOMPARE(found->typed, typed);
+    QCOMPARE(text.mid(found->start, found->end - found->start), operand);
+    QCOMPARE(found->namespaceName, namespaceName);
+    QCOMPARE(found->endsTerm, endsTerm);
+}
+
+void TestTagRules::findsNoOperandWhereNoTagIsTyped_data()
+{
+    QTest::addColumn<QString>("search");
+
+    QTest::newRow("a year") << QStringLiteral("year:20^");
+    QTest::newRow("a date") << QStringLiteral("summer date:2025-07^");
+    QTest::newRow("a month in a group") << QStringLiteral("(year:2025|month:2025-0^");
+    QTest::newRow("a wildcard") << QStringLiteral("sum*^");
+    QTest::newRow("a wildcard after the cursor") << QStringLiteral("su^m*");
+}
+
+void TestTagRules::findsNoOperandWhereNoTagIsTyped()
+{
+    QFETCH(QString, search);
+    const auto [text, cursor] = searchAndCursor(search);
+
+    QCOMPARE(searchOperandAt(text, cursor, namespaces), std::nullopt);
+}
+
+void TestTagRules::putsAChosenTagInPlaceOfTheOperand_data()
+{
+    QTest::addColumn<QString>("search");  // '^' is the cursor
+    QTest::addColumn<QString>("tag");
+    QTest::addColumn<QString>("completed");
+
+    const auto row = [](const char* name, const char* search, const char* tag, const char* completed) {
+        QTest::newRow(name) << QString::fromUtf8(search) << QString::fromUtf8(tag) << QString::fromUtf8(completed);
+    };
+    row("a general tag, bare", "summ^", "general:summer", "summer ^");
+    row("after other terms", "category:photo -summ^", "general:summer", "category:photo -summer ^");
+    row("another namespace, whole", "priv^", "rating:private", "rating:private ^");
+    row("the prefix's namespace, bare", "rating:private|p^", "rating:public", "rating:private|public ^");
+    row("in the middle of a term", "rating:p^|private", "rating:public", "rating:public^|private");
+    row("before a group closes", "author:(sam|b^)", "author:bob", "author:(sam|bob^)");
+    row("all of the operand", "su^mmer beach", "general:sunset", "sunset ^beach");
+    row("general named", "general:sum^", "general:summer", "general:summer ^");
+    row("in a group without a prefix", "(sam^|beach)", "author:sample_artist", "(author:sample_artist^|beach)");
+}
+
+void TestTagRules::putsAChosenTagInPlaceOfTheOperand()
+{
+    QFETCH(QString, search);
+    QFETCH(QString, tag);
+    QFETCH(QString, completed);
+    const auto [text, cursor] = searchAndCursor(search);
+    const std::optional<SearchOperand> operand = searchOperandAt(text, cursor, namespaces);
+    QVERIFY(operand.has_value());
+
+    const CompletedSearch result = completedSearch(text, *operand, tagFromServer(tag));
+
+    const auto [expectedText, expectedCursor] = searchAndCursor(completed);
+    QCOMPARE(result.text, expectedText);
+    QCOMPARE(result.cursor, expectedCursor);
 }
 
 }  // namespace photobook::tag_editor

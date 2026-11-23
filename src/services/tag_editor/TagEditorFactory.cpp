@@ -28,4 +28,9 @@ std::unique_ptr<HiddenFilterEditor> createHiddenFilterEditor(connection::Connect
     return std::make_unique<HiddenFilterEditor>(connection);
 }
 
+std::unique_ptr<SearchSuggestions> createSearchSuggestions(connection::Connection* connection)
+{
+    return std::make_unique<SearchSuggestions>(connection);
+}
+
 }  // namespace photobook::tag_editor

@@ -6,6 +6,7 @@
 add_library(photobook_tag_editor STATIC
     include/BulkTagEditor.hpp
     include/HiddenFilterEditor.hpp
+    include/SearchSuggestions.hpp
     include/TagEditor.hpp
     include/TagRowsEditor.hpp
     include/TagSuggestions.hpp
@@ -15,6 +16,8 @@ add_library(photobook_tag_editor STATIC
     hlp/TagNames.cpp
     hlp/SearchTerm.hpp
     hlp/SearchTerm.cpp
+    hlp/SearchOperand.hpp
+    hlp/SearchOperand.cpp
     hlp/Restrictions.hpp
     hlp/Restrictions.cpp
     hlp/TagMessages.hpp
@@ -25,6 +28,7 @@ add_library(photobook_tag_editor STATIC
     impl/NamespaceRows.cpp
     BulkTagEditor.cpp
     HiddenFilterEditor.cpp
+    SearchSuggestions.cpp
     TagEditor.cpp
     TagRowsEditor.cpp
     TagSuggestions.cpp

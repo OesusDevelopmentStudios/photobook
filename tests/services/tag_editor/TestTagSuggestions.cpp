@@ -5,12 +5,14 @@
 
 #include <memory>
 
+#include <QJsonArray>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
 #include <QUrlQuery>
 
 #include "Connection.hpp"
+#include "SearchSuggestions.hpp"
 #include "ServerClientFactory.hpp"
 #include "SettingsFactory.hpp"
 #include "TagSuggestions.hpp"
@@ -34,6 +36,23 @@ const QString tagsUrl = serverUrl + QStringLiteral("/api/v1/tags");
 QString prefixOf(const HttpRequest& request)
 {
     return QUrlQuery(request.url).queryItemValue(QStringLiteral("prefix"), QUrl::FullyDecoded);
+}
+
+QString namespaceOf(const HttpRequest& request)
+{
+    return QUrlQuery(request.url).queryItemValue(QStringLiteral("namespace"), QUrl::FullyDecoded);
+}
+
+QJsonObject namespaceJson(const QString& name, bool singleValue, const QJsonValue& allowedValues = QJsonValue::Null)
+{
+    return {
+        {QStringLiteral("name"), name},
+        {QStringLiteral("single_value"), singleValue},
+        {QStringLiteral("is_builtin"), name != QLatin1String("weather")},
+        {QStringLiteral("in_path_template"), false},
+        {QStringLiteral("user_editable"), name != QLatin1String("meta")},
+        {QStringLiteral("allowed_values"), allowedValues},
+    };
 }
 
 // The server's answer: tags that start with the prefix, most used first. "su" and "sum" find different
@@ -85,8 +104,16 @@ private Q_SLOTS:
     void showsNothingWhenTheServerFails();
     void asksForOneNamespace();
 
+    void searchAsksForTheTagUnderTheCursor();
+    void searchAsksEveryNamespaceWithoutAPrefix();
+    void searchKnowsTheServersOwnNamespaces();
+    void searchSuggestsNoDates();
+    void searchPutsAChosenTagInPlace();
+
 private:
     QStringList shownTags() const;
+    QList<HttpRequest> tagRequestsFor(const QString& prefix) const;
+    std::unique_ptr<SearchSuggestions> createSearchSuggestions();
 
     std::unique_ptr<QTemporaryDir> m_folder;
     std::unique_ptr<settings::Settings> m_settings;
@@ -112,6 +139,17 @@ void TestTagSuggestions::init()
                                           {QStringLiteral("restricted_tags"), QJsonArray()}}));
     m_server->answerWith(
         "GET", tagsUrl, [](const HttpRequest& request) { return tagsStartingWith(prefixOf(request)); });
+    m_server->answer(
+        "GET",
+        serverUrl + QStringLiteral("/api/v1/namespaces"),
+        fakes::jsonResponse(
+            200,
+            {{QStringLiteral("items"),
+              QJsonArray{namespaceJson(QStringLiteral("category"), true, QJsonArray{QStringLiteral("photo")}),
+                         namespaceJson(QStringLiteral("rating"), true, QJsonArray{QStringLiteral("public")}),
+                         namespaceJson(QStringLiteral("general"), false),
+                         namespaceJson(QStringLiteral("meta"), false),
+                         namespaceJson(QStringLiteral("weather"), false)}}}));
 
     auto keyring = std::make_shared<fakes::Keyring>();
     keyring->tokens.insert(serverUrl, QStringLiteral("pk_kept"));
@@ -134,6 +172,25 @@ QStringList TestTagSuggestions::shownTags() const
     }
 
     return tags;
+}
+
+QList<HttpRequest> TestTagSuggestions::tagRequestsFor(const QString& prefix) const
+{
+    QList<HttpRequest> asked;
+    for (const HttpRequest& request : m_server->requestsTo("GET", tagsUrl))
+    {
+        if (prefixOf(request) == prefix)
+        {
+            asked.append(request);
+        }
+    }
+
+    return asked;
+}
+
+std::unique_ptr<SearchSuggestions> TestTagSuggestions::createSearchSuggestions()
+{
+    return std::make_unique<SearchSuggestions>(m_connection.get());
 }
 
 void TestTagSuggestions::asksOnceTypingPauses()
@@ -234,6 +291,71 @@ void TestTagSuggestions::asksForOneNamespace()
     const QString namespaceAsked =
         QUrlQuery(m_server->requestsTo("GET", tagsUrl).last().url).queryItemValue(QStringLiteral("namespace"));
     QCOMPARE(namespaceAsked, QStringLiteral("album"));
+}
+
+// The prefix of the term holds for the "p": ratings only
+void TestTagSuggestions::searchAsksForTheTagUnderTheCursor()
+{
+    const auto search = createSearchSuggestions();
+
+    search->setTypedSearch(QStringLiteral("rating:private|p summer"), 16);
+
+    QTRY_COMPARE(tagRequestsFor(QStringLiteral("p")).size(), 1);
+    QCOMPARE(namespaceOf(tagRequestsFor(QStringLiteral("p")).first()), QStringLiteral("rating"));
+}
+
+void TestTagSuggestions::searchAsksEveryNamespaceWithoutAPrefix()
+{
+    const auto search = createSearchSuggestions();
+
+    search->setTypedSearch(QStringLiteral("category:photo su"), 17);
+
+    QTRY_COMPARE(search->suggestions()->count(), 2);
+    QVERIFY(namespaceOf(tagRequestsFor(QStringLiteral("su")).first()).isEmpty());
+}
+
+// A custom namespace is a prefix too, once the server's list has arrived.
+void TestTagSuggestions::searchKnowsTheServersOwnNamespaces()
+{
+    const auto search = createSearchSuggestions();
+
+    search->setTypedSearch(QStringLiteral("weather:su"), 10);
+
+    QTRY_VERIFY(!tagRequestsFor(QStringLiteral("su")).isEmpty());
+    QCOMPARE(namespaceOf(tagRequestsFor(QStringLiteral("su")).last()), QStringLiteral("weather"));
+}
+
+void TestTagSuggestions::searchSuggestsNoDates()
+{
+    const auto search = createSearchSuggestions();
+    search->setTypedSearch(QStringLiteral("su"), 2);
+    QTRY_COMPARE(search->suggestions()->count(), 2);
+
+    search->setTypedSearch(QStringLiteral("su year:20"), 10);
+
+    QCOMPARE(search->suggestions()->count(), 0);
+    QTest::qWait(TagSuggestions::typingPause.count() * 2);
+    QVERIFY(tagRequestsFor(QStringLiteral("20")).isEmpty());
+}
+
+void TestTagSuggestions::searchPutsAChosenTagInPlace()
+{
+    const auto search = createSearchSuggestions();
+    QSignalSpy completed(search.get(), &SearchSuggestions::completed);
+    search->setTypedSearch(QStringLiteral("category:photo su"), 17);
+    QTRY_COMPARE(search->suggestions()->count(), 2);
+
+    search->choose(5);  // not there
+    QCOMPARE(completed.size(), 0);
+    search->choose(1);
+
+    QCOMPARE(completed.size(), 1);
+    QCOMPARE(completed.first().at(0).toString(), QStringLiteral("category:photo summer "));
+    QCOMPARE(completed.first().at(1).toInt(), 22);
+    QCOMPARE(search->suggestions()->count(), 0);                           // until the search is typed on
+    search->setTypedSearch(QStringLiteral("category:photo summer "), 22);  // the field, as it shows the choice
+    QTest::qWait(TagSuggestions::typingPause.count() * 2);
+    QCOMPARE(search->suggestions()->count(), 0);
 }
 
 }  // namespace photobook::tag_editor

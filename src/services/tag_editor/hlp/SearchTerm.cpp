@@ -14,12 +14,11 @@ namespace
 {
 
 using photobook::tag_editor::generalNamespace;
+using photobook::tag_editor::searchDateFields;
 using photobook::tag_editor::SearchTerm;
 using photobook::tag_editor::TagName;
 using Node = SearchTerm::Node;
 
-// Search fields that use the namespace syntax and match the date a photo was taken
-const QSet<QString> dateFields{QStringLiteral("year"), QStringLiteral("month"), QStringLiteral("date")};
 const QString operatorCharacters = QStringLiteral(",|()");
 
 Node negation(Node operand)
@@ -55,7 +54,7 @@ class TermParser
 public:
     TermParser(const QString& text, const QSet<QString>& namespaceNames)
         : m_text(text)
-        , m_prefixes(namespaceNames + dateFields)
+        , m_prefixes(namespaceNames + searchDateFields)
     {}
 
     std::optional<Node> parseTerm()
@@ -164,7 +163,7 @@ private:
             return std::nullopt;
         }
 
-        if (dateFields.contains(namespaceName))
+        if (searchDateFields.contains(namespaceName))
         {
             return dateValue(namespaceName, text);
         }

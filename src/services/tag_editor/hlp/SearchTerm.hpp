@@ -19,6 +19,9 @@
 namespace photobook::tag_editor
 {
 
+// Search fields that use the namespace syntax and match the date a photo was taken, e.g. "year:2025"
+inline const QSet<QString> searchDateFields{QStringLiteral("year"), QStringLiteral("month"), QStringLiteral("date")};
+
 // One term of the search language, e.g. a restricted term such as "rating:private|restricted".
 // Matches an image whose tags are known, without asking the server: the same rules as the server's own check,
 // so a restricted tag is refused before anything is sent.
