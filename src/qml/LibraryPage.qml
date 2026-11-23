@@ -372,9 +372,13 @@ Kirigami.Page {
         anchors.centerIn: parent
         width: parent.width - Kirigami.Units.gridUnit * 4
         visible: page.connectionState === Connection.State.Offline
-        icon.name: "network-disconnect"
-        text: KI18n.i18nc("@info:placeholder %1 is a server address", "%1 does not answer",
-                          page.connection.serverAddress)
+                 || page.connectionState === Connection.State.ServerUnusable
+        icon.name: page.connectionState === Connection.State.Offline ? "network-disconnect" : "dialog-warning"
+        text: page.connectionState === Connection.State.Offline
+              ? KI18n.i18nc("@info:placeholder %1 is a server address", "%1 does not answer",
+                            page.connection.serverAddress)
+              : KI18n.i18nc("@info:placeholder %1 is a server address", "%1 cannot be used",
+                            page.connection.serverAddress)
         explanation: page.connection.errorMessage
         helpfulAction: Kirigami.Action {
             icon.name: "view-refresh"
@@ -388,6 +392,7 @@ Kirigami.Page {
         width: parent.width - Kirigami.Units.gridUnit * 4
         visible: !page.loggedIn && page.connectionState !== Connection.State.RestoringLogin
                  && page.connectionState !== Connection.State.Offline
+                 && page.connectionState !== Connection.State.ServerUnusable
         icon.name: "network-server"
         text: KI18n.i18nc("@info:placeholder", "Not logged in")
         explanation: page.connection.errorMessage

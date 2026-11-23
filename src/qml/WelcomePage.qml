@@ -46,11 +46,14 @@ Kirigami.Page {
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.Wrap
             visible: page.loggedIn || page.connection.state === Connection.State.Offline
+                     || page.connection.state === Connection.State.ServerUnusable
             text: page.loggedIn
                 ? KI18n.i18nc("@info %1 is a user name, %2 a server address", "Logged in as %1 on %2.",
                               page.connection.username, page.connection.serverAddress)
-                : KI18n.i18nc("@info %1 is a server address", "%1 does not answer right now.",
-                              page.connection.serverAddress)
+                : page.connection.state === Connection.State.ServerUnusable
+                    ? page.connection.errorMessage
+                    : KI18n.i18nc("@info %1 is a server address", "%1 does not answer right now.",
+                                  page.connection.serverAddress)
         }
 
         Controls.Button {

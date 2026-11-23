@@ -111,31 +111,53 @@ void Connection::restoreLogin()
 
         m_token = *token;
         m_client->setToken(m_token);
-        m_client->currentUser().then(this, [this](const Result<CurrentUser>& currentUser) {
-            if (currentUser.has_value())
+        // First whether the server is one this app can use: e.g. one not updated since the app was.
+        m_client->serverInfo().then(this, [this](const Result<ServerInfo>& info) {
+            if (info.has_value())
             {
-                m_username = currentUser->user.username;
-                m_restrictedTags = currentUser->restrictedTags;
-                Q_EMIT userChanged();
-                setState(State::LoggedIn);
-                askWhereTheLibraryIs();
-                return;
+                const QString problem = problemWithServer(m_serverUrl, *info);
+                if (!problem.isEmpty())
+                {
+                    setErrorMessage(problem);
+                    setState(State::ServerUnusable);  // the token is kept for when the server is updated
+                    return;
+                }
+
+                m_serverDescription = QStringLiteral("%1 %2").arg(info->name, info->version);
+                Q_EMIT serverChanged();
             }
 
-            if (currentUser.error().httpStatus == statusUnauthorized)  // revoked, or the password was changed
-            {
-                m_token.clear();
-                m_client->setToken({});
-                m_tokenStore->deleteToken(keyringKey());
-                setErrorMessage(i18nc("@info", "Your login has ended. Log in again."));
-                setState(State::ServerFound);
-                return;
-            }
-
-            const ApiError& error = currentUser.error();
-            setErrorMessage(describeServerError(error.code, error.title, error.detail));
-            setState(State::Offline);  // the token is kept for when the server answers again
+            checkKeptLogin();  // without an answer, that says so
         });
+    });
+}
+
+void Connection::checkKeptLogin()
+{
+    m_client->currentUser().then(this, [this](const Result<CurrentUser>& currentUser) {
+        if (currentUser.has_value())
+        {
+            m_username = currentUser->user.username;
+            m_restrictedTags = currentUser->restrictedTags;
+            Q_EMIT userChanged();
+            setState(State::LoggedIn);
+            askWhereTheLibraryIs();
+            return;
+        }
+
+        if (currentUser.error().httpStatus == statusUnauthorized)  // revoked, or the password was changed
+        {
+            m_token.clear();
+            m_client->setToken({});
+            m_tokenStore->deleteToken(keyringKey());
+            setErrorMessage(i18nc("@info", "Your login has ended. Log in again."));
+            setState(State::ServerFound);
+            return;
+        }
+
+        const ApiError& error = currentUser.error();
+        setErrorMessage(describeServerError(error.code, error.title, error.detail));
+        setState(State::Offline);  // the token is kept for when the server answers again
     });
 }
 

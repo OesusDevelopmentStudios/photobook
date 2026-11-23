@@ -44,6 +44,7 @@ public:
         LoggingIn,
         RestoringLogin,  // at start: checking the login kept from the last run
         Offline,         // logged in last time, but the server does not answer now
+        ServerUnusable,  // logged in last time, but the server answers that this app cannot use it, e.g. too old
         LoggedIn,
     };
     Q_ENUM(State)
@@ -101,6 +102,7 @@ private:
     void finishLogin(const server_client::Login& login);
     void keepToken(const QString& token);
     void readCurrentUser();
+    void checkKeptLogin();
     void askWhereTheLibraryIs();
     void setLocalLibraryDir(const QString& folder);
     void revokeOnServer(const QString& token);

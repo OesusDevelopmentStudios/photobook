@@ -67,6 +67,7 @@ private Q_SLOTS:
     void restoresTheLoginAtStart();
     void asksToLogInAgainWhenTheLoginHasEnded();
     void staysOfflineWhenTheServerDoesNotAnswer();
+    void keepsTheLoginWhileTheServerIsTooOld();
 
     void logsOutAndEndsThisDevicesLogin();
 
@@ -302,6 +303,7 @@ void TestConnection::restoresTheLoginAtStart()
 
     QTRY_COMPARE(connection->state(), Connection::State::LoggedIn);
     QCOMPARE(connection->restrictedTags(), QStringList({QStringLiteral("rating:private")}));
+    QCOMPARE(connection->serverDescription(), QStringLiteral("photobook-db 0.2.0"));
     QVERIFY(m_server->requestsTo("POST", serverUrl + QStringLiteral("/api/v1/auth/tokens")).isEmpty());  // no password
     const QList<HttpRequest> meRequests = m_server->requestsTo("GET", serverUrl + QStringLiteral("/api/v1/auth/me"));
     QCOMPARE(fakes::authorizationOf(meRequests.last()), QByteArray("Bearer pk_kept"));
@@ -335,6 +337,31 @@ void TestConnection::staysOfflineWhenTheServerDoesNotAnswer()
     QTRY_COMPARE(connection->state(), Connection::State::Offline);
     QVERIFY(connection->errorMessage().contains(QStringLiteral("Connection refused")));
     QCOMPARE(m_keyring->tokens.value(serverUrl), QStringLiteral("pk_kept"));  // for when it answers again
+}
+
+// E.g. the app was updated before the server. Once the server is updated, trying again logs in at once.
+void TestConnection::keepsTheLoginWhileTheServerIsTooOld()
+{
+    m_settings->setServerUrl(QUrl(serverUrl));
+    m_keyring->tokens.insert(serverUrl, QStringLiteral("pk_kept"));
+    const QString infoUrl = serverUrl + QStringLiteral("/api/v1/server/info");
+    m_server->answer(
+        "GET",
+        infoUrl,
+        response(200, R"({"name":"photobook-db","version":"0.1.0","api_version":1,"setup_required":false})"));
+    const auto connection = createConnection();
+
+    connection->restoreLogin();
+
+    QTRY_COMPARE(connection->state(), Connection::State::ServerUnusable);
+    QVERIFY(connection->errorMessage().contains(QStringLiteral("too old")));
+    QCOMPARE(m_keyring->tokens.value(serverUrl), QStringLiteral("pk_kept"));
+    QVERIFY(m_server->requestsTo("GET", serverUrl + QStringLiteral("/api/v1/auth/me")).isEmpty());
+
+    m_server->answer("GET", infoUrl, response(200, serverInfoJson));  // updated
+    connection->restoreLogin();
+
+    QTRY_COMPARE(connection->state(), Connection::State::LoggedIn);
 }
 
 void TestConnection::logsOutAndEndsThisDevicesLogin()

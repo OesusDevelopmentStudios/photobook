@@ -14,9 +14,12 @@ Kirigami.ScrollablePage {
     required property Connection connection
 
     readonly property int connectionState: connection.state
+    // A kept login that cannot be used now, e.g. the server is too old: it is tried again, not replaced.
+    readonly property bool loginKept: connectionState === Connection.State.Offline
+                                      || connectionState === Connection.State.ServerUnusable
     readonly property bool serverKnown: connectionState === Connection.State.ServerFound
                                         || connectionState === Connection.State.LoggingIn
-                                        || connectionState === Connection.State.Offline
+                                        || loginKept
     readonly property bool busy: connectionState === Connection.State.CheckingServer
                                  || connectionState === Connection.State.LoggingIn
                                  || connectionState === Connection.State.RestoringLogin
@@ -29,12 +32,11 @@ Kirigami.ScrollablePage {
         Kirigami.InlineMessage {
             Layout.fillWidth: true
             visible: page.connection.errorMessage.length > 0
-            type: page.connectionState === Connection.State.Offline ? Kirigami.MessageType.Warning
-                                                          : Kirigami.MessageType.Error
+            type: page.loginKept ? Kirigami.MessageType.Warning : Kirigami.MessageType.Error
             text: page.connection.errorMessage
             actions: [
                 Kirigami.Action {
-                    visible: page.connectionState === Connection.State.Offline
+                    visible: page.loginKept
                     icon.name: "view-refresh"
                     text: KI18n.i18nc("@action:button", "Try Again")
                     onTriggered: page.connection.restoreLogin()
