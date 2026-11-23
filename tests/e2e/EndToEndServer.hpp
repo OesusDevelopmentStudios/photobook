@@ -82,6 +82,11 @@ public:
         return m_connection.get();
     }
 
+    settings::Settings* settings() const
+    {
+        return m_settings.get();
+    }
+
     // As on the connect page: the server's address, then the account. True once logged in.
     bool logIn(const EndToEndServer& server, const QString& username, const QString& password) const
     {

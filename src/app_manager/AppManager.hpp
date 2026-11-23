@@ -12,6 +12,7 @@
 #include <QUrl>
 #include <QtQmlIntegration/qqmlintegration.h>
 
+#include "Albums.hpp"
 #include "ApiTypes.hpp"
 #include "BulkTagEditor.hpp"
 #include "Connection.hpp"
@@ -46,6 +47,7 @@ class AppManager : public QObject
     Q_PROPERTY(photobook::slideshow::Slideshow* slideshow READ slideshow CONSTANT)
     Q_PROPERTY(photobook::connection::Connection* connection READ connection CONSTANT)
     Q_PROPERTY(photobook::library::Library* library READ library CONSTANT)
+    Q_PROPERTY(photobook::library::Albums* albums READ albums CONSTANT)
     Q_PROPERTY(photobook::library_view::LibraryView* libraryView READ libraryView CONSTANT)
     Q_PROPERTY(photobook::tag_editor::TagEditor* tagEditor READ tagEditor CONSTANT)
     Q_PROPERTY(photobook::tag_editor::BulkTagEditor* bulkTagEditor READ bulkTagEditor CONSTANT)
@@ -65,6 +67,7 @@ public:
     slideshow::Slideshow* slideshow() const;
     connection::Connection* connection() const;
     library::Library* library() const;
+    library::Albums* albums() const;
     library_view::LibraryView* libraryView() const;
     tag_editor::TagEditor* tagEditor() const;
     tag_editor::BulkTagEditor* bulkTagEditor() const;
@@ -81,6 +84,9 @@ public:
     Q_INVOKABLE void openFolder(const QUrl& folderUrl);
     // Next and previous then step through the library's results.
     Q_INVOKABLE void openLibraryImage(int row);
+    // The album of the Albums tab's row, at its first image once that has arrived (albumOpened()); next and
+    // previous then step through the album in the order its images were added.
+    Q_INVOKABLE void openAlbum(int row);
     // Into the upload list; a folder without its subfolders
     Q_INVOKABLE void uploadCurrentImage();
     Q_INVOKABLE void uploadCurrentFolder();
@@ -93,8 +99,13 @@ public:
     Q_INVOKABLE void copyLibraryImage(int row);
     Q_INVOKABLE void openLibraryImageFolder(int row);
 
+Q_SIGNALS:
+    void albumOpened();  // its first image is on screen: the viewer can be shown
+    void albumNotOpened(const QString& message);
+
 private:
     void showLibraryImage(int row);
+    void albumLoadSettled();
     void openFolderOf(const server_client::Image& image);  // only when the server runs on this computer
 
     // Each service after those it uses: created after them, destroyed before them
@@ -105,6 +116,10 @@ private:
     std::unique_ptr<slideshow::Slideshow> m_slideshow;
     std::unique_ptr<connection::Connection> m_connection;
     std::unique_ptr<library::Library> m_library;
+    std::unique_ptr<library::Albums> m_albums;
+    std::unique_ptr<library::Library> m_albumImages;  // of the album opened last
+    library::Library* m_browsedLibrary = nullptr;     // whose image the viewer shows: m_library or m_albumImages
+    bool m_openingAlbum = false;                      // until its first image is shown
     std::unique_ptr<library_view::LibraryView> m_libraryView;
     std::unique_ptr<tag_editor::TagEditor> m_tagEditor;
     std::unique_ptr<tag_editor::BulkTagEditor> m_bulkTagEditor;

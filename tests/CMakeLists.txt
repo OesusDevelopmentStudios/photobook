@@ -151,6 +151,10 @@ ecm_add_test(e2e/TestEndToEndHiddenFilters.cpp
     LINK_LIBRARIES photobook_uploader photobook_library photobook_tag_editor Qt6::Gui Qt6::Test KF6::I18n
 )
 
+ecm_add_test(e2e/TestEndToEndAlbums.cpp
+    LINK_LIBRARIES photobook_uploader photobook_library photobook_tag_editor Qt6::Gui Qt6::Test KF6::I18n
+)
+
 ecm_add_test(e2e/TestEndToEndRestrictions.cpp
     LINK_LIBRARIES photobook_uploader photobook_library photobook_tag_editor photobook_utils Qt6::Gui Qt6::Test KF6::I18n
 )

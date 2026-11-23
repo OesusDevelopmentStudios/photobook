@@ -18,7 +18,8 @@ namespace photobook::library
 {
 
 // The first page loads with the search; the grid asks for more through canFetchMore() and fetchMore() as it
-// scrolls. Loads when the user logs in, empties when they log out.
+// scrolls. Loads when the user logs in, empties when they log out. A library made for albums shows one album
+// at a time instead of a search, and nothing until openAlbum().
 class Library : public QAbstractListModel
 {
     Q_OBJECT
@@ -52,9 +53,21 @@ public:
         SelectedRole,  // chosen for changing the tags of many images at once
     };
 
+    enum class Content
+    {
+        Search,  // the images a search finds, as the Library tab shows them
+        Album,   // the images of an album opened from the Albums tab
+    };
+
     static constexpr int pageSize = 100;
 
-    explicit Library(connection::Connection* connection, QObject* parent = nullptr);
+    explicit Library(connection::Connection* connection, Content content = Content::Search, QObject* parent = nullptr);
+
+    // For a library made for albums: the album's images, in the order they were added to it and without the hidden
+    // filters, as it was opened on purpose. The name is without "album:", e.g. "vacation_2015". An album without
+    // images (its tag removed since it was listed) is an error, with its message.
+    void openAlbum(const QString& albumName);
+    QString albumName() const;
 
     // The server's search syntax, e.g. "category:photo summer -rating:private"; empty: all images.
     Q_INVOKABLE void search(const QString& text);
@@ -118,6 +131,8 @@ private:
     server_client::ImageQuery queryFor(const QString& cursor) const;
 
     connection::Connection* m_connection;
+    Content m_content;
+    QString m_albumName;  // none yet: nothing to show
     QList<server_client::Image> m_images;
     QString m_searchText;
     Order m_order = Order::NewestFirst;

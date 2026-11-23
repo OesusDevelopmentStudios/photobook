@@ -21,6 +21,7 @@
 #include <QTest>
 #include <QUrl>
 
+#include "Albums.hpp"
 #include "ApiTypes.hpp"
 #include "HiddenFilterEditor.hpp"
 #include "Library.hpp"
@@ -80,6 +81,8 @@ public:
         , m_uploader(std::make_unique<uploader::Uploader>(
               &*m_connection, m_uploadTagEditor.get(), std::make_unique<fakes::FakeTrash>(m_trashCan)))
         , m_library(library::createLibrary(&*m_connection))
+        , m_albums(library::createAlbums(&*m_connection, m_connection.settings()))
+        , m_albumImages(library::createLibrary(&*m_connection, library::Library::Content::Album))
         , m_tagEditor(tag_editor::createTagEditor(&*m_connection))
         , m_hiddenFilterEditor(tag_editor::createHiddenFilterEditor(&*m_connection))
     {}
@@ -178,6 +181,48 @@ public:
         return m_library->errorMessage();
     }
 
+    // As in the Albums tab, with "Show albums with hidden images" as given: the albums listed, as loaded
+    QList<server_client::Album> albums(bool includeHidden)
+    {
+        m_albums->setIncludeHidden(includeHidden);
+        m_albums->reload();
+        QList<server_client::Album> albums;
+        if (!QTest::qWaitFor([this]() { return !m_albums->isLoading(); }, answerTimeout))
+        {
+            return albums;
+        }
+
+        for (int row = 0; row < m_albums->count(); ++row)
+        {
+            albums.append(*m_albums->albumAt(row));
+        }
+
+        return albums;
+    }
+
+    // As a click on an album: its images, in the order the viewer steps through them
+    QList<server_client::Image> openAlbum(const QString& albumName)
+    {
+        m_albumImages->openAlbum(albumName);
+        QList<server_client::Image> images;
+        if (!QTest::qWaitFor([this]() { return !m_albumImages->isLoading(); }, answerTimeout))
+        {
+            return images;
+        }
+
+        for (int row = 0; row < m_albumImages->count(); ++row)
+        {
+            images.append(*m_albumImages->imageAt(row));
+        }
+
+        return images;
+    }
+
+    QString albumError() const
+    {
+        return m_albumImages->errorMessage();
+    }
+
     // The last search as the server ran it, with the hidden filters it added
     QString effectiveQuery() const
     {
@@ -265,6 +310,8 @@ private:
     std::unique_ptr<tag_editor::UploadTagEditor> m_uploadTagEditor;
     std::unique_ptr<uploader::Uploader> m_uploader;
     std::unique_ptr<library::Library> m_library;
+    std::unique_ptr<library::Albums> m_albums;
+    std::unique_ptr<library::Library> m_albumImages;
     std::unique_ptr<tag_editor::TagEditor> m_tagEditor;
     std::unique_ptr<tag_editor::HiddenFilterEditor> m_hiddenFilterEditor;
 };

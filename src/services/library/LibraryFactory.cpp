@@ -8,9 +8,9 @@
 namespace photobook::library
 {
 
-std::unique_ptr<Library> createLibrary(connection::Connection* connection)
+std::unique_ptr<Library> createLibrary(connection::Connection* connection, Library::Content content)
 {
-    return std::make_unique<Library>(connection);
+    return std::make_unique<Library>(connection, content);
 }
 
 std::unique_ptr<Albums> createAlbums(connection::Connection* connection, settings::Settings* settings)

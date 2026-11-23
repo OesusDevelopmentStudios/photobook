@@ -85,6 +85,10 @@ private Q_SLOTS:
     void hasNoTotalIfTheServerCannotCount();
     void replacesAnImageAfterItChanged();
 
+    void loadsNoAlbumUntilOneIsOpened();
+    void opensAnAlbumInTheOrderItsImagesWereAdded();
+    void saysWhenAnAlbumHasNoImages();
+
     void togglesTheSelectionOfAnImage();
     void selectsARange();
     void addsARangeToTheSelection();
@@ -108,7 +112,8 @@ private:
     std::unique_ptr<Library> m_library;
 };
 
-// Logged in from the last run: the kept token is checked at start. All images: two pages (1, 2 and 3).
+// Logged in from the last run: the kept token is checked at start. All images: two pages (1, 2 and 3). The album
+// vacation_2015 holds 5 and 4, in that order; the album gone has no images left.
 void TestLibrary::init()
 {
     m_folder = std::make_unique<QTemporaryDir>();
@@ -121,6 +126,12 @@ void TestLibrary::init()
                           {QStringLiteral("restricted_tags"), QJsonArray()}};
     m_server->answer("GET", serverUrl + QStringLiteral("/api/v1/auth/me"), jsonResponse(200, restrictedUser));
     m_server->answerWith("GET", imagesUrl, [](const HttpRequest& request) {
+        const QString album = parameter(request, QStringLiteral("album"));
+        if (!album.isEmpty())
+        {
+            return imagePageJson(album == QLatin1String("vacation_2015") ? QList<int>{5, 4} : QList<int>{}, QString());
+        }
+
         if (parameter(request, QStringLiteral("q")) == QLatin1String("category:photo"))
         {
             return imagePageJson({7}, QString());
@@ -544,6 +555,57 @@ void TestLibrary::stopsSelectingWhenLoggedOut()
 
     QVERIFY(!m_library->isSelecting());
     QVERIFY(m_library->selectedImages().isEmpty());
+}
+
+// A library made for albums waits for one to be opened.
+void TestLibrary::loadsNoAlbumUntilOneIsOpened()
+{
+    m_library.reset();
+    const Library album(m_connection.get(), Library::Content::Album);
+
+    logIn();
+
+    QTest::qWait(50);
+    QVERIFY(searches().isEmpty());
+    QCOMPARE(album.count(), 0);
+    QVERIFY(!album.canFetchMore({}));
+}
+
+// As opened on purpose: all of its images, the hidden filters not applied
+void TestLibrary::opensAnAlbumInTheOrderItsImagesWereAdded()
+{
+    m_library.reset();
+    Library album(m_connection.get(), Library::Content::Album);
+    logIn();
+
+    album.openAlbum(QStringLiteral("vacation_2015"));
+
+    QTRY_COMPARE(album.count(), 2);
+    QCOMPARE(album.imageAt(0)->id, 5);
+    QCOMPARE(album.imageAt(1)->id, 4);
+    QCOMPARE(album.albumName(), QStringLiteral("vacation_2015"));
+    QVERIFY(album.errorMessage().isEmpty());
+    const HttpRequest request = searches().first();
+    QCOMPARE(parameter(request, QStringLiteral("album")), QStringLiteral("vacation_2015"));
+    QCOMPARE(parameter(request, QStringLiteral("sort")), QStringLiteral("album"));
+    QCOMPARE(parameter(request, QStringLiteral("apply_hidden_filters")), QStringLiteral("false"));
+    QVERIFY(parameter(request, QStringLiteral("q")).isEmpty());
+    const HttpRequest count = m_server->requestsTo("GET", countUrl).first();
+    QCOMPARE(parameter(count, QStringLiteral("album")), QStringLiteral("vacation_2015"));
+    QCOMPARE(parameter(count, QStringLiteral("apply_hidden_filters")), QStringLiteral("false"));
+}
+
+// Its tag was taken off every image since the album was listed.
+void TestLibrary::saysWhenAnAlbumHasNoImages()
+{
+    m_library.reset();
+    Library album(m_connection.get(), Library::Content::Album);
+    logIn();
+
+    album.openAlbum(QStringLiteral("gone"));
+
+    QTRY_COMPARE(album.errorMessage(), QStringLiteral("The album has no images any more."));
+    QCOMPARE(album.count(), 0);
 }
 
 }  // namespace photobook::library

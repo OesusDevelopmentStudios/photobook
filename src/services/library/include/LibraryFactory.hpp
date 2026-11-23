@@ -14,7 +14,8 @@ namespace photobook::library
 {
 
 // The connection is not owned and must outlive the library.
-std::unique_ptr<Library> createLibrary(connection::Connection* connection);
+std::unique_ptr<Library> createLibrary(connection::Connection* connection,
+                                       Library::Content content = Library::Content::Search);
 
 // Neither is owned; both must outlive the albums.
 std::unique_ptr<Albums> createAlbums(connection::Connection* connection, settings::Settings* settings);

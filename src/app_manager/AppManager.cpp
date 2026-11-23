@@ -7,6 +7,7 @@
 
 #include <QDir>
 #include <QFileInfo>
+#include <QMetaObject>
 #include <QStandardPaths>
 
 #include "ConnectionFactory.hpp"
@@ -73,6 +74,8 @@ AppManager::AppManager(QObject* parent)
     , m_slideshow(slideshow::createSlideshow(m_navigator.get(), m_settings.get()))
     , m_connection(connection::createConnection(m_settings.get()))
     , m_library(library::createLibrary(m_connection.get()))
+    , m_albums(library::createAlbums(m_connection.get(), m_settings.get()))
+    , m_albumImages(library::createLibrary(m_connection.get(), library::Library::Content::Album))
     , m_libraryView(library_view::createLibraryView(m_settings.get()))
     , m_tagEditor(tag_editor::createTagEditor(m_connection.get()))
     , m_bulkTagEditor(tag_editor::createBulkTagEditor(m_connection.get()))
@@ -95,6 +98,13 @@ AppManager::AppManager(QObject* parent)
         m_libraryImageOnScreen.reset();
     });
 
+    // The first page's rows arrive just after loading ends: their count is known once the event loop runs.
+    connect(m_albumImages.get(),
+            &library::Library::loadingChanged,
+            this,
+            &AppManager::albumLoadSettled,
+            Qt::QueuedConnection);
+
     connect(m_library.get(), &library::Library::selectionChanged, this, [this]() {
         m_bulkTagEditor->setImages(m_library->selectedImages());
     });
@@ -111,6 +121,7 @@ AppManager::AppManager(QObject* parent)
 
     connect(m_tagEditor.get(), &tag_editor::TagEditor::saved, this, [this](const server_client::Image& image) {
         m_library->replaceImage(image);
+        m_albumImages->replaceImage(image);
         m_libraryImageOnScreen = image;  // a tag that forms the path may have moved its file
         m_viewer->updateDetails(detailsOf(image));
     });
@@ -126,6 +137,7 @@ AppManager::AppManager(QObject* parent)
             this,
             [this](const server_client::Image& image) {
                 m_library->replaceImage(image);
+                m_albumImages->replaceImage(image);
                 if (m_libraryImageOnScreen.has_value() && m_libraryImageOnScreen->id == image.id &&
                     m_connection->client() != nullptr)
                 {
@@ -176,6 +188,11 @@ connection::Connection* AppManager::connection() const
 library::Library* AppManager::library() const
 {
     return m_library.get();
+}
+
+library::Albums* AppManager::albums() const
+{
+    return m_albums.get();
 }
 
 library_view::LibraryView* AppManager::libraryView() const
@@ -235,7 +252,40 @@ void AppManager::openFolder(const QUrl& folderUrl)
 
 void AppManager::openLibraryImage(int row)
 {
+    m_openingAlbum = false;
+    m_browsedLibrary = m_library.get();
     m_navigator->openLibraryImage(m_library.get(), row);
+}
+
+void AppManager::openAlbum(int row)
+{
+    const std::optional<server_client::Album> album = m_albums->albumAt(row);
+    if (!album.has_value())
+    {
+        return;
+    }
+
+    m_openingAlbum = true;
+    m_albumImages->openAlbum(album->tag.mid(album->tag.indexOf(QLatin1Char(':')) + 1));
+}
+
+void AppManager::albumLoadSettled()
+{
+    if (!m_openingAlbum || m_albumImages->isLoading())
+    {
+        return;
+    }
+
+    m_openingAlbum = false;
+    if (m_albumImages->count() == 0)
+    {
+        Q_EMIT albumNotOpened(m_albumImages->errorMessage());
+        return;
+    }
+
+    m_browsedLibrary = m_albumImages.get();
+    m_navigator->openLibraryImage(m_albumImages.get(), 0);
+    Q_EMIT albumOpened();
 }
 
 void AppManager::uploadCurrentImage()
@@ -327,7 +377,8 @@ void AppManager::openFolderOf(const server_client::Image& image)
 
 void AppManager::showLibraryImage(int row)
 {
-    const std::optional<server_client::Image> image = m_library->imageAt(row);
+    const std::optional<server_client::Image> image =
+        m_browsedLibrary != nullptr ? m_browsedLibrary->imageAt(row) : std::nullopt;
     m_tagEditor->setImage(image);
     m_libraryImageOnScreen = image;
     if (!image.has_value() || m_connection->client() == nullptr)

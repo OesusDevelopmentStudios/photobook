@@ -23,9 +23,10 @@ using namespace photobook::server_client;
 namespace photobook::library
 {
 
-Library::Library(connection::Connection* connection, QObject* parent)
+Library::Library(connection::Connection* connection, Content content, QObject* parent)
     : QAbstractListModel(parent)
     , m_connection(connection)
+    , m_content(content)
 {
     connect(m_connection, &connection::Connection::stateChanged, this, &Library::reload);
     reload();
@@ -43,6 +44,18 @@ void Library::search(const QString& text)
     }
 }
 
+void Library::openAlbum(const QString& albumName)
+{
+    Q_ASSERT(m_content == Content::Album);
+    m_albumName = albumName;
+    reload();
+}
+
+QString Library::albumName() const
+{
+    return m_albumName;
+}
+
 void Library::reload()
 {
     ++m_searchNumber;
@@ -54,6 +67,11 @@ void Library::reload()
     {
         setSelecting(false);
         return;
+    }
+
+    if (m_content == Content::Album && m_albumName.isEmpty())
+    {
+        return;  // no album opened yet
     }
 
     m_complete = false;
@@ -380,6 +398,10 @@ void Library::addPage(const server_client::ImagePage& page)
     m_complete = page.nextCursor.isEmpty();
     setLoading(false);
     m_effectiveQuery = page.effectiveQuery;
+    if (m_content == Content::Album && m_images.isEmpty() && page.items.isEmpty())
+    {
+        setErrorMessage(i18nc("@info", "The album has no images any more."));
+    }
 
     if (!page.items.isEmpty())
     {
@@ -437,6 +459,14 @@ server_client::ImageQuery Library::queryFor(const QString& cursor) const
     query.text = m_searchText;
     query.limit = pageSize;
     query.cursor = cursor;
+    if (m_content == Content::Album)
+    {
+        query.album = m_albumName;
+        query.sortBy = SortBy::Album;
+        query.applyHiddenFilters = false;
+        return query;
+    }
+
     switch (m_order)
     {
     case Order::NewestFirst:
