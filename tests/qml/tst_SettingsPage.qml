@@ -28,6 +28,7 @@ Item {
                 anchors.fill: parent
                 connection: TestServices.accountConnection
                 hiddenFilterEditor: TestServices.hiddenFilterEditor
+                libraryView: TestServices.libraryView
             }
         }
 
@@ -198,6 +199,41 @@ Item {
             id: spyComponent
 
             SignalSpy {}
+        }
+
+        // The shown tabs are remembered in the settings the tests share.
+        function cleanup() {
+            TestServices.libraryView.libraryTabShown = true;
+            TestServices.libraryView.albumsTabShown = true;
+        }
+
+        function test_hidesALibraryTab() {
+            const page = shownPage();
+            const albums = findChild(page, "showAlbumsTab");
+            verify(albums.checked);
+
+            mouseClick(albums);
+
+            verify(!TestServices.libraryView.albumsTabShown);
+            compare(TestServices.libraryView.tab, LibraryView.Tab.Library);
+        }
+
+        // The last tab shown cannot be switched off: the library page would be empty.
+        function test_keepsOneTabShown() {
+            const page = shownPage();
+            const library = findChild(page, "showLibraryTab");
+            const albums = findChild(page, "showAlbumsTab");
+
+            mouseClick(albums);
+
+            verify(!library.enabled, "the last one shown");
+            mouseClick(library);
+            verify(TestServices.libraryView.libraryTabShown);
+
+            mouseClick(albums);
+
+            verify(TestServices.libraryView.albumsTabShown);
+            verify(library.enabled && albums.enabled);
         }
 
         function test_showsWhenNoFiltersAreHidden() {

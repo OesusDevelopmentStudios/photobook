@@ -51,6 +51,8 @@ void TestSettings::returnsNothingForValuesNeverStored()
     QCOMPARE(settings->librarySidebarVisible(), std::nullopt);
     QCOMPARE(settings->libraryTileSize(), std::nullopt);
     QCOMPARE(settings->libraryTab(), std::nullopt);
+    QCOMPARE(settings->libraryTabShown(), std::nullopt);
+    QCOMPARE(settings->albumsTabShown(), std::nullopt);
     QCOMPARE(settings->albumSort(), std::nullopt);
     QCOMPARE(settings->showAlbumsWithHiddenImages(), std::nullopt);
 }
@@ -66,6 +68,8 @@ void TestSettings::keepsValuesAfterRestart()
         settings->setLibrarySidebarVisible(false);
         settings->setLibraryTileSize(14);
         settings->setLibraryTab(QStringLiteral("albums"));
+        settings->setLibraryTabShown(false);
+        settings->setAlbumsTabShown(true);
         settings->setAlbumSort(QStringLiteral("size"));
         settings->setShowAlbumsWithHiddenImages(true);
     }
@@ -79,6 +83,8 @@ void TestSettings::keepsValuesAfterRestart()
     QCOMPARE(settingsAfterRestart->librarySidebarVisible(), false);
     QCOMPARE(settingsAfterRestart->libraryTileSize(), 14);
     QCOMPARE(settingsAfterRestart->libraryTab(), QStringLiteral("albums"));
+    QCOMPARE(settingsAfterRestart->libraryTabShown(), false);
+    QCOMPARE(settingsAfterRestart->albumsTabShown(), true);
     QCOMPARE(settingsAfterRestart->albumSort(), QStringLiteral("size"));
     QCOMPARE(settingsAfterRestart->showAlbumsWithHiddenImages(), true);
 }
@@ -94,6 +100,7 @@ void TestSettings::writesReadableConfigFile()
     settings->setLibrarySidebarVisible(false);
     settings->setLibraryTileSize(12);
     settings->setLibraryTab(QStringLiteral("albums"));
+    settings->setAlbumsTabShown(false);
     settings->setAlbumSort(QStringLiteral("name"));
     settings->setShowAlbumsWithHiddenImages(true);
 
@@ -110,6 +117,7 @@ void TestSettings::writesReadableConfigFile()
     QCOMPARE(libraryGroup.readEntry("SidebarVisible", QString()), QStringLiteral("false"));
     QCOMPARE(libraryGroup.readEntry("TileSize", 0), 12);
     QCOMPARE(libraryGroup.readEntry("Tab", QString()), QStringLiteral("albums"));
+    QCOMPARE(libraryGroup.readEntry("ShowAlbumsTab", QString()), QStringLiteral("false"));
     QCOMPARE(albumsGroup.readEntry("Sort", QString()), QStringLiteral("name"));
     QCOMPARE(albumsGroup.readEntry("ShowWithHiddenImages", QString()), QStringLiteral("true"));
     QVERIFY(!serverGroup.keyList().contains(QStringLiteral("Token")));  // the token belongs in the keyring

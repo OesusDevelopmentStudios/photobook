@@ -378,6 +378,7 @@ Kirigami.ApplicationWindow {
         SettingsPage {
             connection: root.appManager.connection
             hiddenFilterEditor: root.appManager.hiddenFilterEditor
+            libraryView: root.appManager.libraryView
             onLeaveRequested: root.afterChangesSettled(root.appManager.hiddenFilterEditor, () => root.pageStack.pop())
             onLogOutRequested: root.afterChangesSettled(root.appManager.hiddenFilterEditor,
                                                         () => root.appManager.connection.logOut())

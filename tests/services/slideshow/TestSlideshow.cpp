@@ -98,6 +98,20 @@ public:
 
     void setLibraryTab(const QString&) override {}
 
+    std::optional<bool> libraryTabShown() const override
+    {
+        return std::nullopt;
+    }
+
+    void setLibraryTabShown(bool) override {}
+
+    std::optional<bool> albumsTabShown() const override
+    {
+        return std::nullopt;
+    }
+
+    void setAlbumsTabShown(bool) override {}
+
     std::optional<QString> albumSort() const override
     {
         return std::nullopt;

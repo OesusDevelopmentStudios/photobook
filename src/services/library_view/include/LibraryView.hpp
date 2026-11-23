@@ -18,6 +18,8 @@ class LibraryView : public QObject
     Q_OBJECT
 
     Q_PROPERTY(Tab tab READ tab WRITE setTab NOTIFY tabChanged)
+    Q_PROPERTY(bool libraryTabShown READ isLibraryTabShown WRITE setLibraryTabShown NOTIFY shownTabsChanged)
+    Q_PROPERTY(bool albumsTabShown READ isAlbumsTabShown WRITE setAlbumsTabShown NOTIFY shownTabsChanged)
     Q_PROPERTY(bool sidebarVisible READ isSidebarVisible WRITE setSidebarVisible NOTIFY sidebarVisibleChanged)
     Q_PROPERTY(int tileSize READ tileSize WRITE setTileSize NOTIFY tileSizeChanged)
     Q_PROPERTY(int minimumTileSize READ minimumTileSizeForQml CONSTANT)
@@ -38,8 +40,15 @@ public:
 
     explicit LibraryView(settings::Settings* settings, QObject* parent = nullptr);
 
-    Tab tab() const;  // the one used last; the Library tab at first
-    void setTab(Tab tab);
+    Tab tab() const;       // the one used last, if it is shown; the Library tab at first
+    void setTab(Tab tab);  // a hidden tab is not chosen
+
+    // Settings → Sections: either tab can be hidden, not both; turning off the last one shown does nothing. The tab
+    // shown then is the other one.
+    bool isLibraryTabShown() const;
+    void setLibraryTabShown(bool shown);
+    bool isAlbumsTabShown() const;
+    void setAlbumsTabShown(bool shown);
 
     bool isSidebarVisible() const;  // shown until the user hides it
     void setSidebarVisible(bool visible);
@@ -56,6 +65,7 @@ public:
 
 Q_SIGNALS:
     void tabChanged();
+    void shownTabsChanged();
     void sidebarVisibleChanged();
     void tileSizeChanged();
 
@@ -65,7 +75,12 @@ private:
     int maximumTileSizeForQml() const;
 
     settings::Settings* m_settings;
+    bool isShown(Tab tab) const;
+    void setShown(Tab tab, bool shown);
+
     Tab m_tab;
+    bool m_libraryTabShown;
+    bool m_albumsTabShown;
     bool m_sidebarVisible;
     int m_tileSize;
     qreal m_partialSteps = 0;  // from a touchpad, not yet a whole step

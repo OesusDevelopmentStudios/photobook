@@ -36,6 +36,7 @@ Kirigami.Page {
     readonly property int connectionState: connection.state
     readonly property bool loggedIn: connectionState === Connection.State.LoggedIn
     readonly property bool albumsTab: libraryView.tab === LibraryView.Tab.Albums
+    readonly property bool bothTabs: libraryView.libraryTabShown && libraryView.albumsTabShown  // see Settings
 
     title: albumsTab ? KI18n.i18nc("@title", "Albums") : KI18n.i18nc("@title", "Library")
     padding: 0
@@ -87,9 +88,10 @@ Kirigami.Page {
             Controls.ToolTip.delay: Kirigami.Units.toolTipDelay
         }
 
+        // With one tab hidden, its name instead of the tabs
         Kirigami.Heading {
             Layout.fillWidth: true
-            visible: !page.loggedIn
+            visible: !page.loggedIn || !page.bothTabs
             text: page.title
             elide: Text.ElideRight
             maximumLineCount: 1
@@ -99,7 +101,7 @@ Kirigami.Page {
         LibraryTabs {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            visible: page.loggedIn
+            visible: page.loggedIn && page.bothTabs
             enabled: !page.library.selecting
             libraryView: page.libraryView
             centreOf: page

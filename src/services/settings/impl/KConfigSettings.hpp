@@ -35,6 +35,10 @@ public:
     void setLibraryTileSize(int gridUnits) override;
     std::optional<QString> libraryTab() const override;
     void setLibraryTab(const QString& tab) override;
+    std::optional<bool> libraryTabShown() const override;
+    void setLibraryTabShown(bool shown) override;
+    std::optional<bool> albumsTabShown() const override;
+    void setAlbumsTabShown(bool shown) override;
 
     std::optional<QString> albumSort() const override;
     void setAlbumSort(const QString& sort) override;
@@ -48,6 +52,7 @@ private:
     void writeServerEntry(const char* key, const QString& value);
     KConfigGroup libraryGroup() const;
     void writeLibraryEntry(const char* key, const QVariant& value);
+    std::optional<bool> readLibraryFlag(const char* key) const;
     KConfigGroup albumsGroup() const;
     void writeAlbumsEntry(const char* key, const QVariant& value);
 

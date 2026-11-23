@@ -19,6 +19,8 @@ const QString libraryGroupName = QStringLiteral("Library");
 constexpr const char* sidebarVisibleKey = "SidebarVisible";
 constexpr const char* tileSizeKey = "TileSize";
 constexpr const char* tabKey = "Tab";
+constexpr const char* showLibraryTabKey = "ShowLibraryTab";
+constexpr const char* showAlbumsTabKey = "ShowAlbumsTab";
 const QString albumsGroupName = QStringLiteral("Albums");
 constexpr const char* sortKey = "Sort";
 constexpr const char* showWithHiddenImagesKey = "ShowWithHiddenImages";
@@ -138,6 +140,26 @@ void KConfigSettings::setLibraryTab(const QString& tab)
     writeLibraryEntry(tabKey, tab);
 }
 
+std::optional<bool> KConfigSettings::libraryTabShown() const
+{
+    return readLibraryFlag(showLibraryTabKey);
+}
+
+void KConfigSettings::setLibraryTabShown(bool shown)
+{
+    writeLibraryEntry(showLibraryTabKey, shown);
+}
+
+std::optional<bool> KConfigSettings::albumsTabShown() const
+{
+    return readLibraryFlag(showAlbumsTabKey);
+}
+
+void KConfigSettings::setAlbumsTabShown(bool shown)
+{
+    writeLibraryEntry(showAlbumsTabKey, shown);
+}
+
 std::optional<QString> KConfigSettings::albumSort() const
 {
     const KConfigGroup group = albumsGroup();
@@ -210,6 +232,17 @@ void KConfigSettings::writeLibraryEntry(const char* key, const QVariant& value)
     KConfigGroup group = libraryGroup();
     group.writeEntry(key, value);
     m_config->sync();
+}
+
+std::optional<bool> KConfigSettings::readLibraryFlag(const char* key) const
+{
+    const KConfigGroup group = libraryGroup();
+    if (!group.hasKey(key))
+    {
+        return std::nullopt;
+    }
+
+    return group.readEntry(key, true);
 }
 
 KConfigGroup KConfigSettings::albumsGroup() const

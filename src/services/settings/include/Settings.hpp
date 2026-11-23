@@ -42,6 +42,11 @@ public:
     // The library page's tab used last, a word such as "albums"
     virtual std::optional<QString> libraryTab() const = 0;
     virtual void setLibraryTab(const QString& tab) = 0;
+    // Each tab can be hidden in the settings
+    virtual std::optional<bool> libraryTabShown() const = 0;
+    virtual void setLibraryTabShown(bool shown) = 0;
+    virtual std::optional<bool> albumsTabShown() const = 0;
+    virtual void setAlbumsTabShown(bool shown) = 0;
 
     // A word such as "name", as for the slideshow's order
     virtual std::optional<QString> albumSort() const = 0;

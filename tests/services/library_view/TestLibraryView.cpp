@@ -26,6 +26,10 @@ private Q_SLOTS:
 
     void startsOnTheLibraryTab();
     void remembersTheTab();
+    void hidesATabAndShowsTheOther();
+    void neverHidesBothTabs();
+    void remembersTheShownTabs();
+    void opensOnTheShownTabWhenTheLastOneIsHidden();
     void showsSidebarAtFirstStart();
     void remembersHiddenSidebar();
     void announcesOnlyChanges();
@@ -80,6 +84,62 @@ void TestLibraryView::remembersTheTab()
     m_libraryView->setTab(LibraryView::Tab::Library);
     recreateLibraryView();
     QCOMPARE(m_libraryView->tab(), LibraryView::Tab::Library);
+}
+
+void TestLibraryView::hidesATabAndShowsTheOther()
+{
+    m_libraryView->setTab(LibraryView::Tab::Albums);
+    QSignalSpy tabChanged(m_libraryView.get(), &LibraryView::tabChanged);
+    QSignalSpy shownChanged(m_libraryView.get(), &LibraryView::shownTabsChanged);
+
+    m_libraryView->setAlbumsTabShown(false);
+
+    QVERIFY(!m_libraryView->isAlbumsTabShown());
+    QCOMPARE(m_libraryView->tab(), LibraryView::Tab::Library);
+    QCOMPARE(tabChanged.size(), 1);
+    QCOMPARE(shownChanged.size(), 1);
+
+    m_libraryView->setTab(LibraryView::Tab::Albums);  // hidden: not chosen
+    QCOMPARE(m_libraryView->tab(), LibraryView::Tab::Library);
+
+    m_libraryView->setAlbumsTabShown(true);
+    QVERIFY(m_libraryView->isAlbumsTabShown());
+    QCOMPARE(m_libraryView->tab(), LibraryView::Tab::Albums);  // the one chosen last, shown again
+}
+
+void TestLibraryView::neverHidesBothTabs()
+{
+    m_libraryView->setLibraryTabShown(false);
+    QSignalSpy shownChanged(m_libraryView.get(), &LibraryView::shownTabsChanged);
+
+    m_libraryView->setAlbumsTabShown(false);
+
+    QVERIFY(m_libraryView->isAlbumsTabShown());
+    QCOMPARE(shownChanged.size(), 0);
+    QCOMPARE(m_libraryView->tab(), LibraryView::Tab::Albums);
+}
+
+void TestLibraryView::remembersTheShownTabs()
+{
+    m_libraryView->setLibraryTabShown(false);
+    recreateLibraryView();
+
+    QVERIFY(!m_libraryView->isLibraryTabShown());
+    QVERIFY(m_libraryView->isAlbumsTabShown());
+    QCOMPARE(m_libraryView->tab(), LibraryView::Tab::Albums);
+}
+
+// Also when the settings file says both are hidden, e.g. edited by hand
+void TestLibraryView::opensOnTheShownTabWhenTheLastOneIsHidden()
+{
+    m_settings->setLibraryTab(QStringLiteral("albums"));
+    m_settings->setAlbumsTabShown(false);
+    recreateLibraryView();
+    QCOMPARE(m_libraryView->tab(), LibraryView::Tab::Library);
+
+    m_settings->setLibraryTabShown(false);
+    recreateLibraryView();
+    QVERIFY(m_libraryView->isLibraryTabShown() && m_libraryView->isAlbumsTabShown());
 }
 
 void TestLibraryView::showsSidebarAtFirstStart()

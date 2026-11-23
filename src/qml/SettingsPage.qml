@@ -12,6 +12,7 @@ Kirigami.ScrollablePage {
 
     required property Connection connection
     required property HiddenFilterEditor hiddenFilterEditor
+    required property LibraryView libraryView
 
     // The window asks first about unsaved filter changes, then goes back or logs out.
     signal leaveRequested()  // back, while there are unsaved filter changes
@@ -42,7 +43,7 @@ Kirigami.ScrollablePage {
             id: accountForm
 
             Layout.fillWidth: true
-            twinFormLayouts: [serverManagementForm, hiddenFiltersForm]
+            twinFormLayouts: [serverManagementForm, sectionsForm, hiddenFiltersForm]
 
             Kirigami.Separator {
                 Kirigami.FormData.isSection: true
@@ -73,7 +74,7 @@ Kirigami.ScrollablePage {
             id: serverManagementForm
 
             Layout.fillWidth: true
-            twinFormLayouts: [accountForm, hiddenFiltersForm]
+            twinFormLayouts: [accountForm, sectionsForm, hiddenFiltersForm]
 
             Kirigami.Separator {
                 Kirigami.FormData.isSection: true
@@ -99,11 +100,47 @@ Kirigami.ScrollablePage {
             onClicked: Qt.openUrlExternally(page.connection.webAdminUrl)
         }
 
+        // The library page's tabs; one of them stays shown.
+        Kirigami.FormLayout {
+            id: sectionsForm
+
+            Layout.fillWidth: true
+            twinFormLayouts: [accountForm, serverManagementForm, hiddenFiltersForm]
+
+            Kirigami.Separator {
+                Kirigami.FormData.isSection: true
+                Kirigami.FormData.label: KI18n.i18nc("@title:group", "Sections")
+            }
+
+            // One label for both, so that it is not greyed out with the switch that cannot be turned off
+            ColumnLayout {
+                Kirigami.FormData.label: KI18n.i18nc("@label", "Library page tabs:")
+                Kirigami.FormData.labelAlignment: Qt.AlignTop
+                spacing: Kirigami.Units.smallSpacing
+
+                Controls.Switch {
+                    objectName: "showLibraryTab"
+                    text: KI18n.i18nc("@option:check The tab with the image grid", "Library")
+                    checked: page.libraryView.libraryTabShown
+                    enabled: !checked || page.libraryView.albumsTabShown
+                    onToggled: page.libraryView.libraryTabShown = checked
+                }
+
+                Controls.Switch {
+                    objectName: "showAlbumsTab"
+                    text: KI18n.i18nc("@option:check The tab with the albums", "Albums")
+                    checked: page.libraryView.albumsTabShown
+                    enabled: !checked || page.libraryView.libraryTabShown
+                    onToggled: page.libraryView.albumsTabShown = checked
+                }
+            }
+        }
+
         Kirigami.FormLayout {
             id: hiddenFiltersForm
 
             Layout.fillWidth: true
-            twinFormLayouts: [accountForm, serverManagementForm]
+            twinFormLayouts: [accountForm, serverManagementForm, sectionsForm]
 
             Kirigami.Separator {
                 Kirigami.FormData.isSection: true
