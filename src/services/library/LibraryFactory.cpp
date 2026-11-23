@@ -13,4 +13,9 @@ std::unique_ptr<Library> createLibrary(connection::Connection* connection)
     return std::make_unique<Library>(connection);
 }
 
+std::unique_ptr<Albums> createAlbums(connection::Connection* connection, settings::Settings* settings)
+{
+    return std::make_unique<Albums>(connection, settings);
+}
+
 }  // namespace photobook::library

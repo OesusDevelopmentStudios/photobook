@@ -34,6 +34,11 @@ public:
     std::optional<int> libraryTileSize() const override;
     void setLibraryTileSize(int gridUnits) override;
 
+    std::optional<QString> albumSort() const override;
+    void setAlbumSort(const QString& sort) override;
+    std::optional<bool> showAlbumsWithHiddenImages() const override;
+    void setShowAlbumsWithHiddenImages(bool show) override;
+
 private:
     KConfigGroup slideshowGroup() const;
     void writeSlideshowEntry(const char* key, const QVariant& value);
@@ -41,6 +46,8 @@ private:
     void writeServerEntry(const char* key, const QString& value);
     KConfigGroup libraryGroup() const;
     void writeLibraryEntry(const char* key, const QVariant& value);
+    KConfigGroup albumsGroup() const;
+    void writeAlbumsEntry(const char* key, const QVariant& value);
 
     KSharedConfigPtr m_config;
 };

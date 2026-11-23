@@ -78,6 +78,10 @@ ecm_add_test(services/library/TestLibrary.cpp
     LINK_LIBRARIES photobook_library Qt6::Test
 )
 
+ecm_add_test(services/library/TestAlbums.cpp
+    LINK_LIBRARIES photobook_library Qt6::Test KF6::I18n
+)
+
 ecm_add_test(services/library_view/TestLibraryView.cpp
     LINK_LIBRARIES photobook_library_view Qt6::Test
 )

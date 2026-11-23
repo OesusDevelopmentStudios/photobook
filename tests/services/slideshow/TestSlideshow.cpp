@@ -91,6 +91,20 @@ public:
 
     void setLibraryTileSize(int) override {}
 
+    std::optional<QString> albumSort() const override
+    {
+        return std::nullopt;
+    }
+
+    void setAlbumSort(const QString&) override {}
+
+    std::optional<bool> showAlbumsWithHiddenImages() const override
+    {
+        return std::nullopt;
+    }
+
+    void setShowAlbumsWithHiddenImages(bool) override {}
+
     std::optional<int> intervalSeconds;
     std::optional<QString> order;
 };

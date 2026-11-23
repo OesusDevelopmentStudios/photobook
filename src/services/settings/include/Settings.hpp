@@ -39,6 +39,13 @@ public:
     // In Kirigami grid units, so tiles scale with the system font
     virtual std::optional<int> libraryTileSize() const = 0;
     virtual void setLibraryTileSize(int gridUnits) = 0;
+
+    // A word such as "name", as for the slideshow's order
+    virtual std::optional<QString> albumSort() const = 0;
+    virtual void setAlbumSort(const QString& sort) = 0;
+    // Albums with an image the user's hidden filters match are listed too
+    virtual std::optional<bool> showAlbumsWithHiddenImages() const = 0;
+    virtual void setShowAlbumsWithHiddenImages(bool show) = 0;
 };
 
 }  // namespace photobook::settings

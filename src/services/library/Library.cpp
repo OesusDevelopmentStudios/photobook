@@ -11,26 +11,12 @@
 #include <KLocalizedString>
 #include <QRandomGenerator>
 
+#include "hlp/ServerErrors.hpp"
+
 namespace
 {
 
 using namespace photobook::server_client;
-
-// A search the server cannot read says why.
-QString describeError(const ApiError& error)
-{
-    if (error.code == networkErrorCode)
-    {
-        return i18nc("@info %1 is the reason, e.g. Connection refused", "The server does not answer: %1", error.detail);
-    }
-
-    if (error.detail.isEmpty())
-    {
-        return error.title;
-    }
-
-    return i18nc("@info %1 is a title, %2 an explanation", "%1. %2", error.title, error.detail);
-}
 
 }  // namespace
 

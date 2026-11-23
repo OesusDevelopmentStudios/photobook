@@ -7,6 +7,7 @@
 
 #include <memory>
 
+#include "Albums.hpp"
 #include "Library.hpp"
 
 namespace photobook::library
@@ -14,5 +15,8 @@ namespace photobook::library
 
 // The connection is not owned and must outlive the library.
 std::unique_ptr<Library> createLibrary(connection::Connection* connection);
+
+// Neither is owned; both must outlive the albums.
+std::unique_ptr<Albums> createAlbums(connection::Connection* connection, settings::Settings* settings);
 
 }  // namespace photobook::library

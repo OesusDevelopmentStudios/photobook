@@ -18,6 +18,9 @@ constexpr const char* usernameKey = "Username";
 const QString libraryGroupName = QStringLiteral("Library");
 constexpr const char* sidebarVisibleKey = "SidebarVisible";
 constexpr const char* tileSizeKey = "TileSize";
+const QString albumsGroupName = QStringLiteral("Albums");
+constexpr const char* sortKey = "Sort";
+constexpr const char* showWithHiddenImagesKey = "ShowWithHiddenImages";
 
 }  // namespace
 
@@ -118,6 +121,38 @@ void KConfigSettings::setLibraryTileSize(int gridUnits)
     writeLibraryEntry(tileSizeKey, gridUnits);
 }
 
+std::optional<QString> KConfigSettings::albumSort() const
+{
+    const KConfigGroup group = albumsGroup();
+    if (!group.hasKey(sortKey))
+    {
+        return std::nullopt;
+    }
+
+    return group.readEntry(sortKey, QString());
+}
+
+void KConfigSettings::setAlbumSort(const QString& sort)
+{
+    writeAlbumsEntry(sortKey, sort);
+}
+
+std::optional<bool> KConfigSettings::showAlbumsWithHiddenImages() const
+{
+    const KConfigGroup group = albumsGroup();
+    if (!group.hasKey(showWithHiddenImagesKey))
+    {
+        return std::nullopt;
+    }
+
+    return group.readEntry(showWithHiddenImagesKey, false);
+}
+
+void KConfigSettings::setShowAlbumsWithHiddenImages(bool show)
+{
+    writeAlbumsEntry(showWithHiddenImagesKey, show);
+}
+
 KConfigGroup KConfigSettings::slideshowGroup() const
 {
     return m_config->group(slideshowGroupName);
@@ -156,6 +191,18 @@ KConfigGroup KConfigSettings::libraryGroup() const
 void KConfigSettings::writeLibraryEntry(const char* key, const QVariant& value)
 {
     KConfigGroup group = libraryGroup();
+    group.writeEntry(key, value);
+    m_config->sync();
+}
+
+KConfigGroup KConfigSettings::albumsGroup() const
+{
+    return m_config->group(albumsGroupName);
+}
+
+void KConfigSettings::writeAlbumsEntry(const char* key, const QVariant& value)
+{
+    KConfigGroup group = albumsGroup();
     group.writeEntry(key, value);
     m_config->sync();
 }

@@ -50,6 +50,8 @@ void TestSettings::returnsNothingForValuesNeverStored()
     QCOMPARE(settings->serverUsername(), std::nullopt);
     QCOMPARE(settings->librarySidebarVisible(), std::nullopt);
     QCOMPARE(settings->libraryTileSize(), std::nullopt);
+    QCOMPARE(settings->albumSort(), std::nullopt);
+    QCOMPARE(settings->showAlbumsWithHiddenImages(), std::nullopt);
 }
 
 void TestSettings::keepsValuesAfterRestart()
@@ -62,6 +64,8 @@ void TestSettings::keepsValuesAfterRestart()
         settings->setServerUsername(QStringLiteral("restrictedUser"));
         settings->setLibrarySidebarVisible(false);
         settings->setLibraryTileSize(14);
+        settings->setAlbumSort(QStringLiteral("size"));
+        settings->setShowAlbumsWithHiddenImages(true);
     }
 
     const auto settingsAfterRestart = createSettings(configFilePath());
@@ -72,6 +76,8 @@ void TestSettings::keepsValuesAfterRestart()
     QCOMPARE(settingsAfterRestart->serverUsername(), QStringLiteral("restrictedUser"));
     QCOMPARE(settingsAfterRestart->librarySidebarVisible(), false);
     QCOMPARE(settingsAfterRestart->libraryTileSize(), 14);
+    QCOMPARE(settingsAfterRestart->albumSort(), QStringLiteral("size"));
+    QCOMPARE(settingsAfterRestart->showAlbumsWithHiddenImages(), true);
 }
 
 // Group and key names must not change, or users lose their settings with an update.
@@ -84,11 +90,14 @@ void TestSettings::writesReadableConfigFile()
     settings->setServerUsername(QStringLiteral("restrictedUser"));
     settings->setLibrarySidebarVisible(false);
     settings->setLibraryTileSize(12);
+    settings->setAlbumSort(QStringLiteral("name"));
+    settings->setShowAlbumsWithHiddenImages(true);
 
     const KConfig configFile(configFilePath(), KConfig::SimpleConfig);
     const KConfigGroup slideshowGroup = configFile.group(QStringLiteral("Slideshow"));
     const KConfigGroup serverGroup = configFile.group(QStringLiteral("Server"));
     const KConfigGroup libraryGroup = configFile.group(QStringLiteral("Library"));
+    const KConfigGroup albumsGroup = configFile.group(QStringLiteral("Albums"));
 
     QCOMPARE(slideshowGroup.readEntry("IntervalSeconds", 0), 7);
     QCOMPARE(slideshowGroup.readEntry("Order", QString()), QStringLiteral("random"));
@@ -96,6 +105,8 @@ void TestSettings::writesReadableConfigFile()
     QCOMPARE(serverGroup.readEntry("Username", QString()), QStringLiteral("restrictedUser"));
     QCOMPARE(libraryGroup.readEntry("SidebarVisible", QString()), QStringLiteral("false"));
     QCOMPARE(libraryGroup.readEntry("TileSize", 0), 12);
+    QCOMPARE(albumsGroup.readEntry("Sort", QString()), QStringLiteral("name"));
+    QCOMPARE(albumsGroup.readEntry("ShowWithHiddenImages", QString()), QStringLiteral("true"));
     QVERIFY(!serverGroup.keyList().contains(QStringLiteral("Token")));  // the token belongs in the keyring
 }
 
