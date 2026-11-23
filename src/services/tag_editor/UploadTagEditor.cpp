@@ -200,7 +200,7 @@ QStringList UploadTagEditor::withoutNamespace(const QString& namespaceName) cons
 void UploadTagEditor::updateRows()
 {
     QList<NamespaceRows::Row> rows;
-    for (const Namespaces::Info& info : m_namespaces->all())
+    for (const Namespaces::Info& info : m_namespaces->editable())
     {
         QStringList names;
         QVariantList tags;

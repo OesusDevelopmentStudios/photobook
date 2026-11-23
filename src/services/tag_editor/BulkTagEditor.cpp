@@ -400,7 +400,7 @@ void BulkTagEditor::updateRows()
 
     const QSet<QString> singleValue = m_namespaces->singleValueNames();
     QList<NamespaceRows::Row> rows;
-    for (const Namespaces::Info& info : m_namespaces->all())
+    for (const Namespaces::Info& info : m_namespaces->editable())
     {
         // The tags all selected images share in the namespace, those to be removed, and those to be added, by
         // name. A tag only some have is not shown, unless its removal is pending, e.g. from an earlier selection.

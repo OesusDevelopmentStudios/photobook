@@ -39,6 +39,7 @@ QJsonObject namespaceJson(const QString& name, bool singleValue)
         {QStringLiteral("single_value"), singleValue},
         {QStringLiteral("is_builtin"), true},
         {QStringLiteral("in_path_template"), false},
+        {QStringLiteral("user_editable"), true},
         {QStringLiteral("allowed_values"), QJsonValue::Null},
     };
 }

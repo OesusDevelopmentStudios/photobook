@@ -194,6 +194,7 @@ struct Namespace
     bool singleValue = false;  // an image has at most one tag in it, e.g. category
     bool isBuiltin = false;
     bool inPathTemplate = false;               // its tags form folder names in the server's library
+    bool userEditable = true;                  // false: the server alone sets its tags, e.g. meta
     std::optional<QStringList> allowedValues;  // the only names its tags may have, e.g. the ratings; nothing: any
 };
 

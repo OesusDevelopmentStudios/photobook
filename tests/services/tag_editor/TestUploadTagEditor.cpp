@@ -37,6 +37,7 @@ QJsonObject namespaceJson(const QString& name, bool singleValue, const QJsonValu
         {QStringLiteral("single_value"), singleValue},
         {QStringLiteral("is_builtin"), true},
         {QStringLiteral("in_path_template"), name == QLatin1String("category")},
+        {QStringLiteral("user_editable"), name != QLatin1String("meta")},  // the server sets meta tags
         {QStringLiteral("allowed_values"), allowedValues},
     };
 }
@@ -124,14 +125,15 @@ void TestUploadTagEditor::init()
     m_server->answer(
         "GET",
         serverUrl + QStringLiteral("/api/v1/namespaces"),
-        fakes::jsonResponse(
-            200,
-            {{QStringLiteral("items"),
-              QJsonArray{namespaceJson(QStringLiteral("category"), true),
-                         namespaceJson(QStringLiteral("author"), false),
-                         namespaceJson(
-                             QStringLiteral("rating"), true, QJsonArray{QStringLiteral("public"), QStringLiteral("private")}),
-                         namespaceJson(QStringLiteral("general"), false)}}}));
+        fakes::jsonResponse(200,
+                            {{QStringLiteral("items"),
+                              QJsonArray{namespaceJson(QStringLiteral("category"), true),
+                                         namespaceJson(QStringLiteral("author"), false),
+                                         namespaceJson(QStringLiteral("rating"),
+                                                       true,
+                                                       QJsonArray{QStringLiteral("public"), QStringLiteral("private")}),
+                                         namespaceJson(QStringLiteral("general"), false),
+                                         namespaceJson(QStringLiteral("meta"), false)}}}));
     m_server->answer("GET",
                      serverUrl + QStringLiteral("/api/v1/tags"),
                      fakes::jsonResponse(200, {{QStringLiteral("items"), QJsonArray()}}));
@@ -160,6 +162,7 @@ void TestUploadTagEditor::startsWithoutTags()
     QVERIFY(category.value(QStringLiteral("value")).toString().isEmpty());
     QVERIFY(!m_editor->hasChanges());
     QCOMPARE(m_editor->tagsToUpload(), QStringList());
+    QVERIFY(rowOf(*m_editor, QStringLiteral("meta")).isEmpty());  // the server sets meta tags
 }
 
 void TestUploadTagEditor::collectsTheTagsForEveryFile()

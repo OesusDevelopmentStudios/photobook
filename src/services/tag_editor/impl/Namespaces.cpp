@@ -6,6 +6,7 @@
 #include "impl/Namespaces.hpp"
 
 #include <algorithm>
+#include <iterator>
 
 #include <KLocalizedString>
 
@@ -58,7 +59,7 @@ void Namespaces::load()
         m_infos.clear();
         for (const server_client::Namespace& info : *answer)
         {
-            m_infos.append({info.name, info.singleValue, info.isBuiltin, info.allowedValues});
+            m_infos.append({info.name, info.singleValue, info.isBuiltin, info.allowedValues, info.userEditable});
         }
 
         loadKnownValues();  // for dropdowns only the server knew of
@@ -69,6 +70,13 @@ void Namespaces::load()
 const QList<Namespaces::Info>& Namespaces::all() const
 {
     return m_infos;
+}
+
+QList<Namespaces::Info> Namespaces::editable() const
+{
+    QList<Info> editable;
+    std::ranges::copy_if(m_infos, std::back_inserter(editable), &Info::userEditable);
+    return editable;
 }
 
 const Namespaces::Info* Namespaces::find(const QString& name) const

@@ -41,6 +41,7 @@ QJsonObject namespaceJson(const QString& name, bool singleValue, const QJsonValu
         {QStringLiteral("single_value"), singleValue},
         {QStringLiteral("is_builtin"), name != QLatin1String("weather")},
         {QStringLiteral("in_path_template"), name == QLatin1String("category")},
+        {QStringLiteral("user_editable"), name != QLatin1String("meta")},  // the server sets meta tags
         {QStringLiteral("allowed_values"), allowedValues},
     };
 }
@@ -179,14 +180,15 @@ void TestBulkTagEditor::init()
     m_server->answer(
         "GET",
         serverUrl + QStringLiteral("/api/v1/namespaces"),
-        fakes::jsonResponse(
-            200,
-            {{QStringLiteral("items"),
-              QJsonArray{namespaceJson(QStringLiteral("category"), true),
-                         namespaceJson(
-                             QStringLiteral("rating"), true, QJsonArray{QStringLiteral("public"), QStringLiteral("private")}),
-                         namespaceJson(QStringLiteral("general"), false),
-                         namespaceJson(QStringLiteral("weather"), true)}}}));
+        fakes::jsonResponse(200,
+                            {{QStringLiteral("items"),
+                              QJsonArray{namespaceJson(QStringLiteral("category"), true),
+                                         namespaceJson(QStringLiteral("rating"),
+                                                       true,
+                                                       QJsonArray{QStringLiteral("public"), QStringLiteral("private")}),
+                                         namespaceJson(QStringLiteral("general"), false),
+                                         namespaceJson(QStringLiteral("weather"), true),
+                                         namespaceJson(QStringLiteral("meta"), false)}}}));
     m_server->answer("GET",
                      serverUrl + QStringLiteral("/api/v1/tags"),
                      fakes::jsonResponse(200, {{QStringLiteral("items"), QJsonArray()}}));
@@ -240,6 +242,7 @@ void TestBulkTagEditor::showsOnlyTheTagsAllImagesShare()
     selectThreeImages();  // nothing shared
 
     QVERIFY(tagsShown(*m_editor).isEmpty());
+    QVERIFY(rowOf(*m_editor, QStringLiteral("meta")).isEmpty());  // the server sets meta tags
 }
 
 // Category and rating are kept as is: the dropdown shows the value all share, or "keep as is" if they differ.

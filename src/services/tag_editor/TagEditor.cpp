@@ -361,7 +361,7 @@ void TagEditor::updateRows()
 
     const QStringList after = tagsAfter(m_additions, m_removals);
     QList<NamespaceRows::Row> rows;
-    for (const Namespaces::Info& info : m_namespaces->all())
+    for (const Namespaces::Info& info : m_namespaces->editable())
     {
         QList<QPair<TagName, Change>> entries;
         QString valueBefore;

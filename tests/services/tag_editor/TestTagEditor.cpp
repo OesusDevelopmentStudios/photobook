@@ -40,6 +40,7 @@ QJsonObject namespaceJson(const QString& name, bool singleValue, const QJsonValu
         {QStringLiteral("single_value"), singleValue},
         {QStringLiteral("is_builtin"), name != QLatin1String("weather")},
         {QStringLiteral("in_path_template"), name == QLatin1String("category")},
+        {QStringLiteral("user_editable"), name != QLatin1String("meta")},  // the server sets meta tags
         {QStringLiteral("allowed_values"), allowedValues},
     };
 }
@@ -51,7 +52,7 @@ server_client::Image beachPhoto()
     image.id = 5;
     image.originalFilename = QStringLiteral("beach.jpg");
     image.takenAt = QDateTime(QDate(2025, 7, 14), QTime(18, 3));
-    image.tags = {QStringLiteral("category:photo"), QStringLiteral("general:summer")};
+    image.tags = {QStringLiteral("category:photo"), QStringLiteral("general:summer"), QStringLiteral("meta:jpeg")};
     return image;
 }
 
@@ -174,15 +175,16 @@ void TestTagEditor::init()
     m_server->answer(
         "GET",
         serverUrl + QStringLiteral("/api/v1/namespaces"),
-        fakes::jsonResponse(
-            200,
-            {{QStringLiteral("items"),
-              QJsonArray{namespaceJson(QStringLiteral("category"), true),
-                         namespaceJson(QStringLiteral("author"), false),
-                         namespaceJson(
-                             QStringLiteral("rating"), true, QJsonArray{QStringLiteral("public"), QStringLiteral("private")}),
-                         namespaceJson(QStringLiteral("general"), false),
-                         namespaceJson(QStringLiteral("weather"), true)}}}));
+        fakes::jsonResponse(200,
+                            {{QStringLiteral("items"),
+                              QJsonArray{namespaceJson(QStringLiteral("category"), true),
+                                         namespaceJson(QStringLiteral("author"), false),
+                                         namespaceJson(QStringLiteral("rating"),
+                                                       true,
+                                                       QJsonArray{QStringLiteral("public"), QStringLiteral("private")}),
+                                         namespaceJson(QStringLiteral("general"), false),
+                                         namespaceJson(QStringLiteral("weather"), true),
+                                         namespaceJson(QStringLiteral("meta"), false)}}}));
     // The categories in use, most used first
     m_server->answerWith("GET", serverUrl + QStringLiteral("/api/v1/tags"), [](const HttpRequest& request) {
         QJsonArray items;
@@ -234,7 +236,7 @@ void TestTagEditor::needsALibraryImage()
     QCOMPARE(m_editor->namespaceRows()->rowCount(), 0);
 }
 
-// Also namespaces the image has no tag in, in the server's order
+// Also namespaces the image has no tag in, in the server's order; not meta, whose tags the server sets
 void TestTagEditor::showsARowPerNamespace()
 {
     startEditingTheBeachPhoto();

@@ -685,22 +685,27 @@ void TestServerClient::suggestsTags()
 void TestServerClient::readsTheNamespaces()
 {
     m_transport->nextResponse = answer(200, R"({"items":[
-        {"name":"category","single_value":true,"is_builtin":true,"in_path_template":true,"allowed_values":null},
-        {"name":"rating","single_value":true,"is_builtin":true,"in_path_template":false,
+        {"name":"category","single_value":true,"is_builtin":true,"in_path_template":true,"user_editable":true,
+         "allowed_values":null},
+        {"name":"rating","single_value":true,"is_builtin":true,"in_path_template":false,"user_editable":true,
          "allowed_values":["public","private"]},
-        {"name":"weather","single_value":false,"is_builtin":false,"in_path_template":false,"allowed_values":null}]})");
+        {"name":"weather","single_value":false,"is_builtin":false,"in_path_template":false,"user_editable":true,
+         "allowed_values":null},
+        {"name":"meta","single_value":false,"is_builtin":true,"in_path_template":false,"user_editable":false,
+         "allowed_values":null}]})");
 
     const Result<QList<Namespace>> namespaces = valueOf(m_client->namespaces());
 
     QCOMPARE(m_transport->lastRequest().url.path(), QStringLiteral("/api/v1/namespaces"));
     QVERIFY(namespaces.has_value());
-    QCOMPARE(namespaces->size(), 3);
+    QCOMPARE(namespaces->size(), 4);
     const Namespace category = namespaces->at(0);
     QCOMPARE(category.name, QStringLiteral("category"));
     QVERIFY(category.singleValue && category.isBuiltin && category.inPathTemplate);
     QCOMPARE(category.allowedValues, std::nullopt);  // any name
     QCOMPARE(namespaces->at(1).allowedValues, QStringList({QStringLiteral("public"), QStringLiteral("private")}));
     QVERIFY(!namespaces->at(2).singleValue);
+    QVERIFY(category.userEditable && !namespaces->at(3).userEditable);  // the server sets meta tags
 }
 
 void TestServerClient::readsAndReplacesThePreferences()

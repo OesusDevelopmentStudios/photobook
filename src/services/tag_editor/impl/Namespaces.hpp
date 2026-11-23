@@ -31,6 +31,7 @@ public:
         bool singleValue = false;
         bool builtin = false;
         std::optional<QStringList> allowedValues;  // nothing: any name
+        bool userEditable = true;                  // false: the server alone sets its tags, e.g. meta
 
         bool hasDropdown() const;  // the built-in one-tag namespaces; custom ones have an add field
     };
@@ -42,6 +43,7 @@ public:
     void load();
 
     const QList<Info>& all() const;  // in the server's order: built-in ones first
+    QList<Info> editable() const;    // those users tag with: an editor's rows; not meta
     const Info* find(const QString& name) const;
     QSet<QString> names() const;
     QSet<QString> singleValueNames() const;
