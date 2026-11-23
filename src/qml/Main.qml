@@ -331,6 +331,7 @@ Kirigami.ApplicationWindow {
             library: root.appManager.library
             libraryView: root.appManager.libraryView
             bulkTagEditor: root.appManager.bulkTagEditor
+            searchSuggestions: root.appManager.searchSuggestions
             navigator: root.appManager.navigator
             connection: root.appManager.connection
             imageActions: root.appManager.imageActions

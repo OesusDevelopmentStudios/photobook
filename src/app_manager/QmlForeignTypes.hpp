@@ -15,6 +15,7 @@
 #include "Library.hpp"
 #include "LibraryView.hpp"
 #include "Navigator.hpp"
+#include "SearchSuggestions.hpp"
 #include "Slideshow.hpp"
 #include "TagEditor.hpp"
 #include "TagRowsEditor.hpp"
@@ -143,12 +144,20 @@ struct ForeignTagRowsEditor
     QML_UNCREATABLE("A base of the tag editors and HiddenFilterEditor")
 };
 
+struct ForeignSearchSuggestions
+{
+    Q_GADGET
+    QML_FOREIGN(photobook::tag_editor::SearchSuggestions)
+    QML_NAMED_ELEMENT(SearchSuggestions)
+    QML_UNCREATABLE("Provided by AppManager")
+};
+
 struct ForeignTagSuggestions
 {
     Q_GADGET
     QML_FOREIGN(photobook::tag_editor::TagSuggestions)
     QML_NAMED_ELEMENT(TagSuggestions)
-    QML_UNCREATABLE("Provided by TagEditor")
+    QML_UNCREATABLE("Provided by TagEditor and SearchSuggestions")
 };
 
 }  // namespace photobook::app_manager

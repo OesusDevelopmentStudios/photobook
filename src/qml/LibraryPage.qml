@@ -17,6 +17,7 @@ Kirigami.Page {
     required property Library library
     required property LibraryView libraryView
     required property BulkTagEditor bulkTagEditor
+    required property SearchSuggestions searchSuggestions
     required property Navigator navigator
     required property Connection connection
     required property ImageActions imageActions
@@ -220,6 +221,7 @@ Kirigami.Page {
             library: page.library
             libraryView: page.libraryView
             bulkTagEditor: page.bulkTagEditor
+            searchSuggestions: page.searchSuggestions
             onTileSizeRequested: gridUnits => page.resizeTiles(() => page.libraryView.tileSize = gridUnits)
             onStopSelectingRequested: page.stopSelectingRequested()
         }

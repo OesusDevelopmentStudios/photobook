@@ -15,6 +15,7 @@ Rectangle {
     required property Library library
     required property LibraryView libraryView
     required property BulkTagEditor bulkTagEditor
+    required property SearchSuggestions searchSuggestions
 
     readonly property bool selecting: library.selecting
 
@@ -41,22 +42,13 @@ Rectangle {
         anchors.margins: Kirigami.Units.largeSpacing
         spacing: Kirigami.Units.smallSpacing
 
-        Kirigami.SearchField {
+        LibrarySearchField {
             id: searchField
 
             Layout.fillWidth: true
-            placeholderText: KI18n.i18nc("@info:placeholder", "Search tags…")
-            autoAccept: false  // one search per Enter, not one per key
-            onAccepted: sidebar.library.search(text)
-            onTextChanged: {
-                if (text.length === 0 && sidebar.library.searchText.length > 0) {
-                    sidebar.library.search("");  // cleared: all images again
-                }
-            }
-
-            Controls.ToolTip.text: KI18n.i18nc("@info:tooltip", "For example: category:photo summer -rating:private")
-            Controls.ToolTip.visible: hovered && text.length === 0
-            Controls.ToolTip.delay: Kirigami.Units.toolTipDelay
+            searchSuggestions: sidebar.searchSuggestions
+            searchedText: sidebar.library.searchText
+            onSearchRequested: text => sidebar.library.search(text)
         }
 
         ColumnLayout {

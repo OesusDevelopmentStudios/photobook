@@ -19,6 +19,7 @@
 #include "Connection.hpp"
 #include "HiddenFilterEditor.hpp"
 #include "ImageLoader.hpp"
+#include "SearchSuggestions.hpp"
 #include "ServerClientFactory.hpp"
 #include "SettingsFactory.hpp"
 #include "TagEditor.hpp"
@@ -38,7 +39,7 @@ namespace photobook::tests
 // Real services for QML parts that need them, over fakes: a viewer showing a photo from a fake image loader,
 // and a tag editor and an uploader of a connection that is not logged in, with a folder of images to upload.
 // The hidden filter editor has a connection of its own, logged in to a server that has two hidden filters saved
-// and keeps what is saved. Registered for the QML tests in TestQml.cpp.
+// and keeps what is saved; the search suggestions use it too. Registered for the QML tests in TestQml.cpp.
 class TestServices : public QObject
 {
     Q_OBJECT
@@ -49,6 +50,7 @@ class TestServices : public QObject
     Q_PROPERTY(photobook::uploader::Uploader* uploader READ uploader CONSTANT)
     Q_PROPERTY(photobook::connection::Connection* accountConnection READ accountConnection CONSTANT)
     Q_PROPERTY(photobook::tag_editor::HiddenFilterEditor* hiddenFilterEditor READ hiddenFilterEditor CONSTANT)
+    Q_PROPERTY(photobook::tag_editor::SearchSuggestions* searchSuggestions READ searchSuggestions CONSTANT)
     Q_PROPERTY(QUrl sampleFolder READ sampleFolder CONSTANT)  // holiday/beach.jpg, holiday/day2/sunset.jpg
 
     // Answers every file with the same landscape photo, without touching the disk.
@@ -130,6 +132,11 @@ public:
         return m_hiddenFilterEditor.get();
     }
 
+    tag_editor::SearchSuggestions* searchSuggestions() const
+    {
+        return m_searchSuggestions.get();
+    }
+
     QUrl sampleFolder() const
     {
         return QUrl::fromLocalFile(m_folder.filePath(QStringLiteral("holiday")));
@@ -198,6 +205,7 @@ private:
             m_accountSettings.get());
         m_accountConnection->restoreLogin();  // tests wait until it is logged in
         m_hiddenFilterEditor = tag_editor::createHiddenFilterEditor(m_accountConnection.get());
+        m_searchSuggestions = tag_editor::createSearchSuggestions(m_accountConnection.get());
     }
 
     QTemporaryDir m_folder;  // the settings, never the user's own, and the images to upload
@@ -211,6 +219,7 @@ private:
     std::unique_ptr<settings::Settings> m_accountSettings;
     std::unique_ptr<connection::Connection> m_accountConnection;
     std::unique_ptr<tag_editor::HiddenFilterEditor> m_hiddenFilterEditor;
+    std::unique_ptr<tag_editor::SearchSuggestions> m_searchSuggestions;
 };
 
 }  // namespace photobook::tests

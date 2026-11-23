@@ -79,6 +79,7 @@ AppManager::AppManager(QObject* parent)
     , m_uploadTagEditor(tag_editor::createUploadTagEditor(m_connection.get()))
     , m_uploader(uploader::createUploader(m_connection.get(), m_uploadTagEditor.get()))
     , m_hiddenFilterEditor(tag_editor::createHiddenFilterEditor(m_connection.get()))
+    , m_searchSuggestions(tag_editor::createSearchSuggestions(m_connection.get()))
     , m_imageActions(image_actions::createImageActions(m_connection.get()))
     , m_serverCredentials(std::make_shared<network_access::ServerCredentials>())
     , m_networkAccessFactory(network_access::createNetworkAccessFactory(
@@ -200,6 +201,11 @@ tag_editor::UploadTagEditor* AppManager::uploadTagEditor() const
 tag_editor::HiddenFilterEditor* AppManager::hiddenFilterEditor() const
 {
     return m_hiddenFilterEditor.get();
+}
+
+tag_editor::SearchSuggestions* AppManager::searchSuggestions() const
+{
+    return m_searchSuggestions.get();
 }
 
 image_actions::ImageActions* AppManager::imageActions() const

@@ -63,6 +63,7 @@ set(qmlFiles
     qml/HiddenFilterSettings.qml
     qml/LibraryPage.qml
     qml/LibrarySidebar.qml
+    qml/LibrarySearchField.qml
     qml/LibraryTile.qml
     qml/ImageDetailsFooter.qml
     qml/ImageDetailsZone.qml

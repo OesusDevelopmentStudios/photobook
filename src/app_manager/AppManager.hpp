@@ -21,6 +21,7 @@
 #include "LibraryView.hpp"
 #include "Navigator.hpp"
 #include "NetworkAccess.hpp"
+#include "SearchSuggestions.hpp"
 #include "Settings.hpp"
 #include "Slideshow.hpp"
 #include "TagEditor.hpp"
@@ -50,6 +51,7 @@ class AppManager : public QObject
     Q_PROPERTY(photobook::tag_editor::BulkTagEditor* bulkTagEditor READ bulkTagEditor CONSTANT)
     Q_PROPERTY(photobook::tag_editor::UploadTagEditor* uploadTagEditor READ uploadTagEditor CONSTANT)
     Q_PROPERTY(photobook::tag_editor::HiddenFilterEditor* hiddenFilterEditor READ hiddenFilterEditor CONSTANT)
+    Q_PROPERTY(photobook::tag_editor::SearchSuggestions* searchSuggestions READ searchSuggestions CONSTANT)
     Q_PROPERTY(photobook::image_actions::ImageActions* imageActions READ imageActions CONSTANT)
     Q_PROPERTY(photobook::uploader::Uploader* uploader READ uploader CONSTANT)
 
@@ -68,6 +70,7 @@ public:
     tag_editor::BulkTagEditor* bulkTagEditor() const;
     tag_editor::UploadTagEditor* uploadTagEditor() const;
     tag_editor::HiddenFilterEditor* hiddenFilterEditor() const;
+    tag_editor::SearchSuggestions* searchSuggestions() const;
     image_actions::ImageActions* imageActions() const;
     uploader::Uploader* uploader() const;
 
@@ -108,6 +111,7 @@ private:
     std::unique_ptr<tag_editor::UploadTagEditor> m_uploadTagEditor;
     std::unique_ptr<uploader::Uploader> m_uploader;
     std::unique_ptr<tag_editor::HiddenFilterEditor> m_hiddenFilterEditor;
+    std::unique_ptr<tag_editor::SearchSuggestions> m_searchSuggestions;
     std::unique_ptr<image_actions::ImageActions> m_imageActions;
     std::optional<server_client::Image> m_libraryImageOnScreen;  // none while a local file is shown
     std::shared_ptr<network_access::ServerCredentials> m_serverCredentials;
