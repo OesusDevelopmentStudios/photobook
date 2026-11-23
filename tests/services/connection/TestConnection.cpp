@@ -32,9 +32,11 @@ using server_client::HttpRequest;
 const QString serverUrl = QStringLiteral("https://photos.example.org");
 const QString localUrl = serverUrl + QStringLiteral("/api/v1/server/local");
 
-const QByteArray serverInfoJson = R"({"name":"photobook-db","version":"0.1.0","api_version":1,"setup_required":false})";
-const QByteArray loginJson = R"({"token_id":3,"token":"pk_new","user":{"id":2,"username":"restrictedUser","role":"user"}})";
-const QByteArray currentUserJson = R"({"id":2,"username":"restrictedUser","role":"user","restricted_tags":["rating:private"]})";
+const QByteArray serverInfoJson = R"({"name":"photobook-db","version":"0.2.0","api_version":1,"setup_required":false})";
+const QByteArray loginJson =
+    R"({"token_id":3,"token":"pk_new","user":{"id":2,"username":"restrictedUser","role":"user"}})";
+const QByteArray currentUserJson =
+    R"({"id":2,"username":"restrictedUser","role":"user","restricted_tags":["rating:private"]})";
 const QByteArray devicesJson = R"([{"token_id":3,"device_name":"laptop","created_at":"2026-11-15T19:22:03Z",
     "last_used_at":"2026-11-15T19:22:04Z","expires_at":null,"is_current":true}])";
 
@@ -52,6 +54,8 @@ private Q_SLOTS:
     void asksForAnAddress();
     void refusesWhatIsNotAPhotobookServer();
     void pointsToTheSetupPageOfANewServer();
+    void refusesAServerOlderThan020();
+    void acceptsAPreReleaseOf020();
     void linksToTheWebAdmin();
     void linksToTheWebAdminUnderTheServersPath();
 
@@ -126,7 +130,7 @@ void TestConnection::findsTheServer()
     QTRY_COMPARE(connection->state(), Connection::State::ServerFound);
     QCOMPARE(states, QList<Connection::State>({Connection::State::CheckingServer, Connection::State::ServerFound}));
     QCOMPARE(connection->serverAddress(), serverUrl);
-    QCOMPARE(connection->serverDescription(), QStringLiteral("photobook-db 0.1.0"));
+    QCOMPARE(connection->serverDescription(), QStringLiteral("photobook-db 0.2.0"));
     QVERIFY(!connection->isPlainHttp());
     QVERIFY(connection->errorMessage().isEmpty());
 }
@@ -173,13 +177,43 @@ void TestConnection::pointsToTheSetupPageOfANewServer()
     m_server->answer(
         "GET",
         serverUrl + QStringLiteral("/api/v1/server/info"),
-        response(200, R"({"name":"photobook-db","version":"0.1.0","api_version":1,"setup_required":true})"));
+        response(200, R"({"name":"photobook-db","version":"0.2.0","api_version":1,"setup_required":true})"));
     const auto connection = createConnection();
 
     connection->checkServer(serverUrl);
 
     QTRY_COMPARE(connection->state(), Connection::State::NoServer);
     QVERIFY(connection->errorMessage().contains(QStringLiteral("https://photos.example.org/admin/setup")));
+}
+
+void TestConnection::refusesAServerOlderThan020()
+{
+    m_server->answer(
+        "GET",
+        serverUrl + QStringLiteral("/api/v1/server/info"),
+        response(200, R"({"name":"photobook-db","version":"0.1.0","api_version":1,"setup_required":false})"));
+    const auto connection = createConnection();
+
+    connection->checkServer(serverUrl);
+
+    QTRY_COMPARE(connection->state(), Connection::State::NoServer);
+    QVERIFY2(connection->errorMessage().contains(QStringLiteral("too old (photobook-db 0.1.0)")),
+             qPrintable(connection->errorMessage()));
+    QVERIFY(connection->errorMessage().contains(QStringLiteral("photobook-db 0.2.0 or newer")));
+}
+
+// A development build of the server, e.g. 0.2.0.dev0, has the 0.2.0 features.
+void TestConnection::acceptsAPreReleaseOf020()
+{
+    m_server->answer(
+        "GET",
+        serverUrl + QStringLiteral("/api/v1/server/info"),
+        response(200, R"({"name":"photobook-db","version":"0.2.0.dev0","api_version":1,"setup_required":false})"));
+    const auto connection = createConnection();
+
+    connection->checkServer(serverUrl);
+
+    QTRY_COMPARE(connection->state(), Connection::State::ServerFound);
 }
 
 void TestConnection::linksToTheWebAdmin()
@@ -321,7 +355,8 @@ void TestConnection::logsOutAndEndsThisDevicesLogin()
 
 void TestConnection::learnsWhereTheLibraryIsWhenTheServerRunsHere()
 {
-    m_server->answer("GET", localUrl, response(200, R"({"library_dir":"/home/restrictedUser/Pictures/photobook-library"})"));
+    m_server->answer(
+        "GET", localUrl, response(200, R"({"library_dir":"/home/restrictedUser/Pictures/photobook-library"})"));
     const auto connection = createConnection(QStringLiteral("9d623a36"));
     QSignalSpy changed(connection.get(), &Connection::localLibraryDirChanged);
 
@@ -335,7 +370,8 @@ void TestConnection::learnsWhereTheLibraryIsWhenTheServerRunsHere()
 
 void TestConnection::learnsItWhenTheLoginIsRestored()
 {
-    m_server->answer("GET", localUrl, response(200, R"({"library_dir":"/home/restrictedUser/Pictures/photobook-library"})"));
+    m_server->answer(
+        "GET", localUrl, response(200, R"({"library_dir":"/home/restrictedUser/Pictures/photobook-library"})"));
     m_settings->setServerUrl(QUrl(serverUrl));
     m_keyring->tokens.insert(serverUrl, QStringLiteral("pk_kept"));
     const auto connection = createConnection(QStringLiteral("9d623a36"));
@@ -371,7 +407,8 @@ void TestConnection::doesNotAskWithoutAMachineId()
 
 void TestConnection::forgetsTheFolderOnLogout()
 {
-    m_server->answer("GET", localUrl, response(200, R"({"library_dir":"/home/restrictedUser/Pictures/photobook-library"})"));
+    m_server->answer(
+        "GET", localUrl, response(200, R"({"library_dir":"/home/restrictedUser/Pictures/photobook-library"})"));
     const auto connection = createConnection(QStringLiteral("9d623a36"));
     logInAsrestrictedUser(*connection);
     QTRY_VERIFY(!connection->localLibraryDir().isEmpty());

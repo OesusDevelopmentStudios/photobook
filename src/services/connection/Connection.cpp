@@ -6,6 +6,7 @@
 #include "Connection.hpp"
 
 #include <KLocalizedString>
+#include <QVersionNumber>
 
 #include "hlp/ServerAddress.hpp"
 
@@ -19,6 +20,8 @@ using photobook::token_store::TokenStoreError;
 
 const QString expectedServerName = QStringLiteral("photobook-db");
 constexpr int supportedApiVersion = 1;
+// The albums, tag counts and fixed values this app uses came with 0.2.0; a pre-release such as 0.2.0.dev0 counts.
+const QVersionNumber minimumServerVersion(0, 2, 0);
 constexpr int statusUnauthorized = 401;
 
 // Why an address that answered is not a server this app can use; empty if it is one.
@@ -36,6 +39,15 @@ QString problemWithServer(const QUrl& serverUrl, const ServerInfo& info)
                      "older of the two.",
                      info.apiVersion,
                      supportedApiVersion);
+    }
+
+    if (QVersionNumber::fromString(info.version) < minimumServerVersion)
+    {
+        return i18nc("@info %1 and %2 are version numbers",
+                     "The server is too old (photobook-db %1): this Photobook needs photobook-db %2 or newer. Update "
+                     "the server.",
+                     info.version,
+                     minimumServerVersion.toString());
     }
 
     if (info.setupRequired)
