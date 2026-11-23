@@ -8,6 +8,7 @@
 #include <KLocalizedString>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
 #include <QUrlQuery>
@@ -83,6 +84,7 @@ private Q_SLOTS:
     void listsAlbumsWithHiddenImagesWhenAsked();
     void remembersTheSortAndTheHiddenChoice();
     void ignoresTheAnswerToAnOlderLoad();
+    void keepsTheGridWhenNothingChanged();
     void showsWhyLoadingFailed();
     void emptiesWhenLoggedOut();
 
@@ -268,6 +270,20 @@ void TestAlbums::ignoresTheAnswerToAnOlderLoad()
     QTest::qWait(50);
     QCOMPARE(m_albums->count(), 4);
     QVERIFY(!m_albums->isLoading());
+}
+
+// The tab reloads whenever it is shown, e.g. back from the viewer: the grid keeps its place.
+void TestAlbums::keepsTheGridWhenNothingChanged()
+{
+    logIn();
+    QTRY_COMPARE(m_albums->count(), 3);
+    QSignalSpy reset(m_albums.get(), &Albums::modelReset);
+
+    m_albums->reload();
+    QTRY_VERIFY(!m_albums->isLoading());
+
+    QCOMPARE(reset.size(), 0);
+    QCOMPARE(m_server->requestsTo("GET", albumsUrl).size(), 2);
 }
 
 void TestAlbums::showsWhyLoadingFailed()

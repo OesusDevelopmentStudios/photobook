@@ -329,6 +329,7 @@ Kirigami.ApplicationWindow {
 
         LibraryPage {
             library: root.appManager.library
+            albums: root.appManager.albums
             libraryView: root.appManager.libraryView
             bulkTagEditor: root.appManager.bulkTagEditor
             searchSuggestions: root.appManager.searchSuggestions

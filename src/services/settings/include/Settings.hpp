@@ -39,6 +39,9 @@ public:
     // In Kirigami grid units, so tiles scale with the system font
     virtual std::optional<int> libraryTileSize() const = 0;
     virtual void setLibraryTileSize(int gridUnits) = 0;
+    // The library page's tab used last, a word such as "albums"
+    virtual std::optional<QString> libraryTab() const = 0;
+    virtual void setLibraryTab(const QString& tab) = 0;
 
     // A word such as "name", as for the slideshow's order
     virtual std::optional<QString> albumSort() const = 0;

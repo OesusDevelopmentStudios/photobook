@@ -91,6 +91,13 @@ public:
 
     void setLibraryTileSize(int) override {}
 
+    std::optional<QString> libraryTab() const override
+    {
+        return std::nullopt;
+    }
+
+    void setLibraryTab(const QString&) override {}
+
     std::optional<QString> albumSort() const override
     {
         return std::nullopt;

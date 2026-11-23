@@ -192,6 +192,8 @@ struct Album
     int coverImageId = 0;     // the album's first image, in the order images were added to it
     int coverRevision = 0;    // for the cover's thumbnail URL
     QDateTime lastChangedAt;  // UTC; when an image was last added to it
+
+    bool operator==(const Album&) const = default;
 };
 
 struct TagCount

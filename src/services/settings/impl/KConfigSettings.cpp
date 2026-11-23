@@ -18,6 +18,7 @@ constexpr const char* usernameKey = "Username";
 const QString libraryGroupName = QStringLiteral("Library");
 constexpr const char* sidebarVisibleKey = "SidebarVisible";
 constexpr const char* tileSizeKey = "TileSize";
+constexpr const char* tabKey = "Tab";
 const QString albumsGroupName = QStringLiteral("Albums");
 constexpr const char* sortKey = "Sort";
 constexpr const char* showWithHiddenImagesKey = "ShowWithHiddenImages";
@@ -119,6 +120,22 @@ std::optional<int> KConfigSettings::libraryTileSize() const
 void KConfigSettings::setLibraryTileSize(int gridUnits)
 {
     writeLibraryEntry(tileSizeKey, gridUnits);
+}
+
+std::optional<QString> KConfigSettings::libraryTab() const
+{
+    const KConfigGroup group = libraryGroup();
+    if (!group.hasKey(tabKey))
+    {
+        return std::nullopt;
+    }
+
+    return group.readEntry(tabKey, QString());
+}
+
+void KConfigSettings::setLibraryTab(const QString& tab)
+{
+    writeLibraryEntry(tabKey, tab);
 }
 
 std::optional<QString> KConfigSettings::albumSort() const

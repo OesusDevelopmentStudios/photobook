@@ -15,6 +15,10 @@ namespace
 
 using photobook::library_view::LibraryView;
 
+// As stored in the settings: words, so the config file stays readable
+const QString libraryWord = QStringLiteral("library");
+const QString albumsWord = QStringLiteral("albums");
+
 int limitedTileSize(int gridUnits)
 {
     return std::clamp(gridUnits, LibraryView::minimumTileSize, LibraryView::maximumTileSize);
@@ -28,9 +32,25 @@ namespace photobook::library_view
 LibraryView::LibraryView(settings::Settings* settings, QObject* parent)
     : QObject(parent)
     , m_settings(settings)
+    , m_tab(m_settings->libraryTab() == albumsWord ? Tab::Albums : Tab::Library)
     , m_sidebarVisible(m_settings->librarySidebarVisible().value_or(true))
     , m_tileSize(limitedTileSize(m_settings->libraryTileSize().value_or(defaultTileSize)))
 {}
+
+LibraryView::Tab LibraryView::tab() const
+{
+    return m_tab;
+}
+
+void LibraryView::setTab(Tab tab)
+{
+    if (tab != m_tab)
+    {
+        m_tab = tab;
+        m_settings->setLibraryTab(tab == Tab::Albums ? albumsWord : libraryWord);
+        Q_EMIT tabChanged();
+    }
+}
 
 bool LibraryView::isSidebarVisible() const
 {

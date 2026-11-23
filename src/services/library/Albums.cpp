@@ -269,15 +269,15 @@ bool Albums::isLoggedIn() const
     return m_connection->state() == connection::Connection::State::LoggedIn && m_connection->client() != nullptr;
 }
 
+// The same albums again leave the grid as it is, scrolled where it was.
 void Albums::setAlbums(const QList<Album>& albums)
 {
-    const int oldTotal = totalCount();
-    m_albums = albums;
-    if (oldTotal == 0 && albums.isEmpty())
+    if (albums == m_albums)
     {
         return;
     }
 
+    m_albums = albums;
     showAlbums();
 }
 

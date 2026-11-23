@@ -24,6 +24,8 @@ class TestLibraryView : public QObject
 private Q_SLOTS:
     void init();
 
+    void startsOnTheLibraryTab();
+    void remembersTheTab();
     void showsSidebarAtFirstStart();
     void remembersHiddenSidebar();
     void announcesOnlyChanges();
@@ -58,6 +60,26 @@ void TestLibraryView::init()
 void TestLibraryView::recreateLibraryView()
 {
     m_libraryView = createLibraryView(m_settings.get());
+}
+
+void TestLibraryView::startsOnTheLibraryTab()
+{
+    QCOMPARE(m_libraryView->tab(), LibraryView::Tab::Library);
+}
+
+void TestLibraryView::remembersTheTab()
+{
+    QSignalSpy changed(m_libraryView.get(), &LibraryView::tabChanged);
+
+    m_libraryView->setTab(LibraryView::Tab::Albums);
+    m_libraryView->setTab(LibraryView::Tab::Albums);
+
+    QCOMPARE(changed.size(), 1);
+    recreateLibraryView();
+    QCOMPARE(m_libraryView->tab(), LibraryView::Tab::Albums);
+    m_libraryView->setTab(LibraryView::Tab::Library);
+    recreateLibraryView();
+    QCOMPARE(m_libraryView->tab(), LibraryView::Tab::Library);
 }
 
 void TestLibraryView::showsSidebarAtFirstStart()

@@ -65,6 +65,11 @@ set(qmlFiles
     qml/LibrarySidebar.qml
     qml/LibrarySearchField.qml
     qml/LibraryTile.qml
+    qml/EdgeFade.qml
+    qml/LibraryTabs.qml
+    qml/AlbumsView.qml
+    qml/AlbumsSidebar.qml
+    qml/AlbumTile.qml
     qml/ImageDetailsFooter.qml
     qml/ImageDetailsZone.qml
     qml/TagChip.qml

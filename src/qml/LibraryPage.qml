@@ -15,6 +15,7 @@ Kirigami.Page {
     id: page
 
     required property Library library
+    required property Albums albums
     required property LibraryView libraryView
     required property BulkTagEditor bulkTagEditor
     required property SearchSuggestions searchSuggestions
@@ -29,48 +30,41 @@ Kirigami.Page {
     signal imageOpenRequested(int row)
     signal imageCopyRequested(int row)
     signal imageFolderRequested(int row)
+    signal albumOpenRequested(int row)
     signal stopSelectingRequested()       // Done or Esc; the window asks first about tag changes not applied
 
     readonly property int connectionState: connection.state
     readonly property bool loggedIn: connectionState === Connection.State.LoggedIn
+    readonly property bool albumsTab: libraryView.tab === LibraryView.Tab.Albums
 
-    title: KI18n.i18nc("@title", "Library")
+    title: albumsTab ? KI18n.i18nc("@title", "Albums") : KI18n.i18nc("@title", "Library")
     padding: 0
 
-    // From the background colour to transparent, over the edge of the grid. Takes no input, so tiles under
-    // it are still hovered.
-    component EdgeFade: Rectangle {
-        property bool shown: false
-
-        height: Kirigami.Units.gridUnit * 2
-        opacity: shown ? 1 : 0
-        gradient: Gradient {
-            GradientStop {
-                position: 0
-                color: Kirigami.Theme.backgroundColor
-            }
-            GradientStop {
-                position: 1
-                color: Qt.alpha(Kirigami.Theme.backgroundColor, 0)
-            }
-        }
-
-        Behavior on opacity {
-            NumberAnimation {
-                duration: Kirigami.Units.shortDuration
-            }
-        }
-    }
-
-    // Back from the viewer, the last image viewed there is in view, also if the viewer stepped far on.
+    // Back from the viewer, the last image viewed there is in view, also if the viewer stepped far on. Albums
+    // may have changed meanwhile, e.g. by tags given in the viewer.
     onIsCurrentPageChanged: {
-        if (isCurrentPage && navigator.browsingLibrary && navigator.currentIndex >= 0) {
+        if (!isCurrentPage) {
+            return;
+        }
+        if (albumsTab) {
+            albums.reload();
+        } else if (navigator.browsingLibrary && navigator.currentIndex >= 0) {
             grid.positionViewAtIndex(navigator.currentIndex, GridView.Contain);
         }
     }
+    onAlbumsTabChanged: {
+        if (albumsTab) {
+            albums.reload();
+        }
+    }
 
-    // A new tile size reflows the grid; the image at the top stays in view instead of jumping away.
+    // A new tile size reflows the grid; the tile at the top stays in view instead of jumping away.
     function resizeTiles(resize) {
+        if (albumsTab) {
+            albumsView.resizeTiles(resize);
+            return;
+        }
+
         const topIndex = grid.indexAt(grid.cellWidth / 2, grid.contentY + grid.cellHeight / 2);
         resize();
         grid.forceLayout();
@@ -95,9 +89,20 @@ Kirigami.Page {
 
         Kirigami.Heading {
             Layout.fillWidth: true
+            visible: !page.loggedIn
             text: page.title
             elide: Text.ElideRight
             maximumLineCount: 1
+        }
+
+        // Images are chosen for their tags in the Library tab only.
+        LibraryTabs {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            visible: page.loggedIn
+            enabled: !page.library.selecting
+            libraryView: page.libraryView
+            centreOf: page
         }
     }
 
@@ -116,7 +121,7 @@ Kirigami.Page {
 
     Kirigami.Action {
         shortcut: "Escape"
-        enabled: page.loggedIn && page.isCurrentPage && page.library.selecting
+        enabled: page.loggedIn && page.isCurrentPage && !page.albumsTab && page.library.selecting
         onTriggered: page.stopSelectingRequested()
     }
 
@@ -124,6 +129,10 @@ Kirigami.Page {
         shortcut: StandardKey.Find
         enabled: page.loggedIn && page.isCurrentPage
         onTriggered: {
+            if (page.albumsTab) {
+                albumsView.focusFilter();
+                return;
+            }
             page.libraryView.sidebarVisible = true;
             sidebar.focusSearch();
         }
@@ -209,7 +218,7 @@ Kirigami.Page {
     RowLayout {
         anchors.fill: parent
         spacing: 0
-        visible: page.loggedIn
+        visible: page.loggedIn && !page.albumsTab
 
         LibrarySidebar {
             id: sidebar
@@ -362,6 +371,16 @@ Kirigami.Page {
                 explanation: page.library.searchText  // as typed: the hidden filters stay out of sight
             }
         }
+    }
+
+    AlbumsView {
+        id: albumsView
+
+        anchors.fill: parent
+        visible: page.loggedIn && page.albumsTab
+        albums: page.albums
+        libraryView: page.libraryView
+        onAlbumOpenRequested: row => page.albumOpenRequested(row)
     }
 
     Kirigami.LoadingPlaceholder {

@@ -17,18 +17,29 @@ class LibraryView : public QObject
 {
     Q_OBJECT
 
+    Q_PROPERTY(Tab tab READ tab WRITE setTab NOTIFY tabChanged)
     Q_PROPERTY(bool sidebarVisible READ isSidebarVisible WRITE setSidebarVisible NOTIFY sidebarVisibleChanged)
     Q_PROPERTY(int tileSize READ tileSize WRITE setTileSize NOTIFY tileSizeChanged)
     Q_PROPERTY(int minimumTileSize READ minimumTileSizeForQml CONSTANT)
     Q_PROPERTY(int maximumTileSize READ maximumTileSizeForQml CONSTANT)
 
 public:
+    enum class Tab
+    {
+        Library,  // the images of a search
+        Albums,
+    };
+    Q_ENUM(Tab)
+
     // Tile sizes in Kirigami grid units, so tiles scale with the system font
     static constexpr int minimumTileSize = 6;
     static constexpr int maximumTileSize = 24;
     static constexpr int defaultTileSize = 10;
 
     explicit LibraryView(settings::Settings* settings, QObject* parent = nullptr);
+
+    Tab tab() const;  // the one used last; the Library tab at first
+    void setTab(Tab tab);
 
     bool isSidebarVisible() const;  // shown until the user hides it
     void setSidebarVisible(bool visible);
@@ -44,6 +55,7 @@ public:
     Q_INVOKABLE bool needsLargeThumbnail(qreal tilePixels) const;
 
 Q_SIGNALS:
+    void tabChanged();
     void sidebarVisibleChanged();
     void tileSizeChanged();
 
@@ -53,6 +65,7 @@ private:
     int maximumTileSizeForQml() const;
 
     settings::Settings* m_settings;
+    Tab m_tab;
     bool m_sidebarVisible;
     int m_tileSize;
     qreal m_partialSteps = 0;  // from a touchpad, not yet a whole step

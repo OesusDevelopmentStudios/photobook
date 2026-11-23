@@ -33,6 +33,8 @@ public:
     void setLibrarySidebarVisible(bool visible) override;
     std::optional<int> libraryTileSize() const override;
     void setLibraryTileSize(int gridUnits) override;
+    std::optional<QString> libraryTab() const override;
+    void setLibraryTab(const QString& tab) override;
 
     std::optional<QString> albumSort() const override;
     void setAlbumSort(const QString& sort) override;

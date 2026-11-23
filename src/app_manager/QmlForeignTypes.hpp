@@ -8,6 +8,7 @@
 #include <QObject>
 #include <QtQmlIntegration/qqmlintegration.h>
 
+#include "Albums.hpp"
 #include "BulkTagEditor.hpp"
 #include "Connection.hpp"
 #include "HiddenFilterEditor.hpp"
@@ -142,6 +143,14 @@ struct ForeignTagRowsEditor
     QML_FOREIGN(photobook::tag_editor::TagRowsEditor)
     QML_NAMED_ELEMENT(TagRowsEditor)
     QML_UNCREATABLE("A base of the tag editors and HiddenFilterEditor")
+};
+
+struct ForeignAlbums
+{
+    Q_GADGET
+    QML_FOREIGN(photobook::library::Albums)
+    QML_NAMED_ELEMENT(Albums)
+    QML_UNCREATABLE("Provided by AppManager")
 };
 
 struct ForeignSearchSuggestions

@@ -4,6 +4,7 @@
  */
 
 #include <QApplication>
+#include <QQmlAbstractUrlInterceptor>
 #include <QQmlEngine>
 #include <QQmlEngineExtensionPlugin>
 #include <QQuickStyle>
@@ -21,7 +22,21 @@ Q_IMPORT_QML_PLUGIN(io_github_oesusdevelopmentstudios_photobookPlugin)
 namespace
 {
 
-// Each test file's engine is set up as the application's is.
+// The fake servers' addresses are made up: an image from them is a blank pixel instead, so no test reaches the
+// network.
+class NoNetwork : public QQmlAbstractUrlInterceptor
+{
+public:
+    QUrl intercept(const QUrl& url, DataType /*type*/) override
+    {
+        static const QUrl blankPixel(QStringLiteral(
+            "data:image/"
+            "png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="));
+        return url.scheme().startsWith(QLatin1String("http")) ? blankPixel : url;
+    }
+};
+
+// Each test file's engine is set up as the application's is, without the network.
 class Setup : public QObject
 {
     Q_OBJECT
@@ -31,7 +46,11 @@ public Q_SLOTS:
     void qmlEngineAvailable(QQmlEngine* engine)
     {
         KLocalization::setupLocalizedContext(engine);  // KI18n.i18n*() in QML
+        engine->addUrlInterceptor(&m_noNetwork);
     }
+
+private:
+    NoNetwork m_noNetwork;
 };
 
 }  // namespace
