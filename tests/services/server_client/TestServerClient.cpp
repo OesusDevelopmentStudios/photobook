@@ -158,7 +158,9 @@ private Q_SLOTS:
     void searchesWithEveryParameter();
     void readsAPageOfImages();
     void hasNoCursorOnTheLastPage();
+    void searchesAnAlbumInItsOrder();
     void countsTheImagesASearchFinds();
+    void countsTheImagesOfAnAlbum();
     void readsOneImage();
     void uploadsAFileWithItsMetadata();
     void refusesToUploadAFileItCannotRead();
@@ -171,6 +173,10 @@ private Q_SLOTS:
     void givesAChangedFileANewAddress();
 
     void suggestsTags();
+    void countsTheImagesOfAnImagesTags();
+    void readsTheAlbums();
+    void listsAlbumsWithHiddenImagesWhenAsked();
+    void namesTheFieldOfACoverThatIsMissing();
     void readsTheNamespaces();
     void readsAndReplacesThePreferences();
     void namesTheItemThatIsWrong();
@@ -414,6 +420,7 @@ void TestServerClient::searchesWithEveryParameter()
     m_transport->nextResponse = answer(200, R"({"items":[],"next_cursor":null,"effective_query":""})");
     ImageQuery query;
     query.text = QStringLiteral("category:photo c++ q&a?#1");  // + & ? # are all allowed in tag names
+    query.album = QStringLiteral("c++_trip");
     query.sortBy = SortBy::Random;
     query.order = SortOrder::Ascending;
     query.seed = 7;
@@ -426,6 +433,7 @@ void TestServerClient::searchesWithEveryParameter()
     const QUrl url = m_transport->lastRequest().url;
     QCOMPARE(url.path(), QStringLiteral("/api/v1/images"));
     QCOMPARE(serverSideValue(url, "q"), QStringLiteral("category:photo c++ q&a?#1"));
+    QCOMPARE(serverSideValue(url, "album"), QStringLiteral("c++_trip"));
     QCOMPARE(serverSideValue(url, "sort"), QStringLiteral("random"));
     QCOMPARE(serverSideValue(url, "order"), QStringLiteral("asc"));
     QCOMPARE(serverSideValue(url, "seed"), QStringLiteral("7"));
@@ -471,6 +479,21 @@ void TestServerClient::hasNoCursorOnTheLastPage()
     QVERIFY(page->nextCursor.isEmpty());
     QCOMPARE(serverSideValue(m_transport->lastRequest().url, "apply_hidden_filters"), QStringLiteral("true"));
     QVERIFY(!m_transport->lastRequest().url.query().contains(QStringLiteral("cursor")));
+    QVERIFY(!m_transport->lastRequest().url.query().contains(QStringLiteral("album")));
+}
+
+void TestServerClient::searchesAnAlbumInItsOrder()
+{
+    m_transport->nextResponse = answer(200, R"({"items":[],"next_cursor":null,"effective_query":""})");
+    ImageQuery query;
+    query.album = QStringLiteral("vacation_2015");
+    query.sortBy = SortBy::Album;
+
+    QVERIFY(valueOf(m_client->searchImages(query)).has_value());
+
+    const QUrl url = m_transport->lastRequest().url;
+    QCOMPARE(serverSideValue(url, "album"), QStringLiteral("vacation_2015"));
+    QCOMPARE(serverSideValue(url, "sort"), QStringLiteral("album"));
 }
 
 void TestServerClient::countsTheImagesASearchFinds()
@@ -492,6 +515,22 @@ void TestServerClient::countsTheImagesASearchFinds()
     QVERIFY(!url.query().contains(QStringLiteral("cursor")));
     QCOMPARE(found->count, 11230);
     QCOMPARE(found->effectiveQuery, QStringLiteral("summer -rating:private"));
+    QVERIFY(!url.query().contains(QStringLiteral("album")));
+}
+
+void TestServerClient::countsTheImagesOfAnAlbum()
+{
+    m_transport->nextResponse = answer(200, R"({"count":84,"effective_query":"-rating:private"})");
+    ImageQuery query;
+    query.album = QStringLiteral("vacation_2015");
+    query.sortBy = SortBy::Album;  // not part of a count
+
+    const Result<ImageCount> found = valueOf(m_client->countImages(query));
+
+    const QUrl url = m_transport->lastRequest().url;
+    QCOMPARE(serverSideValue(url, "album"), QStringLiteral("vacation_2015"));
+    QVERIFY(!url.query().contains(QStringLiteral("sort")));
+    QCOMPARE(found->count, 84);
 }
 
 void TestServerClient::readsOneImage()
@@ -680,6 +719,68 @@ void TestServerClient::suggestsTags()
     QCOMPARE(tags->size(), 2);
     QCOMPARE(tags->at(0).tag, QStringLiteral("author:sample_artist"));
     QCOMPARE(tags->at(0).imageCount, 412);
+}
+
+void TestServerClient::countsTheImagesOfAnImagesTags()
+{
+    m_transport->nextResponse = answer(200, R"({"items":[{"tag":"category:photo","image_count":9000},
+                                                         {"tag":"general:summer","image_count":412}]})");
+
+    const Result<QList<TagCount>> counts = valueOf(m_client->imageTagCounts(5));
+
+    QCOMPARE(m_transport->lastRequest().method, QByteArray("GET"));
+    QCOMPARE(m_transport->lastRequest().url.path(), QStringLiteral("/api/v1/images/5/tag-counts"));
+    QVERIFY(counts.has_value());
+    QCOMPARE(counts->size(), 2);
+    QCOMPARE(counts->at(1).tag, QStringLiteral("general:summer"));
+    QCOMPARE(counts->at(1).imageCount, 412);
+}
+
+void TestServerClient::readsTheAlbums()
+{
+    m_transport->nextResponse = answer(200, R"({"items":[
+        {"tag":"album:vacation_2015","image_count":84,"cover":{"id":1234,"revision":2},
+         "last_changed_at":"2026-11-20T18:03:11Z"},
+        {"tag":"album:garden","image_count":1,"cover":{"id":7,"revision":0},
+         "last_changed_at":"2026-11-02T08:00:00Z"}]})");
+
+    const Result<QList<Album>> albums = valueOf(m_client->albums(false));
+
+    const QUrl url = m_transport->lastRequest().url;
+    QCOMPARE(url.path(), QStringLiteral("/api/v1/albums"));
+    QCOMPARE(serverSideValue(url, "include_hidden"), QStringLiteral("false"));
+    QVERIFY(albums.has_value());
+    QCOMPARE(albums->size(), 2);
+    const Album vacation = albums->at(0);
+    QCOMPARE(vacation.tag, QStringLiteral("album:vacation_2015"));
+    QCOMPARE(vacation.imageCount, 84);
+    QCOMPARE(vacation.coverImageId, 1234);
+    QCOMPARE(vacation.coverRevision, 2);
+    QCOMPARE(vacation.lastChangedAt, QDateTime(QDate(2026, 11, 20), QTime(18, 3, 11), QTimeZone::UTC));
+    QCOMPARE(albums->at(1).coverImageId, 7);
+}
+
+void TestServerClient::listsAlbumsWithHiddenImagesWhenAsked()
+{
+    m_transport->nextResponse = answer(200, R"({"items":[]})");
+
+    const Result<QList<Album>> albums = valueOf(m_client->albums(true));
+
+    QCOMPARE(serverSideValue(m_transport->lastRequest().url, "include_hidden"), QStringLiteral("true"));
+    QVERIFY(albums.has_value());
+    QVERIFY(albums->isEmpty());
+}
+
+void TestServerClient::namesTheFieldOfACoverThatIsMissing()
+{
+    m_transport->nextResponse = answer(200, R"({"items":[
+        {"tag":"album:garden","image_count":1,"cover":{"id":7},"last_changed_at":"2026-11-02T08:00:00Z"}]})");
+
+    const Result<QList<Album>> albums = valueOf(m_client->albums(false));
+
+    QVERIFY(!albums.has_value());
+    QCOMPARE(albums.error().code, invalidResponseCode);
+    QCOMPARE(albums.error().detail, QStringLiteral("items[0].cover: revision: missing"));
 }
 
 void TestServerClient::readsTheNamespaces()

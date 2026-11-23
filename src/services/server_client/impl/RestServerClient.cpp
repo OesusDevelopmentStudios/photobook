@@ -77,6 +77,8 @@ QString sortName(SortBy sortBy)
         return QStringLiteral("imported_at");
     case SortBy::Random:
         return QStringLiteral("random");
+    case SortBy::Album:
+        return QStringLiteral("album");
     case SortBy::TakenAt:
         break;
     }
@@ -87,6 +89,14 @@ QString sortName(SortBy sortBy)
 QString booleanValue(bool value)
 {
     return value ? QStringLiteral("true") : QStringLiteral("false");
+}
+
+void addAlbum(QUrlQuery& parameters, const ImageQuery& query)
+{
+    if (!query.album.isEmpty())
+    {
+        parameters.addQueryItem(QStringLiteral("album"), queryValue(query.album));
+    }
 }
 
 QString imageFilePath(int imageId)
@@ -211,6 +221,7 @@ QFuture<Result<ImagePage>> RestServerClient::searchImages(const ImageQuery& quer
 {
     QUrlQuery parameters;
     parameters.addQueryItem(QStringLiteral("q"), queryValue(query.text));
+    addAlbum(parameters, query);
     parameters.addQueryItem(QStringLiteral("sort"), sortName(query.sortBy));
     parameters.addQueryItem(QStringLiteral("order"),
                             query.order == SortOrder::Ascending ? QStringLiteral("asc") : QStringLiteral("desc"));
@@ -243,6 +254,7 @@ QFuture<Result<ImageCount>> RestServerClient::countImages(const ImageQuery& quer
 {
     QUrlQuery parameters;
     parameters.addQueryItem(QStringLiteral("q"), queryValue(query.text));
+    addAlbum(parameters, query);
     parameters.addQueryItem(QStringLiteral("apply_hidden_filters"), booleanValue(query.applyHiddenFilters));
     return send("GET", QStringLiteral("/images/count"), std::nullopt, parameters)
         .then([](const HttpResponse& response) { return jsonAnswer(response, statusOk, imageCountFrom); });
@@ -350,6 +362,22 @@ QFuture<Result<QList<TagCount>>> RestServerClient::tags(const QString& prefix, c
     parameters.addQueryItem(QStringLiteral("limit"), QString::number(limit));
     return send("GET", QStringLiteral("/tags"), std::nullopt, parameters).then([](const HttpResponse& response) {
         return jsonAnswer(response, statusOk, tagCountsFrom);
+    });
+}
+
+QFuture<Result<QList<TagCount>>> RestServerClient::imageTagCounts(int imageId)
+{
+    return send("GET", QStringLiteral("/images/%1/tag-counts").arg(imageId)).then([](const HttpResponse& response) {
+        return jsonAnswer(response, statusOk, tagCountsFrom);
+    });
+}
+
+QFuture<Result<QList<Album>>> RestServerClient::albums(bool includeHidden)
+{
+    QUrlQuery parameters;
+    parameters.addQueryItem(QStringLiteral("include_hidden"), booleanValue(includeHidden));
+    return send("GET", QStringLiteral("/albums"), std::nullopt, parameters).then([](const HttpResponse& response) {
+        return jsonAnswer(response, statusOk, albumsFrom);
     });
 }
 

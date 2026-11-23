@@ -52,8 +52,8 @@ public:
     // GET /images: one page of the images the user may see
     virtual QFuture<Result<ImagePage>> searchImages(const ImageQuery& query) = 0;
 
-    // GET /images/count: how many images the search finds. Only the query's text and hidden-filter switch
-    // count; its sort and paging are ignored.
+    // GET /images/count: how many images the search finds. Only the query's text, album and hidden-filter
+    // switch count; its sort and paging are ignored.
     virtual QFuture<Result<ImageCount>> countImages(const ImageQuery& query) = 0;
 
     // GET /images/{id}
@@ -92,6 +92,13 @@ public:
     // namespaceName limits the search to one. The user's restricted tags are never suggested.
     virtual QFuture<Result<QList<TagCount>>>
     tags(const QString& prefix, const QString& namespaceName = {}, int limit = 20) = 0;
+
+    // GET /images/{id}/tag-counts: every tag of the image, in the image's order, with how many images have it
+    virtual QFuture<Result<QList<TagCount>>> imageTagCounts(int imageId) = 0;
+
+    // GET /albums: the albums with an image the user may see, most recently changed first. Albums with an image
+    // the user's hidden filters match are left out, unless includeHidden.
+    virtual QFuture<Result<QList<Album>>> albums(bool includeHidden) = 0;
 
     // GET /namespaces
     virtual QFuture<Result<QList<Namespace>>> namespaces() = 0;

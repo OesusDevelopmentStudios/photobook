@@ -25,6 +25,7 @@ Result<ImagePage> imagePageFrom(const QJsonValue& json);
 Result<ImageCount> imageCountFrom(const QJsonValue& json);
 Result<int> updatedCountFrom(const QJsonValue& json);  // of a bulk tag change
 Result<QList<TagCount>> tagCountsFrom(const QJsonValue& json);
+Result<QList<Album>> albumsFrom(const QJsonValue& json);
 Result<QList<Namespace>> namespacesFrom(const QJsonValue& json);
 Result<Preferences> preferencesFrom(const QJsonValue& json);
 

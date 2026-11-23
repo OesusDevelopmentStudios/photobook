@@ -102,6 +102,23 @@ TagCount tagCountFrom(JsonReader& reader)
     return tagCount;
 }
 
+Album albumFrom(JsonReader& reader)
+{
+    Album album;
+    album.tag = reader.string(QStringLiteral("tag"));
+    album.imageCount = reader.integer(QStringLiteral("image_count"));
+    JsonReader coverReader(reader.object(QStringLiteral("cover")));
+    album.coverImageId = coverReader.integer(QStringLiteral("id"));
+    album.coverRevision = coverReader.integer(QStringLiteral("revision"));
+    if (!coverReader.isValid())
+    {
+        reader.reject(QStringLiteral("cover"), coverReader.error());
+    }
+
+    album.lastChangedAt = reader.dateTime(QStringLiteral("last_changed_at"));
+    return album;
+}
+
 Namespace namespaceFrom(JsonReader& reader)
 {
     Namespace info;
@@ -254,6 +271,11 @@ Result<int> updatedCountFrom(const QJsonValue& json)
 Result<QList<TagCount>> tagCountsFrom(const QJsonValue& json)
 {
     return itemsFrom(json, tagCountFrom);
+}
+
+Result<QList<Album>> albumsFrom(const QJsonValue& json)
+{
+    return itemsFrom(json, albumFrom);
 }
 
 Result<QList<Namespace>> namespacesFrom(const QJsonValue& json)

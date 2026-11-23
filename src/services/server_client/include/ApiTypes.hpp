@@ -120,6 +120,7 @@ enum class SortBy
     TakenAt,
     ImportedAt,
     Random,  // the same order for the same seed, so paging works
+    Album,   // the order images were added to ImageQuery::album, which it needs; ignores the sort order
 };
 
 enum class SortOrder
@@ -131,6 +132,7 @@ enum class SortOrder
 struct ImageQuery
 {
     QString text;  // the search syntax, e.g. "category:photo -rating:private"; empty: all images
+    QString album;  // an album's name, without "album:": only its images; empty: any image
     SortBy sortBy = SortBy::TakenAt;
     SortOrder order = SortOrder::Descending;  // ignored for random
     std::optional<qint64> seed;               // for random; without one the server picks it
@@ -180,7 +182,17 @@ enum class ThumbnailSize
     Large = 1024,
 };
 
-// --- Tags, namespaces, preferences, jobs
+// --- Albums, tags, namespaces, preferences
+
+// The images with one album: tag
+struct Album
+{
+    QString tag;              // e.g. "album:vacation_2015"; its name goes into ImageQuery::album
+    int imageCount = 0;       // the images the user may see
+    int coverImageId = 0;     // the album's first image, in the order images were added to it
+    int coverRevision = 0;    // for the cover's thumbnail URL
+    QDateTime lastChangedAt;  // UTC; when an image was last added to it
+};
 
 struct TagCount
 {
