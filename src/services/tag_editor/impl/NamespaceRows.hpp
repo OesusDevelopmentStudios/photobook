@@ -29,7 +29,8 @@ public:
         QStringList options;       // for a dropdown: the names to choose from
         QString value;             // for a dropdown: the name after the changes, or the shared one; empty: none
         bool changed = false;      // for a dropdown: the value differs from the image's, or is not kept as is
-        QVariantList tags;         // {"tag", "name", "change"} of each tag
+        QVariantList tags;         // {"tag", "name", "change", "count"} of each tag
+        bool editable = true;      // false: the server alone sets its tags (meta), shown without controls
 
         bool operator==(const Row&) const = default;
     };
@@ -44,6 +45,7 @@ public:
         ValueRole,
         ChangedRole,
         TagsRole,
+        EditableRole,
     };
 
     using QAbstractListModel::QAbstractListModel;

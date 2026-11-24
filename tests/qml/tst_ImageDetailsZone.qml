@@ -111,6 +111,18 @@ Item {
             tryCompare(zone.footer, "visible", false);
         }
 
+        // The tags are edited in the pane, so it stays open meanwhile.
+        function test_keepsThePaneOpenWhileEditing() {
+            const zone = shownZone(libraryZoneComponent);
+            TestServices.paneTagEditor.startEditing();
+
+            verify(!findChild(zone, "tagPaneToggle").enabled);
+
+            TestServices.paneTagEditor.cancel();
+
+            verify(findChild(zone, "tagPaneToggle").enabled);
+        }
+
         // A local file has no tags.
         function test_hasNoTagPaneButtonWithoutALibraryImage() {
             const zone = shownZone();

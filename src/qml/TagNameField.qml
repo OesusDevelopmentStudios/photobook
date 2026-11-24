@@ -57,6 +57,8 @@ Controls.TextField {
         contentItem: ListView {
             id: suggestionList
 
+            objectName: "tagSuggestionList"
+
             implicitHeight: contentHeight
             model: field.suggestions
             currentIndex: -1

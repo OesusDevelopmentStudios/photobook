@@ -153,6 +153,7 @@ private Q_SLOTS:
     void showsEachTagsImageCountOnceKnown();
     void asksForTheCountsOncePerImage();
     void asksForNewCountsAfterASave();
+    void keepsTheCountsWhileEditing();
     void showsARowPerNamespace();
     void collectsChangesUntilSaved();
     void savesAllChangesInOnePatch();
@@ -372,7 +373,22 @@ void TestTagEditor::asksForNewCountsAfterASave()
     QTRY_COMPARE(m_server->requestsTo("GET", countsUrl).size(), 2);
 }
 
-// Also namespaces the image has no tag in, in the server's order; not meta, whose tags the server sets
+// The image's own tags keep their counts; an added one has none yet.
+void TestTagEditor::keepsTheCountsWhileEditing()
+{
+    m_editor->setImage(beachPhoto());
+    QTRY_COMPARE(countShown(*m_editor, QStringLiteral("general:summer")), 412);
+
+    startEditingTheBeachPhoto();
+    m_editor->addTag(QStringLiteral("general"), QStringLiteral("sunset"));
+
+    QCOMPARE(countShown(*m_editor, QStringLiteral("general:summer")), 412);
+    QCOMPARE(countShown(*m_editor, QStringLiteral("meta:jpeg")), 9800);
+    QCOMPARE(countShown(*m_editor, QStringLiteral("general:sunset")), -1);
+}
+
+// Also namespaces the image has no tag in, in the server's order; meta, whose tags the server sets, last and without
+// controls
 void TestTagEditor::showsARowPerNamespace()
 {
     startEditingTheBeachPhoto();
@@ -389,7 +405,10 @@ void TestTagEditor::showsARowPerNamespace()
                           QStringLiteral("author"),
                           QStringLiteral("rating"),
                           QStringLiteral("general"),
-                          QStringLiteral("weather")}));
+                          QStringLiteral("weather"),
+                          QStringLiteral("meta")}));
+    QVERIFY(rowOf(*m_editor, QStringLiteral("general")).value(QStringLiteral("editable")).toBool());
+    QVERIFY(!rowOf(*m_editor, QStringLiteral("meta")).value(QStringLiteral("editable")).toBool());
     QCOMPARE(rowOf(*m_editor, QStringLiteral("category")).value(QStringLiteral("value")).toString(),
              QStringLiteral("photo"));
     QVERIFY(rowOf(*m_editor, QStringLiteral("author")).value(QStringLiteral("tags")).toList().isEmpty());

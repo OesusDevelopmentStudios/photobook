@@ -57,6 +57,8 @@ QVariant NamespaceRows::data(const QModelIndex& index, int role) const
         return row.value;
     case ChangedRole:
         return row.changed;
+    case EditableRole:
+        return row.editable;
     case TagsRole:
         return row.tags;
     default:
@@ -75,6 +77,7 @@ QHash<int, QByteArray> NamespaceRows::roleNames() const
         {ValueRole, "value"},
         {ChangedRole, "changed"},
         {TagsRole, "tags"},
+        {EditableRole, "editable"},
     };
 }
 

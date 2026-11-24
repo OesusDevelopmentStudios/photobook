@@ -390,6 +390,8 @@ void TagEditor::updateRows()
     }
 
     const QStringList after = tagsAfter(m_additions, m_removals);
+    const QHash<QString, int>* counts = m_counts.object(m_image->id);
+    const auto countOf = [counts](const QString& text) { return counts != nullptr ? counts->value(text, -1) : -1; };
     QList<NamespaceRows::Row> rows;
     for (const Namespaces::Info& info : m_namespaces->editable())
     {
@@ -421,7 +423,7 @@ void TagEditor::updateRows()
         QVariantList tags;
         for (const auto& [tag, change] : entries)
         {
-            tags.append(tagEntry(tag, change));
+            tags.append(tagEntry(tag, change, countOf(tag.text())));
         }
 
         NamespaceRows::Row row;
@@ -442,6 +444,35 @@ void TagEditor::updateRows()
 
             row.value = valueAfter;
             row.changed = valueAfter != valueBefore;
+        }
+
+        rows.append(row);
+    }
+
+    // Those only the server sets: shown as they are, last, without controls
+    for (const Namespaces::Info& info : m_namespaces->all())
+    {
+        QList<TagName> tags;
+        for (const TagName& tag : tagNamesOf(m_image->tags))
+        {
+            if (!info.userEditable && tag.namespaceName == info.name)
+            {
+                tags.append(tag);
+            }
+        }
+
+        if (tags.isEmpty())
+        {
+            continue;
+        }
+
+        std::ranges::sort(tags, {}, &TagName::name);
+        NamespaceRows::Row row;
+        row.namespaceName = info.name;
+        row.editable = false;
+        for (const TagName& tag : tags)
+        {
+            row.tags.append(tagEntry(tag, Change::Kept, countOf(tag.text())));
         }
 
         rows.append(row);

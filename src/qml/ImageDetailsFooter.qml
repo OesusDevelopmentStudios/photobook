@@ -20,12 +20,9 @@ Rectangle {
     property TagPaneLayout tagPaneLayout: null
     property bool shown: false
     property bool expanded: false
-    // The height the footer may take, e.g. the viewer's. The details take up to 40 % of it; while editing,
-    // all of it up to the toolbar. More scrolls.
+    // The height the footer may take, e.g. the viewer's. The details take up to 40 % of it; more scrolls.
     property real availableHeight: Kirigami.Units.gridUnit * 25
-    readonly property real maximumDetailsHeight: tagEditor.editing
-        ? availableHeight - headerRow.implicitHeight - Kirigami.Units.smallSpacing * 3
-        : availableHeight * 0.4
+    readonly property real maximumDetailsHeight: availableHeight * 0.4
 
     // The details after the name, e.g. "14/07/2025 · 4032 × 3024 · 3.1 MB"; what is not known is left out.
     readonly property string summary: {
@@ -106,6 +103,7 @@ Rectangle {
             Controls.ToolButton {
                 objectName: "tagPaneToggle"
                 visible: footer.tagPaneLayout !== null && footer.tagEditor.canEdit
+                enabled: !footer.tagEditor.editing  // the tags are edited in the pane
                 icon.name: "tag"
                 text: KI18n.i18nc("@action:button", "Show Tags")
                 display: Controls.AbstractButton.IconOnly
@@ -130,37 +128,6 @@ Rectangle {
             }
 
             Controls.ToolButton {
-                visible: footer.expanded && footer.tagEditor.canEdit && !footer.tagEditor.editing
-                icon.name: "document-edit"
-                text: KI18n.i18nc("@action:button", "Edit Tags")
-                onClicked: footer.tagEditor.startEditing()
-            }
-
-            Controls.BusyIndicator {
-                Layout.preferredHeight: Kirigami.Units.iconSizes.medium
-                Layout.preferredWidth: Kirigami.Units.iconSizes.medium
-                visible: running
-                running: footer.tagEditor.saving
-            }
-
-            Controls.Button {
-                visible: footer.tagEditor.editing
-                icon.name: "dialog-ok-apply"
-                text: KI18n.i18nc("@action:button Save the tag changes", "Save")
-                enabled: footer.tagEditor.hasChanges && !footer.tagEditor.saving
-                onClicked: footer.tagEditor.save()
-            }
-
-            Controls.Button {
-                visible: footer.tagEditor.editing
-                icon.name: "dialog-cancel"
-                text: KI18n.i18nc("@action:button Drop the tag changes", "Cancel")
-                enabled: !footer.tagEditor.saving
-                onClicked: footer.tagEditor.cancel()
-            }
-
-            Controls.ToolButton {
-                enabled: !footer.tagEditor.editing  // the editing happens in the expanded part
                 icon.name: footer.expanded ? "arrow-down" : "arrow-up"
                 text: footer.expanded ? KI18n.i18nc("@action:button", "Hide Details")
                                       : KI18n.i18nc("@action:button", "Show Details")
@@ -187,15 +154,12 @@ Rectangle {
         id: row
 
         property string label
-        // The height of the value's first line, e.g. of a tag chip, so the name lines up with it
-        property real firstLineHeight: 0
         default property alias content: valueArea.data
 
         spacing: Kirigami.Units.largeSpacing
 
         Controls.Label {
             Layout.preferredWidth: Kirigami.Units.gridUnit * 7
-            Layout.preferredHeight: Math.max(implicitHeight, row.firstLineHeight)
             Layout.alignment: Qt.AlignTop
             horizontalAlignment: Text.AlignRight
             verticalAlignment: Text.AlignVCenter
@@ -225,55 +189,6 @@ Rectangle {
 
                 width: detailsScroll.availableWidth
                 spacing: Kirigami.Units.smallSpacing
-
-                // While editing: a row per namespace, like the server's folder-import form
-                Repeater {
-                    model: footer.tagEditor.editing ? footer.tagEditor.namespaceRows : null
-
-                    delegate: DetailRow {
-                        id: namespaceRow
-
-                        required property string namespaceName
-                        required property bool dropdown
-                        required property bool fixedValues
-                        required property bool keepable
-                        required property var options
-                        required property string value
-                        required property bool changed
-                        required property var tags
-
-                        Layout.fillWidth: true
-                        label: namespaceName + ":"
-                        firstLineHeight: rowContent.firstLineHeight
-
-                        TagRowContent {
-                            id: rowContent
-
-                            Layout.fillWidth: true
-                            editor: footer.tagEditor
-                            namespaceName: namespaceRow.namespaceName
-                            dropdown: namespaceRow.dropdown
-                            fixedValues: namespaceRow.fixedValues
-                            keepable: namespaceRow.keepable
-                            options: namespaceRow.options
-                            value: namespaceRow.value
-                            changed: namespaceRow.changed
-                            tags: namespaceRow.tags
-                        }
-                    }
-                }
-
-                Kirigami.InlineMessage {
-                    Layout.fillWidth: true
-                    visible: footer.tagEditor.editing && footer.tagEditor.errorMessage.length > 0
-                    type: Kirigami.MessageType.Error
-                    text: footer.tagEditor.errorMessage
-                }
-
-                Kirigami.Separator {
-                    Layout.fillWidth: true
-                    visible: footer.tagEditor.editing
-                }
 
                 DetailRow {
                     Layout.fillWidth: true

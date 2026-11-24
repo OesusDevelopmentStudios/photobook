@@ -168,18 +168,23 @@ public:
         return m_tagPaneLayout.get();
     }
 
-    // A library photo on screen in the pane's tag editor; its tags' counts come from the server.
+    // A library photo on screen in the pane's tag editor, not being edited; its tags' counts come from the server.
     Q_INVOKABLE void showSamplePhoto()
     {
         server_client::Image photo;
         photo.id = 5;
         photo.originalFilename = QStringLiteral("beach.jpg");
-        photo.tags = {QStringLiteral("author:sample_artist"),
-                      QStringLiteral("category:photo"),
-                      QStringLiteral("general:beach_day"),
-                      QStringLiteral("general:summer"),
-                      QStringLiteral("meta:jpeg")};
+        photo.tags = samplePhotoTags();
         m_paneTagEditor->setImage(photo);
+    }
+
+    static QStringList samplePhotoTags()
+    {
+        return {QStringLiteral("author:sample_artist"),
+                QStringLiteral("category:photo"),
+                QStringLiteral("general:beach_day"),
+                QStringLiteral("general:summer"),
+                QStringLiteral("meta:jpeg")};
     }
 
     QUrl sampleFolder() const
@@ -270,6 +275,25 @@ private:
                                                         tagCount("general:beach_day", 45678),
                                                         tagCount("general:summer", 999),
                                                         tagCount("meta:jpeg", 3100000)}}}));
+        // The sample photo's tags as changed: the server applies what it is sent.
+        server->answerWith("PATCH", api + QStringLiteral("/images/5"), [](const server_client::HttpRequest& request) {
+            const QJsonObject changes = QJsonDocument::fromJson(request.body).object();
+            QStringList tags = samplePhotoTags();
+            for (const QJsonValue& removed : changes.value(QStringLiteral("remove_tags")).toArray())
+            {
+                tags.removeAll(removed.toString());
+            }
+
+            for (const QJsonValue& added : changes.value(QStringLiteral("add_tags")).toArray())
+            {
+                tags.append(added.toString());
+            }
+
+            tags.sort();
+            QJsonObject image = fakes::imageJson(5);
+            image[QStringLiteral("tags")] = QJsonArray::fromStringList(tags);
+            return fakes::jsonResponse(200, image);
+        });
         server->answerWith("PUT", api + QStringLiteral("/preferences"), [](const server_client::HttpRequest& request) {
             return fakes::jsonResponse(200, QJsonDocument::fromJson(request.body).object());
         });
