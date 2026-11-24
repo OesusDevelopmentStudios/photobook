@@ -97,6 +97,20 @@ Item {
             verify(TestServices.tagPaneLayout.open);
         }
 
+        // While the tag pane is open, the details stay without the pointer near.
+        function test_staysShownWhilePinned() {
+            const zone = createTemporaryObject(libraryZoneComponent, root, {pinned: true});
+            mouseMove(root, root.width / 2, 10);  // over the image
+
+            tryCompare(zone.footer, "reveal", 1);
+            wait(100);
+            verify(zone.footer.shown);
+
+            zone.pinned = false;
+
+            tryCompare(zone.footer, "visible", false);
+        }
+
         // A local file has no tags.
         function test_hasNoTagPaneButtonWithoutALibraryImage() {
             const zone = shownZone();

@@ -558,14 +558,16 @@ Kirigami.Page {
         explanation: page.viewer.errorMessage
     }
 
+    // Beside the tag pane, not over it; while the pane is open the details stay shown, over the image's bottom.
     ImageDetailsZone {
-        anchors.left: parent.left
+        anchors.left: tagPane.visible ? tagPaneSeparator.right : parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         visible: page.viewer.hasImage && !page.presenting
         viewer: page.viewer
         tagEditor: page.tagEditor
         tagPaneLayout: page.tagPaneLayout
+        pinned: tagPane.visible
         availableHeight: page.height
     }
 
