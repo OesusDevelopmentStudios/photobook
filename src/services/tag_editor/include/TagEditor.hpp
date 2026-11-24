@@ -9,6 +9,7 @@
 #include <optional>
 
 #include <QAbstractListModel>
+#include <QCache>
 #include <QHash>
 #include <QObject>
 #include <QSet>
@@ -25,11 +26,13 @@ namespace photobook::tag_editor
 class Namespaces;
 class NamespaceRows;
 
-// Changing the tags of the library image on screen, laid out like the server's folder-import form: a row
-// per namespace. A built-in one-tag namespace (category, rating) is set to a value or none; the others,
-// custom ones included, get tags added and removed. Changes are collected and sent together with save(); cancel() drops
-// them. A change the server would refuse (a restricted, invalid or not allowed tag) is refused at once, with the
-// reason, before anything is sent; the server checks again when saving.
+// The tags of the library image on screen, for the viewer's tag pane, and changing them. Shown, there is a row for
+// each namespace the image has tags in, in the server's order with those only the server sets (meta) last, each tag
+// with how many images have it. While editing, there is a row for each namespace users tag with. A built-in
+// one-tag namespace (category, rating) is set to a value or none; the others, custom ones included, get tags added
+// and removed. Changes are collected and sent together with save(); cancel() drops them. A change the server would
+// refuse (a restricted, invalid or not allowed tag) is refused at once, with the reason, before anything is sent; the
+// server checks again when saving.
 class TagEditor : public TagRowsEditor
 {
     Q_OBJECT
@@ -60,7 +63,7 @@ public:
     bool isSaving() const;
     bool isBusy() const override;
     bool hasChanges() const override;
-    QAbstractListModel* namespaceRows() const override;  // while editing
+    QAbstractListModel* namespaceRows() const override;  // each tag also has its "count"; -1 until known
     QString errorMessage() const override;
     TagSuggestions* suggestions() const override;
 
@@ -76,6 +79,8 @@ private:
     std::optional<QString> restrictionProblem(const QStringList& additions, const QStringList& removals) const;
     QStringList tagsAfter(const QStringList& additions, const QStringList& removals) const;
     void updateRows();
+    void showImageTags();  // the rows while not editing
+    void loadCounts(int imageId);
     void endEditing();
     void setSaving(bool saving);
     void setErrorMessage(const QString& message);
@@ -90,6 +95,7 @@ private:
     QStringList m_additions;  // as the server writes tags, e.g. "general:beach"
     QStringList m_removals;
     QString m_errorMessage;
+    QCache<int, QHash<QString, int>> m_counts{500};  // by image id: each tag's image count, e.g. stepping back
 };
 
 }  // namespace photobook::tag_editor

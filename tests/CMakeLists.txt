@@ -96,6 +96,10 @@ ecm_add_test(services/tag_editor/TestTagSuggestions.cpp
     LINK_LIBRARIES photobook_tag_editor Qt6::Test
 )
 
+ecm_add_test(services/tag_editor/TestTagPaneLayout.cpp
+    LINK_LIBRARIES photobook_tag_editor Qt6::Test
+)
+
 ecm_add_test(services/tag_editor/TestTagEditor.cpp
     LINK_LIBRARIES photobook_tag_editor Qt6::Test KF6::I18n
 )

@@ -40,6 +40,11 @@ public:
     std::optional<bool> albumsTabShown() const override;
     void setAlbumsTabShown(bool shown) override;
 
+    std::optional<bool> tagPaneOpen() const override;
+    void setTagPaneOpen(bool open) override;
+    std::optional<QStringList> foldedTagNamespaces() const override;
+    void setFoldedTagNamespaces(const QStringList& namespaceNames) override;
+
     std::optional<QString> albumSort() const override;
     void setAlbumSort(const QString& sort) override;
     std::optional<bool> showAlbumsWithHiddenImages() const override;
@@ -53,6 +58,8 @@ private:
     KConfigGroup libraryGroup() const;
     void writeLibraryEntry(const char* key, const QVariant& value);
     std::optional<bool> readLibraryFlag(const char* key) const;
+    KConfigGroup tagPaneGroup() const;
+    void writeTagPaneEntry(const char* key, const QVariant& value);
     KConfigGroup albumsGroup() const;
     void writeAlbumsEntry(const char* key, const QVariant& value);
 

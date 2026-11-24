@@ -112,6 +112,20 @@ public:
 
     void setAlbumsTabShown(bool) override {}
 
+    std::optional<bool> tagPaneOpen() const override
+    {
+        return std::nullopt;
+    }
+
+    void setTagPaneOpen(bool) override {}
+
+    std::optional<QStringList> foldedTagNamespaces() const override
+    {
+        return std::nullopt;
+    }
+
+    void setFoldedTagNamespaces(const QStringList&) override {}
+
     std::optional<QString> albumSort() const override
     {
         return std::nullopt;

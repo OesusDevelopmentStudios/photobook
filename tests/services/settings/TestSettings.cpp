@@ -53,6 +53,8 @@ void TestSettings::returnsNothingForValuesNeverStored()
     QCOMPARE(settings->libraryTab(), std::nullopt);
     QCOMPARE(settings->libraryTabShown(), std::nullopt);
     QCOMPARE(settings->albumsTabShown(), std::nullopt);
+    QCOMPARE(settings->tagPaneOpen(), std::nullopt);
+    QCOMPARE(settings->foldedTagNamespaces(), std::nullopt);
     QCOMPARE(settings->albumSort(), std::nullopt);
     QCOMPARE(settings->showAlbumsWithHiddenImages(), std::nullopt);
 }
@@ -70,6 +72,8 @@ void TestSettings::keepsValuesAfterRestart()
         settings->setLibraryTab(QStringLiteral("albums"));
         settings->setLibraryTabShown(false);
         settings->setAlbumsTabShown(true);
+        settings->setTagPaneOpen(false);
+        settings->setFoldedTagNamespaces({QStringLiteral("general"), QStringLiteral("meta")});
         settings->setAlbumSort(QStringLiteral("size"));
         settings->setShowAlbumsWithHiddenImages(true);
     }
@@ -85,6 +89,9 @@ void TestSettings::keepsValuesAfterRestart()
     QCOMPARE(settingsAfterRestart->libraryTab(), QStringLiteral("albums"));
     QCOMPARE(settingsAfterRestart->libraryTabShown(), false);
     QCOMPARE(settingsAfterRestart->albumsTabShown(), true);
+    QCOMPARE(settingsAfterRestart->tagPaneOpen(), false);
+    QCOMPARE(settingsAfterRestart->foldedTagNamespaces(),
+             QStringList({QStringLiteral("general"), QStringLiteral("meta")}));
     QCOMPARE(settingsAfterRestart->albumSort(), QStringLiteral("size"));
     QCOMPARE(settingsAfterRestart->showAlbumsWithHiddenImages(), true);
 }
@@ -101,6 +108,8 @@ void TestSettings::writesReadableConfigFile()
     settings->setLibraryTileSize(12);
     settings->setLibraryTab(QStringLiteral("albums"));
     settings->setAlbumsTabShown(false);
+    settings->setTagPaneOpen(false);
+    settings->setFoldedTagNamespaces({QStringLiteral("general")});
     settings->setAlbumSort(QStringLiteral("name"));
     settings->setShowAlbumsWithHiddenImages(true);
 
@@ -109,6 +118,7 @@ void TestSettings::writesReadableConfigFile()
     const KConfigGroup serverGroup = configFile.group(QStringLiteral("Server"));
     const KConfigGroup libraryGroup = configFile.group(QStringLiteral("Library"));
     const KConfigGroup albumsGroup = configFile.group(QStringLiteral("Albums"));
+    const KConfigGroup tagPaneGroup = configFile.group(QStringLiteral("TagPane"));
 
     QCOMPARE(slideshowGroup.readEntry("IntervalSeconds", 0), 7);
     QCOMPARE(slideshowGroup.readEntry("Order", QString()), QStringLiteral("random"));
@@ -119,6 +129,8 @@ void TestSettings::writesReadableConfigFile()
     QCOMPARE(libraryGroup.readEntry("Tab", QString()), QStringLiteral("albums"));
     QCOMPARE(libraryGroup.readEntry("ShowAlbumsTab", QString()), QStringLiteral("false"));
     QCOMPARE(albumsGroup.readEntry("Sort", QString()), QStringLiteral("name"));
+    QCOMPARE(tagPaneGroup.readEntry("Open", QString()), QStringLiteral("false"));
+    QCOMPARE(tagPaneGroup.readEntry("FoldedNamespaces", QString()), QStringLiteral("general"));
     QCOMPARE(albumsGroup.readEntry("ShowWithHiddenImages", QString()), QStringLiteral("true"));
     QVERIFY(!serverGroup.keyList().contains(QStringLiteral("Token")));  // the token belongs in the keyring
 }

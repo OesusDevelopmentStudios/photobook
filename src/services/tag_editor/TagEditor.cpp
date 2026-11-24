@@ -24,12 +24,13 @@ using photobook::tag_editor::TagEditor;
 using photobook::tag_editor::tagFromServer;
 using photobook::tag_editor::TagName;
 
-QVariantMap tagEntry(const TagName& tag, TagEditor::Change change)
+QVariantMap tagEntry(const TagName& tag, TagEditor::Change change, int count = -1)
 {
     return {
         {QStringLiteral("tag"), tag.text()},
         {QStringLiteral("name"), tag.name},
         {QStringLiteral("change"), static_cast<int>(change)},  // a number, which QML compares with TagRowsEditor.Change
+        {QStringLiteral("count"), count},                      // images with the tag; -1 until known
     };
 }
 
@@ -46,6 +47,23 @@ TagEditor::TagEditor(connection::Connection* connection, QObject* parent)
     , m_rows(std::make_unique<NamespaceRows>())
 {
     connect(m_namespaces.get(), &Namespaces::changed, this, &TagEditor::updateRows);
+
+    // The namespaces at each login, so that the image's tags have their place; counts belong to one server.
+    connect(m_connection, &connection::Connection::stateChanged, this, [this]() {
+        if (m_connection->state() == connection::Connection::State::LoggedIn)
+        {
+            m_namespaces->load();
+        }
+        else
+        {
+            m_counts.clear();
+        }
+    });
+
+    if (m_connection->state() == connection::Connection::State::LoggedIn)
+    {
+        m_namespaces->load();
+    }
 }
 
 TagEditor::~TagEditor() = default;
@@ -60,6 +78,10 @@ void TagEditor::setImage(const std::optional<server_client::Image>& image)
 
     Q_EMIT imageChanged();
     updateRows();
+    if (m_image.has_value() && !m_counts.contains(m_image->id))
+    {
+        loadCounts(m_image->id);
+    }
 }
 
 void TagEditor::startEditing()
@@ -259,7 +281,9 @@ void TagEditor::save()
             }
 
             m_image = *answer;
+            m_counts.remove(imageId);  // its tags changed, so the counts did
             endEditing();
+            loadCounts(imageId);
             Q_EMIT saved(*answer);
         });
 }
@@ -353,9 +377,15 @@ QStringList TagEditor::tagsAfter(const QStringList& additions, const QStringList
 
 void TagEditor::updateRows()
 {
-    if (!m_editing || !m_image.has_value())
+    if (!m_image.has_value())
     {
         m_rows->setRows({});
+        return;
+    }
+
+    if (!m_editing)
+    {
+        showImageTags();
         return;
     }
 
@@ -418,6 +448,93 @@ void TagEditor::updateRows()
     }
 
     m_rows->setRows(rows);
+}
+
+void TagEditor::showImageTags()
+{
+    // The server's order; a namespace it has not listed yet goes before those only the server sets.
+    QStringList order;
+    QStringList serverOnly;
+    for (const Namespaces::Info& info : m_namespaces->all())
+    {
+        if (info.userEditable)
+        {
+            order.append(info.name);
+        }
+        else
+        {
+            serverOnly.append(info.name);
+        }
+    }
+
+    for (const TagName& tag : tagNamesOf(m_image->tags))
+    {
+        if (!order.contains(tag.namespaceName) && !serverOnly.contains(tag.namespaceName))
+        {
+            order.append(tag.namespaceName);
+        }
+    }
+
+    const QHash<QString, int>* counts = m_counts.object(m_image->id);
+    QList<NamespaceRows::Row> rows;
+    for (const QString& namespaceName : order + serverOnly)
+    {
+        QList<TagName> tags;
+        for (const TagName& tag : tagNamesOf(m_image->tags))
+        {
+            if (tag.namespaceName == namespaceName)
+            {
+                tags.append(tag);
+            }
+        }
+
+        if (tags.isEmpty())
+        {
+            continue;
+        }
+
+        std::ranges::sort(tags, {}, &TagName::name);
+        NamespaceRows::Row row;
+        row.namespaceName = namespaceName;
+        for (const TagName& tag : tags)
+        {
+            row.tags.append(tagEntry(tag, Change::Kept, counts != nullptr ? counts->value(tag.text(), -1) : -1));
+        }
+
+        rows.append(row);
+    }
+
+    m_rows->setRows(rows);
+}
+
+// Without an answer the tags are shown without counts.
+void TagEditor::loadCounts(int imageId)
+{
+    server_client::ServerClient* client = m_connection->client();
+    if (client == nullptr)
+    {
+        return;
+    }
+
+    client->imageTagCounts(imageId).then(
+        this, [this, imageId](const server_client::Result<QList<server_client::TagCount>>& answer) {
+            if (!answer.has_value())
+            {
+                return;
+            }
+
+            auto* counts = new QHash<QString, int>();
+            for (const server_client::TagCount& tagCount : *answer)
+            {
+                counts->insert(tagCount.tag, tagCount.imageCount);
+            }
+
+            m_counts.insert(imageId, counts);  // the cache owns it now
+            if (m_image.has_value() && m_image->id == imageId && !m_editing)
+            {
+                showImageTags();
+            }
+        });
 }
 
 void TagEditor::endEditing()

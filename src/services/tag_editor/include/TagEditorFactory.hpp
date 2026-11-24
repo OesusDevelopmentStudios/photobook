@@ -11,6 +11,7 @@
 #include "HiddenFilterEditor.hpp"
 #include "SearchSuggestions.hpp"
 #include "TagEditor.hpp"
+#include "TagPaneLayout.hpp"
 #include "UploadTagEditor.hpp"
 
 namespace photobook::tag_editor
@@ -30,5 +31,8 @@ std::unique_ptr<HiddenFilterEditor> createHiddenFilterEditor(connection::Connect
 
 // The connection is not owned and must outlive the suggestions.
 std::unique_ptr<SearchSuggestions> createSearchSuggestions(connection::Connection* connection);
+
+// The settings are not owned and must outlive the layout.
+std::unique_ptr<TagPaneLayout> createTagPaneLayout(settings::Settings* settings);
 
 }  // namespace photobook::tag_editor

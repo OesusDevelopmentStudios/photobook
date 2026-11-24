@@ -33,4 +33,9 @@ std::unique_ptr<SearchSuggestions> createSearchSuggestions(connection::Connectio
     return std::make_unique<SearchSuggestions>(connection);
 }
 
+std::unique_ptr<TagPaneLayout> createTagPaneLayout(settings::Settings* settings)
+{
+    return std::make_unique<TagPaneLayout>(settings);
+}
+
 }  // namespace photobook::tag_editor

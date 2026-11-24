@@ -21,6 +21,9 @@ constexpr const char* tileSizeKey = "TileSize";
 constexpr const char* tabKey = "Tab";
 constexpr const char* showLibraryTabKey = "ShowLibraryTab";
 constexpr const char* showAlbumsTabKey = "ShowAlbumsTab";
+const QString tagPaneGroupName = QStringLiteral("TagPane");
+constexpr const char* openKey = "Open";
+constexpr const char* foldedNamespacesKey = "FoldedNamespaces";
 const QString albumsGroupName = QStringLiteral("Albums");
 constexpr const char* sortKey = "Sort";
 constexpr const char* showWithHiddenImagesKey = "ShowWithHiddenImages";
@@ -160,6 +163,38 @@ void KConfigSettings::setAlbumsTabShown(bool shown)
     writeLibraryEntry(showAlbumsTabKey, shown);
 }
 
+std::optional<bool> KConfigSettings::tagPaneOpen() const
+{
+    const KConfigGroup group = tagPaneGroup();
+    if (!group.hasKey(openKey))
+    {
+        return std::nullopt;
+    }
+
+    return group.readEntry(openKey, true);
+}
+
+void KConfigSettings::setTagPaneOpen(bool open)
+{
+    writeTagPaneEntry(openKey, open);
+}
+
+std::optional<QStringList> KConfigSettings::foldedTagNamespaces() const
+{
+    const KConfigGroup group = tagPaneGroup();
+    if (!group.hasKey(foldedNamespacesKey))
+    {
+        return std::nullopt;
+    }
+
+    return group.readEntry(foldedNamespacesKey, QStringList());
+}
+
+void KConfigSettings::setFoldedTagNamespaces(const QStringList& namespaceNames)
+{
+    writeTagPaneEntry(foldedNamespacesKey, namespaceNames);
+}
+
 std::optional<QString> KConfigSettings::albumSort() const
 {
     const KConfigGroup group = albumsGroup();
@@ -243,6 +278,18 @@ std::optional<bool> KConfigSettings::readLibraryFlag(const char* key) const
     }
 
     return group.readEntry(key, true);
+}
+
+KConfigGroup KConfigSettings::tagPaneGroup() const
+{
+    return m_config->group(tagPaneGroupName);
+}
+
+void KConfigSettings::writeTagPaneEntry(const char* key, const QVariant& value)
+{
+    KConfigGroup group = tagPaneGroup();
+    group.writeEntry(key, value);
+    m_config->sync();
 }
 
 KConfigGroup KConfigSettings::albumsGroup() const

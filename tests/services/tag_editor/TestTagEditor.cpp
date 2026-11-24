@@ -32,6 +32,7 @@ using server_client::HttpRequest;
 
 const QString serverUrl = QStringLiteral("https://photos.example.org");
 const QString imageUrl = serverUrl + QStringLiteral("/api/v1/images/5");
+const QString countsUrl = imageUrl + QStringLiteral("/tag-counts");
 
 QJsonObject namespaceJson(const QString& name, bool singleValue, const QJsonValue& allowedValues = QJsonValue::Null)
 {
@@ -81,6 +82,39 @@ QVariantMap rowOf(const TagEditor& editor, const QString& namespaceName)
     return {};
 }
 
+// The namespaces of the rows, in their order
+QStringList namespacesShown(const TagEditor& editor)
+{
+    const QAbstractListModel* rows = editor.namespaceRows();
+    QStringList namespaces;
+    for (int row = 0; row < rows->rowCount(); ++row)
+    {
+        namespaces.append(rows->index(row).data(rows->roleNames().key("namespaceName")).toString());
+    }
+
+    return namespaces;
+}
+
+// The image count shown with a tag; -1 while unknown, -2 if the tag is not shown
+int countShown(const TagEditor& editor, const QString& tagText)
+{
+    const QAbstractListModel* rows = editor.namespaceRows();
+    const int tagsRole = rows->roleNames().key("tags");
+    for (int row = 0; row < rows->rowCount(); ++row)
+    {
+        for (const QVariant& entry : rows->index(row).data(tagsRole).toList())
+        {
+            const QVariantMap tag = entry.toMap();
+            if (tag.value(QStringLiteral("tag")).toString() == tagText)
+            {
+                return tag.value(QStringLiteral("count")).toInt();
+            }
+        }
+    }
+
+    return -2;
+}
+
 // What the edit view shows of each tag: {tag: change}, e.g. {"general:beach": Added}
 QHash<QString, TagEditor::Change> changesShown(const TagEditor& editor)
 {
@@ -113,6 +147,12 @@ private Q_SLOTS:
     void init();
 
     void needsALibraryImage();
+    void showsTheImagesTagsByNamespace();
+    void putsTheServersOwnNamespacesLast();
+    void showsANamespaceTheServerHasNotListed();
+    void showsEachTagsImageCountOnceKnown();
+    void asksForTheCountsOncePerImage();
+    void asksForNewCountsAfterASave();
     void showsARowPerNamespace();
     void collectsChangesUntilSaved();
     void savesAllChangesInOnePatch();
@@ -198,6 +238,17 @@ void TestTagEditor::init()
 
         return fakes::jsonResponse(200, {{QStringLiteral("items"), items}});
     });
+    const auto tagCount = [](const char* tag, int imageCount) {
+        return QJsonObject{{QStringLiteral("tag"), QString::fromLatin1(tag)},
+                           {QStringLiteral("image_count"), imageCount}};
+    };
+    m_server->answer("GET",
+                     countsUrl,
+                     fakes::jsonResponse(200,
+                                         {{QStringLiteral("items"),
+                                           QJsonArray{tagCount("category:photo", 1200),
+                                                      tagCount("general:summer", 412),
+                                                      tagCount("meta:jpeg", 9800)}}}));
     m_server->answerWith("PATCH", imageUrl, [](const HttpRequest&) {
         QJsonObject image = fakes::imageJson(5);
         image[QStringLiteral("tags")] = QJsonArray{QStringLiteral("category:photo"), QStringLiteral("general:sunset")};
@@ -234,6 +285,91 @@ void TestTagEditor::needsALibraryImage()
     QVERIFY(!m_editor->canEdit());
     QVERIFY(!m_editor->isEditing());
     QCOMPARE(m_editor->namespaceRows()->rowCount(), 0);
+}
+
+// For the tag pane: the namespaces the image has tags in, in the server's order
+void TestTagEditor::showsTheImagesTagsByNamespace()
+{
+    m_editor->setImage(beachPhoto());
+
+    QTRY_COMPARE(namespacesShown(*m_editor),
+                 QStringList({QStringLiteral("category"), QStringLiteral("general"), QStringLiteral("meta")}));
+    QVERIFY(!m_editor->isEditing());
+    QCOMPARE(changesShown(*m_editor).value(QStringLiteral("general:summer")), TagEditor::Change::Kept);
+}
+
+// Those only the server sets come after the user's, wherever the server lists them.
+void TestTagEditor::putsTheServersOwnNamespacesLast()
+{
+    m_server->answer("GET",
+                     serverUrl + QStringLiteral("/api/v1/namespaces"),
+                     fakes::jsonResponse(200,
+                                         {{QStringLiteral("items"),
+                                           QJsonArray{namespaceJson(QStringLiteral("meta"), false),
+                                                      namespaceJson(QStringLiteral("general"), false),
+                                                      namespaceJson(QStringLiteral("category"), true)}}}));
+    m_editor = createTagEditor(m_connection.get());
+
+    m_editor->setImage(beachPhoto());
+
+    QTRY_COMPARE(namespacesShown(*m_editor),
+                 QStringList({QStringLiteral("general"), QStringLiteral("category"), QStringLiteral("meta")}));
+}
+
+// e.g. one added on the server since the list was read: still shown, before meta
+void TestTagEditor::showsANamespaceTheServerHasNotListed()
+{
+    server_client::Image image = beachPhoto();
+    image.tags.append(QStringLiteral("mood:calm"));
+
+    m_editor->setImage(image);
+
+    QTRY_COMPARE(
+        namespacesShown(*m_editor),
+        QStringList(
+            {QStringLiteral("category"), QStringLiteral("general"), QStringLiteral("mood"), QStringLiteral("meta")}));
+}
+
+void TestTagEditor::showsEachTagsImageCountOnceKnown()
+{
+    m_server->holdAnswers = true;
+    m_editor->setImage(beachPhoto());
+    QTRY_COMPARE(m_server->requestsTo("GET", countsUrl).size(), 1);
+    QCOMPARE(countShown(*m_editor, QStringLiteral("general:summer")), -1);  // the names come first
+
+    m_server->releaseAnswers();
+
+    QTRY_COMPARE(countShown(*m_editor, QStringLiteral("general:summer")), 412);
+    QCOMPARE(countShown(*m_editor, QStringLiteral("meta:jpeg")), 9800);
+}
+
+// Stepping back to an image shows its counts at once.
+void TestTagEditor::asksForTheCountsOncePerImage()
+{
+    m_editor->setImage(beachPhoto());
+    QTRY_COMPARE(countShown(*m_editor, QStringLiteral("category:photo")), 1200);
+    server_client::Image another = beachPhoto();
+    another.id = 6;
+    m_editor->setImage(another);
+
+    m_editor->setImage(beachPhoto());
+
+    QCOMPARE(countShown(*m_editor, QStringLiteral("category:photo")), 1200);
+    QCOMPARE(m_server->requestsTo("GET", countsUrl).size(), 1);
+}
+
+// A tag added or removed changes the counts.
+void TestTagEditor::asksForNewCountsAfterASave()
+{
+    m_editor->setImage(beachPhoto());
+    QTRY_COMPARE(m_server->requestsTo("GET", countsUrl).size(), 1);
+    m_editor->startEditing();
+    m_editor->addTag(QStringLiteral("general"), QStringLiteral("sunset"));
+
+    m_editor->save();
+
+    QTRY_VERIFY(!m_editor->isEditing());
+    QTRY_COMPARE(m_server->requestsTo("GET", countsUrl).size(), 2);
 }
 
 // Also namespaces the image has no tag in, in the server's order; not meta, whose tags the server sets

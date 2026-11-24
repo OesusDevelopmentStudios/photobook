@@ -10,6 +10,7 @@ add_library(photobook_tag_editor STATIC
     include/TagEditor.hpp
     include/TagRowsEditor.hpp
     include/TagSuggestions.hpp
+    include/TagPaneLayout.hpp
     include/UploadTagEditor.hpp
     include/TagEditorFactory.hpp
     hlp/TagNames.hpp
@@ -32,6 +33,7 @@ add_library(photobook_tag_editor STATIC
     TagEditor.cpp
     TagRowsEditor.cpp
     TagSuggestions.cpp
+    TagPaneLayout.cpp
     UploadTagEditor.cpp
     TagEditorFactory.cpp
 )

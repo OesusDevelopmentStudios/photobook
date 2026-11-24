@@ -8,6 +8,7 @@
 #include <optional>
 
 #include <QString>
+#include <QStringList>
 #include <QUrl>
 
 namespace photobook::settings
@@ -47,6 +48,12 @@ public:
     virtual void setLibraryTabShown(bool shown) = 0;
     virtual std::optional<bool> albumsTabShown() const = 0;
     virtual void setAlbumsTabShown(bool shown) = 0;
+
+    // The viewer's tag pane: open or not, and the namespaces whose sections are folded
+    virtual std::optional<bool> tagPaneOpen() const = 0;
+    virtual void setTagPaneOpen(bool open) = 0;
+    virtual std::optional<QStringList> foldedTagNamespaces() const = 0;
+    virtual void setFoldedTagNamespaces(const QStringList& namespaceNames) = 0;
 
     // A word such as "name", as for the slideshow's order
     virtual std::optional<QString> albumSort() const = 0;
