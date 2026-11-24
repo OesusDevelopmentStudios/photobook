@@ -133,6 +133,17 @@ Item {
             tryCompare(field, "suggesting", true);
         }
 
+        // e.g. a tag clicked in the viewer's tag pane
+        function test_showsASearchStartedElsewhere() {
+            const [field, searches] = focusedField();
+
+            field.searchedText = "author:sample_artist";
+
+            compare(field.text, "author:sample_artist");
+            verify(!field.suggesting);
+            compare(searches.count, 0, "already searched");
+        }
+
         function test_movingTheCursorClosesTheList() {
             const [field] = focusedField();
             typeWithSuggestion(field, "her");

@@ -11,8 +11,8 @@ import org.kde.kirigami as Kirigami
 import org.kde.ki18n
 
 // The viewer's tags, as on a booru: a heading per namespace, under it the tags, each with how many images have
-// it. A click on a heading folds its section to the heading and the number of its tags; the folded namespaces are
-// remembered for every image. "Edit Tags" at the bottom edits them here: ✕ removes a tag (struck through until
+// it. A click on a tag searches the library for it. A click on a heading folds its section to the heading and the
+// number of its tags; the folded namespaces are remembered for every image. "Edit Tags" at the bottom edits them here: ✕ removes a tag (struck through until
 // saved), + at the end of a section opens a field for new ones, category and rating have a dropdown. Every
 // namespace users tag with gets a section then; meta stays without controls.
 Rectangle {
@@ -20,8 +20,20 @@ Rectangle {
 
     required property TagEditor tagEditor
     required property TagPaneLayout layout
+    property bool searchable: true  // a click on a tag searches the library; not while the Library tab is hidden
 
     readonly property bool editing: tagEditor.editing
+
+    // The library's search for a tag, written as the user would type it
+    signal tagSearchRequested(string text)
+
+    // "general:summer" is just "summer" in a search; a name with ':' keeps its namespace, so no part of it is
+    // read as one.
+    function searchTextFor(tag: string): string {
+        const general = "general:";
+        const name = tag.slice(general.length);
+        return tag.startsWith(general) && !name.includes(":") ? name : tag;
+    }
 
     // A count as boorus write it: 412, 1.2k, 33k, 4.5m
     function shortCount(count: int): string {
@@ -211,8 +223,22 @@ Rectangle {
                             text: tagLine.modelData.name.replace(/_/g, " ")
                             color: pane.tagColor(section.namespaceName)
                             font.strikeout: tagLine.isRemoved
+                            font.underline: nameHover.hovered
                             opacity: tagLine.isRemoved ? 0.6 : 1
                             elide: Text.ElideRight
+
+                            // Like a link, while browsing
+                            HoverHandler {
+                                id: nameHover
+
+                                enabled: pane.searchable && !pane.editing
+                                cursorShape: Qt.PointingHandCursor
+                            }
+
+                            TapHandler {
+                                enabled: pane.searchable && !pane.editing
+                                onTapped: pane.tagSearchRequested(pane.searchTextFor(tagLine.modelData.tag))
+                            }
                         }
 
                         Controls.Label {

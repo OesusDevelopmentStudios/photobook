@@ -21,11 +21,13 @@ Kirigami.Page {
     required property Connection connection
     required property TagEditor tagEditor
     required property TagPaneLayout tagPaneLayout
+    property bool tagsSearchable: true  // there is a Library tab to search in
     required property Uploader uploader
     required property ImageActions imageActions
 
     signal serverPageRequested()
     signal libraryRequested()
+    signal tagSearchRequested(string text)  // a tag clicked in the tag pane
     signal uploadImageRequested()
     signal uploadFolderRequested()  // without subfolders
     signal copyImageRequested()
@@ -389,6 +391,8 @@ Kirigami.Page {
         visible: page.tagPaneLayout.open && page.tagEditor.canEdit && !page.presenting
         tagEditor: page.tagEditor
         layout: page.tagPaneLayout
+        searchable: page.tagsSearchable
+        onTagSearchRequested: text => page.tagSearchRequested(text)
     }
 
     Kirigami.Separator {

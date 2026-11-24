@@ -35,6 +35,14 @@ Item {
             }
         }
 
+        Component {
+            id: searchSpyComponent
+
+            SignalSpy {
+                signalName: "tagSearchRequested"
+            }
+        }
+
         function initTestCase() {
             tryCompare(TestServices.accountConnection, "state", Connection.State.LoggedIn);
         }
@@ -286,6 +294,53 @@ Item {
 
             verify(!partOf(pane, "add_general").visible);
             tryVerify(() => partOf(pane, "remove_general:summer") === null);
+        }
+
+        // As the user would type it in the search: general tags without their namespace
+        function test_searchesTheLibraryForAClickedTag() {
+            const pane = shownPane();
+            const searches = createTemporaryObject(searchSpyComponent, root, {target: pane});
+
+            mouseClick(partOf(pane, "tag_general:summer"));
+            mouseClick(partOf(pane, "tag_author:sample_artist"));
+
+            compare(searches.count, 2);
+            compare(searches.signalArguments[0][0], "summer");
+            compare(searches.signalArguments[1][0], "author:sample_artist");
+        }
+
+        function test_searchTextFor_data() {
+            return [
+                {tag: "a general tag", text: "general:summer", search: "summer"},
+                {tag: "another namespace", text: "rating:public", search: "rating:public"},
+                {tag: "a general name with a colon", text: "general:re:zero", search: "general:re:zero"},
+            ];
+        }
+
+        function test_searchTextFor(data) {
+            const pane = createTemporaryObject(paneComponent, root);
+
+            compare(pane.searchTextFor(data.text), data.search);
+        }
+
+        // A click while editing is for the controls, not for a search.
+        function test_searchesNothingWhileEditing() {
+            const pane = editingPane();
+            const searches = createTemporaryObject(searchSpyComponent, root, {target: pane});
+
+            mouseClick(partOf(pane, "tag_general:summer"));
+
+            compare(searches.count, 0);
+        }
+
+        function test_searchesNothingWithoutALibraryTab() {
+            const pane = shownPane();
+            pane.searchable = false;
+            const searches = createTemporaryObject(searchSpyComponent, root, {target: pane});
+
+            mouseClick(partOf(pane, "tag_general:summer"));
+
+            compare(searches.count, 0);
         }
 
         // As for the next image, or after a restart

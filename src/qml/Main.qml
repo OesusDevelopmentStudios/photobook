@@ -279,6 +279,12 @@ Kirigami.ApplicationWindow {
             connection: root.appManager.connection
             tagEditor: root.appManager.tagEditor
             tagPaneLayout: root.appManager.tagPaneLayout
+            tagsSearchable: root.appManager.libraryView.libraryTabShown
+            onTagSearchRequested: text => {
+                root.appManager.libraryView.tab = LibraryView.Tab.Library;
+                root.appManager.library.search(text);
+                root.showLibrary();
+            }
             uploader: root.appManager.uploader
             imageActions: root.appManager.imageActions
             onServerPageRequested: root.showServerPage()

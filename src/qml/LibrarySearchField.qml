@@ -52,6 +52,13 @@ Kirigami.SearchField {
             searchRequested("");  // cleared: all images again
         }
     }
+    // A search started elsewhere, e.g. a tag clicked in the viewer, shows here.
+    onSearchedTextChanged: {
+        if (text.trim() !== searchedText) {
+            typing = false;
+            text = searchedText;
+        }
+    }
 
     Keys.onPressed: event => {
         if (!suggesting) {
