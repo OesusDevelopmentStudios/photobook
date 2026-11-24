@@ -56,7 +56,6 @@ Viewer::ImageDetails detailsOf(const photobook::server_client::Image& image)
     details.takenAtSource = takenAtSourceFor(image.takenAtSource);
     details.importedAt = image.importedAt;
     details.location = image.storagePath;
-    details.tags = image.tags;
     return details;
 }
 
@@ -78,6 +77,7 @@ AppManager::AppManager(QObject* parent)
     , m_albumImages(library::createLibrary(m_connection.get(), library::Library::Content::Album))
     , m_libraryView(library_view::createLibraryView(m_settings.get()))
     , m_tagEditor(tag_editor::createTagEditor(m_connection.get()))
+    , m_tagPaneLayout(tag_editor::createTagPaneLayout(m_settings.get()))
     , m_bulkTagEditor(tag_editor::createBulkTagEditor(m_connection.get()))
     , m_uploadTagEditor(tag_editor::createUploadTagEditor(m_connection.get()))
     , m_uploader(uploader::createUploader(m_connection.get(), m_uploadTagEditor.get()))
@@ -205,6 +205,11 @@ library_view::LibraryView* AppManager::libraryView() const
 tag_editor::TagEditor* AppManager::tagEditor() const
 {
     return m_tagEditor.get();
+}
+
+tag_editor::TagPaneLayout* AppManager::tagPaneLayout() const
+{
+    return m_tagPaneLayout.get();
 }
 
 tag_editor::BulkTagEditor* AppManager::bulkTagEditor() const

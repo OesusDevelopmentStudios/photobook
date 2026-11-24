@@ -26,6 +26,7 @@
 #include "Settings.hpp"
 #include "Slideshow.hpp"
 #include "TagEditor.hpp"
+#include "TagPaneLayout.hpp"
 #include "UploadTagEditor.hpp"
 #include "Uploader.hpp"
 #include "ViewTransform.hpp"
@@ -50,6 +51,7 @@ class AppManager : public QObject
     Q_PROPERTY(photobook::library::Albums* albums READ albums CONSTANT)
     Q_PROPERTY(photobook::library_view::LibraryView* libraryView READ libraryView CONSTANT)
     Q_PROPERTY(photobook::tag_editor::TagEditor* tagEditor READ tagEditor CONSTANT)
+    Q_PROPERTY(photobook::tag_editor::TagPaneLayout* tagPaneLayout READ tagPaneLayout CONSTANT)
     Q_PROPERTY(photobook::tag_editor::BulkTagEditor* bulkTagEditor READ bulkTagEditor CONSTANT)
     Q_PROPERTY(photobook::tag_editor::UploadTagEditor* uploadTagEditor READ uploadTagEditor CONSTANT)
     Q_PROPERTY(photobook::tag_editor::HiddenFilterEditor* hiddenFilterEditor READ hiddenFilterEditor CONSTANT)
@@ -70,6 +72,7 @@ public:
     library::Albums* albums() const;
     library_view::LibraryView* libraryView() const;
     tag_editor::TagEditor* tagEditor() const;
+    tag_editor::TagPaneLayout* tagPaneLayout() const;
     tag_editor::BulkTagEditor* bulkTagEditor() const;
     tag_editor::UploadTagEditor* uploadTagEditor() const;
     tag_editor::HiddenFilterEditor* hiddenFilterEditor() const;
@@ -122,6 +125,7 @@ private:
     bool m_openingAlbum = false;                      // until its first image is shown
     std::unique_ptr<library_view::LibraryView> m_libraryView;
     std::unique_ptr<tag_editor::TagEditor> m_tagEditor;
+    std::unique_ptr<tag_editor::TagPaneLayout> m_tagPaneLayout;
     std::unique_ptr<tag_editor::BulkTagEditor> m_bulkTagEditor;
     std::unique_ptr<tag_editor::UploadTagEditor> m_uploadTagEditor;
     std::unique_ptr<uploader::Uploader> m_uploader;

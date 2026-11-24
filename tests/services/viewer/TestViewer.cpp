@@ -61,10 +61,6 @@ photobook::viewer::Viewer::ImageDetails libraryPhoto()
     details.takenAtSource = photobook::viewer::Viewer::TakenAtSource::FileDate;
     details.importedAt = QDateTime(QDate(2026, 11, 15), QTime(19, 22), QTimeZone::UTC);
     details.location = QStringLiteral("photo/sample_artist/2025/beach_aaaaaaaa.jpg");
-    details.tags = QStringList{QStringLiteral("author:sample_artist"),
-                               QStringLiteral("category:photo"),
-                               QStringLiteral("general:beach"),
-                               QStringLiteral("general:summer")};
     return details;
 }
 
@@ -97,7 +93,6 @@ private Q_SLOTS:
     void givesTheDetailsOfALocalFile();
     void knowsWhenALocalFileHasNoDate();
     void givesTheDetailsOfALibraryImage();
-    void groupsTagsByNamespace();
     void forgetsTheDetailsWhenAnImageCannotBeOpened();
     void updatesTheDetailsWithoutReopening();
 
@@ -268,7 +263,6 @@ void TestViewer::givesTheDetailsOfALocalFile()
     QCOMPARE(m_viewer->takenAtSource(), Viewer::TakenAtSource::Photo);
     QVERIFY(!m_viewer->importedAt().isValid());
     QCOMPARE(m_viewer->location(), QStringLiteral("/photos"));
-    QVERIFY(m_viewer->tagGroups().isEmpty());
 }
 
 void TestViewer::knowsWhenALocalFileHasNoDate()
@@ -292,22 +286,6 @@ void TestViewer::givesTheDetailsOfALibraryImage()
     QCOMPARE(m_viewer->location(), QStringLiteral("photo/sample_artist/2025/beach_aaaaaaaa.jpg"));
 }
 
-void TestViewer::groupsTagsByNamespace()
-{
-    m_viewer->openServerImage(serverFileUrl, libraryPhoto());
-
-    const QVariantList groups = m_viewer->tagGroups();
-
-    QCOMPARE(groups.size(), 3);
-    QCOMPARE(groups.at(0).toMap().value(QStringLiteral("namespace")).toString(), QStringLiteral("author"));
-    QCOMPARE(groups.at(0).toMap().value(QStringLiteral("names")).toStringList(),
-             QStringList{QStringLiteral("sample_artist")});
-    QCOMPARE(groups.at(1).toMap().value(QStringLiteral("namespace")).toString(), QStringLiteral("category"));
-    QCOMPARE(groups.at(2).toMap().value(QStringLiteral("namespace")).toString(), QStringLiteral("general"));
-    QCOMPARE(groups.at(2).toMap().value(QStringLiteral("names")).toStringList(),
-             QStringList({QStringLiteral("beach"), QStringLiteral("summer")}));
-}
-
 void TestViewer::forgetsTheDetailsWhenAnImageCannotBeOpened()
 {
     m_viewer->openServerImage(serverFileUrl, libraryPhoto());
@@ -316,7 +294,6 @@ void TestViewer::forgetsTheDetailsWhenAnImageCannotBeOpened()
     m_viewer->openImage(QStringLiteral("/photos/missing.jpg"));
 
     QVERIFY(!m_viewer->isFromLibrary());
-    QVERIFY(m_viewer->tagGroups().isEmpty());
     QVERIFY(m_viewer->location().isEmpty());
 }
 
@@ -327,7 +304,6 @@ void TestViewer::updatesTheDetailsWithoutReopening()
     QSignalSpy imageChanged(m_viewer.get(), &Viewer::currentImageChanged);
     QSignalSpy detailsChanged(m_viewer.get(), &Viewer::detailsChanged);
     Viewer::ImageDetails retagged = libraryPhoto();
-    retagged.tags = {QStringLiteral("general:sunset")};
     retagged.location = QStringLiteral("photo/sunset_aaaaaaaa.jpg");
 
     m_viewer->updateDetails(retagged);
@@ -335,7 +311,6 @@ void TestViewer::updatesTheDetailsWithoutReopening()
     QCOMPARE(imageChanged.count(), 0);
     QCOMPARE(detailsChanged.count(), 1);
     QCOMPARE(m_viewer->location(), QStringLiteral("photo/sunset_aaaaaaaa.jpg"));
-    QCOMPARE(m_viewer->tagGroups().size(), 1);
 }
 
 }  // namespace photobook::viewer

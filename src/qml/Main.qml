@@ -278,6 +278,7 @@ Kirigami.ApplicationWindow {
             slideshow: root.appManager.slideshow
             connection: root.appManager.connection
             tagEditor: root.appManager.tagEditor
+            tagPaneLayout: root.appManager.tagPaneLayout
             uploader: root.appManager.uploader
             imageActions: root.appManager.imageActions
             onServerPageRequested: root.showServerPage()

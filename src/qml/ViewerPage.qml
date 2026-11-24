@@ -20,6 +20,7 @@ Kirigami.Page {
     required property Slideshow slideshow
     required property Connection connection
     required property TagEditor tagEditor
+    required property TagPaneLayout tagPaneLayout
     required property Uploader uploader
     required property ImageActions imageActions
 
@@ -376,11 +377,35 @@ Kirigami.Page {
         value: Qt.size(flickable.width, flickable.height)
     }
 
+    // The image's tags at the left, full height; the image fits beside it, never under it. Library images only,
+    // and not in a slideshow.
+    TagPane {
+        id: tagPane
+
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        width: Kirigami.Units.gridUnit * 14
+        visible: page.tagPaneLayout.open && page.tagEditor.canEdit && !page.presenting
+        tagEditor: page.tagEditor
+        layout: page.tagPaneLayout
+    }
+
+    Kirigami.Separator {
+        id: tagPaneSeparator
+
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.left: tagPane.right
+        visible: tagPane.visible
+    }
+
     // Drag to pan. The content is at least as large as the viewport, so a small image stays centered.
     Flickable {
         id: flickable
 
         anchors.fill: parent
+        anchors.leftMargin: tagPane.visible ? tagPane.width + tagPaneSeparator.width : 0
         visible: page.viewer.hasImage
         clip: true
         boundsBehavior: Flickable.StopAtBounds
@@ -540,6 +565,7 @@ Kirigami.Page {
         visible: page.viewer.hasImage && !page.presenting
         viewer: page.viewer
         tagEditor: page.tagEditor
+        tagPaneLayout: page.tagPaneLayout
         availableHeight: page.height
     }
 

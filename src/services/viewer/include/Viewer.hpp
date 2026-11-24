@@ -14,7 +14,6 @@
 #include <QString>
 #include <QStringList>
 #include <QUrl>
-#include <QVariantList>
 
 #include "ImageLoader.hpp"
 
@@ -39,7 +38,6 @@ class Viewer : public QObject
     Q_PROPERTY(TakenAtSource takenAtSource READ takenAtSource NOTIFY detailsChanged)
     Q_PROPERTY(QDateTime importedAt READ importedAt NOTIFY detailsChanged)
     Q_PROPERTY(QString location READ location NOTIFY detailsChanged)
-    Q_PROPERTY(QVariantList tagGroups READ tagGroups NOTIFY detailsChanged)
 
 public:
     enum class TakenAtSource
@@ -61,7 +59,6 @@ public:
         TakenAtSource takenAtSource = TakenAtSource::Unknown;
         QDateTime importedAt;  // into the library; invalid for local files
         QString location;      // the folder, or the place in the server's library
-        QStringList tags;      // of a library image, e.g. "category:photo", sorted by namespace
     };
 
     explicit Viewer(std::unique_ptr<image_loader::ImageLoader> imageLoader, QObject* parent = nullptr);
@@ -90,8 +87,6 @@ public:
     TakenAtSource takenAtSource() const;
     QDateTime importedAt() const;
     QString location() const;
-    // The tags by namespace, in the tags' order: a list of {"namespace": "general", "names": ["beach", …]}
-    QVariantList tagGroups() const;
 
 Q_SIGNALS:
     void currentImageChanged();  // also changes the details

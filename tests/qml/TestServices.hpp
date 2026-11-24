@@ -28,6 +28,7 @@
 #include "SettingsFactory.hpp"
 #include "TagEditor.hpp"
 #include "TagEditorFactory.hpp"
+#include "TagPaneLayout.hpp"
 #include "UploadTagEditor.hpp"
 #include "Uploader.hpp"
 #include "Viewer.hpp"
@@ -44,7 +45,8 @@ namespace photobook::tests
 // and a tag editor and an uploader of a connection that is not logged in, with a folder of images to upload.
 // The hidden filter editor has a connection of its own, logged in to a server that has two hidden filters saved
 // and keeps what is saved; the search suggestions, the albums (vacation_2015 and garden) and the library view use it
-// too. Registered for the QML tests in TestQml.cpp.
+// too, and a tag editor for the tag pane, which shows a library photo once asked to. Registered for the QML tests in
+// TestQml.cpp.
 class TestServices : public QObject
 {
     Q_OBJECT
@@ -58,6 +60,8 @@ class TestServices : public QObject
     Q_PROPERTY(photobook::tag_editor::SearchSuggestions* searchSuggestions READ searchSuggestions CONSTANT)
     Q_PROPERTY(photobook::library::Albums* albums READ albums CONSTANT)
     Q_PROPERTY(photobook::library_view::LibraryView* libraryView READ libraryView CONSTANT)
+    Q_PROPERTY(photobook::tag_editor::TagEditor* paneTagEditor READ paneTagEditor CONSTANT)
+    Q_PROPERTY(photobook::tag_editor::TagPaneLayout* tagPaneLayout READ tagPaneLayout CONSTANT)
     Q_PROPERTY(QUrl sampleFolder READ sampleFolder CONSTANT)  // holiday/beach.jpg, holiday/day2/sunset.jpg
 
     // Answers every file with the same landscape photo, without touching the disk.
@@ -154,6 +158,30 @@ public:
         return m_libraryView.get();
     }
 
+    tag_editor::TagEditor* paneTagEditor() const
+    {
+        return m_paneTagEditor.get();
+    }
+
+    tag_editor::TagPaneLayout* tagPaneLayout() const
+    {
+        return m_tagPaneLayout.get();
+    }
+
+    // A library photo on screen in the pane's tag editor; its tags' counts come from the server.
+    Q_INVOKABLE void showSamplePhoto()
+    {
+        server_client::Image photo;
+        photo.id = 5;
+        photo.originalFilename = QStringLiteral("beach.jpg");
+        photo.tags = {QStringLiteral("author:sample_artist"),
+                      QStringLiteral("category:photo"),
+                      QStringLiteral("general:beach_day"),
+                      QStringLiteral("general:summer"),
+                      QStringLiteral("meta:jpeg")};
+        m_paneTagEditor->setImage(photo);
+    }
+
     QUrl sampleFolder() const
     {
         return QUrl::fromLocalFile(m_folder.filePath(QStringLiteral("holiday")));
@@ -175,7 +203,7 @@ private:
                                {QStringLiteral("single_value"), singleValue},
                                {QStringLiteral("is_builtin"), true},
                                {QStringLiteral("in_path_template"), false},
-                               {QStringLiteral("user_editable"), true},
+                               {QStringLiteral("user_editable"), name != QLatin1String("meta")},
                                {QStringLiteral("allowed_values"), QJsonValue::Null}};
         };
 
@@ -192,8 +220,10 @@ private:
                        fakes::jsonResponse(200,
                                            {{QStringLiteral("items"),
                                              QJsonArray{namespaceJson(QStringLiteral("category"), true),
+                                                        namespaceJson(QStringLiteral("author"), false),
                                                         namespaceJson(QStringLiteral("rating"), true),
                                                         namespaceJson(QStringLiteral("character"), false),
+                                                        namespaceJson(QStringLiteral("meta"), false),
                                                         namespaceJson(QStringLiteral("general"), false)}}}));
         server->answer("GET",
                        api + QStringLiteral("/tags"),
@@ -227,6 +257,19 @@ private:
                       albumJson(
                           QStringLiteral("album:vacation_2015"), 84, 1234, QStringLiteral("2026-11-22T10:00:00Z")),
                       albumJson(QStringLiteral("album:garden"), 3, 7, QStringLiteral("2026-11-01T10:00:00Z"))}}}));
+        const auto tagCount = [](const char* tag, int imageCount) {
+            return QJsonObject{{QStringLiteral("tag"), QString::fromLatin1(tag)},
+                               {QStringLiteral("image_count"), imageCount}};
+        };
+        server->answer("GET",
+                       api + QStringLiteral("/images/5/tag-counts"),
+                       fakes::jsonResponse(200,
+                                           {{QStringLiteral("items"),
+                                             QJsonArray{tagCount("author:sample_artist", 40),
+                                                        tagCount("category:photo", 1234),
+                                                        tagCount("general:beach_day", 45678),
+                                                        tagCount("general:summer", 999),
+                                                        tagCount("meta:jpeg", 3100000)}}}));
         server->answerWith("PUT", api + QStringLiteral("/preferences"), [](const server_client::HttpRequest& request) {
             return fakes::jsonResponse(200, QJsonDocument::fromJson(request.body).object());
         });
@@ -244,6 +287,8 @@ private:
         m_searchSuggestions = tag_editor::createSearchSuggestions(m_accountConnection.get());
         m_albums = library::createAlbums(m_accountConnection.get(), m_accountSettings.get());
         m_libraryView = library_view::createLibraryView(m_accountSettings.get());
+        m_paneTagEditor = tag_editor::createTagEditor(m_accountConnection.get());
+        m_tagPaneLayout = tag_editor::createTagPaneLayout(m_accountSettings.get());
     }
 
     QTemporaryDir m_folder;  // the settings, never the user's own, and the images to upload
@@ -260,6 +305,8 @@ private:
     std::unique_ptr<tag_editor::SearchSuggestions> m_searchSuggestions;
     std::unique_ptr<library::Albums> m_albums;
     std::unique_ptr<library_view::LibraryView> m_libraryView;
+    std::unique_ptr<tag_editor::TagEditor> m_paneTagEditor;
+    std::unique_ptr<tag_editor::TagPaneLayout> m_tagPaneLayout;
 };
 
 }  // namespace photobook::tests

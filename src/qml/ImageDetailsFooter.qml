@@ -10,13 +10,14 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.ki18n
 
-// Over the bottom of the image; the page decides when it shows. Expanded, it shows all details, a library
-// image's tags included.
+// Over the bottom of the image; the page decides when it shows. Expanded, it shows all details. A library image's
+// tags are in the tag pane, which the button at the left end shows and hides.
 Rectangle {
     id: footer
 
     required property Viewer viewer
     required property TagEditor tagEditor
+    property TagPaneLayout tagPaneLayout: null
     property bool shown: false
     property bool expanded: false
     // The height the footer may take, e.g. the viewer's. The details take up to 40 % of it; while editing,
@@ -78,14 +79,6 @@ Rectangle {
         }
     }
 
-    // Never shown: measures a tag chip, so the namespace names line up with their chips.
-    Kirigami.Chip {
-        id: chipHeight
-
-        visible: false
-        text: "x"
-    }
-
     // The image underneath does not react to clicks, drags and the wheel on the footer.
     MouseArea {
         anchors.fill: parent
@@ -108,6 +101,22 @@ Rectangle {
 
             Layout.fillWidth: true
             spacing: Kirigami.Units.largeSpacing
+
+            // Only library images have tags. The bar slides away; the pane stays as it is.
+            Controls.ToolButton {
+                objectName: "tagPaneToggle"
+                visible: footer.tagPaneLayout !== null && footer.tagEditor.canEdit
+                icon.name: "tag"
+                text: KI18n.i18nc("@action:button", "Show Tags")
+                display: Controls.AbstractButton.IconOnly
+                checkable: true
+                checked: footer.tagPaneLayout?.open ?? false
+                onToggled: footer.tagPaneLayout.open = checked
+
+                Controls.ToolTip.text: text
+                Controls.ToolTip.visible: hovered
+                Controls.ToolTip.delay: Kirigami.Units.toolTipDelay
+            }
 
             Controls.Label {
                 Layout.fillWidth: true
@@ -217,38 +226,6 @@ Rectangle {
                 width: detailsScroll.availableWidth
                 spacing: Kirigami.Units.smallSpacing
 
-                // A library image's tags, one line per namespace
-                Repeater {
-                    model: footer.tagEditor.editing ? [] : footer.viewer.tagGroups
-
-                    delegate: DetailRow {
-                        id: tagGroup
-
-                        required property var modelData
-
-                        Layout.fillWidth: true
-                        label: modelData.namespace + ":"  // as written in a tag, e.g. "author:"
-                        firstLineHeight: chipHeight.implicitHeight
-
-                        Flow {
-                            Layout.fillWidth: true
-                            spacing: Kirigami.Units.smallSpacing
-
-                            Repeater {
-                                model: tagGroup.modelData.names
-
-                                delegate: Kirigami.Chip {
-                                    required property string modelData
-
-                                    text: modelData
-                                    closable: false
-                                    checkable: false
-                                }
-                            }
-                        }
-                    }
-                }
-
                 // While editing: a row per namespace, like the server's folder-import form
                 Repeater {
                     model: footer.tagEditor.editing ? footer.tagEditor.namespaceRows : null
@@ -295,7 +272,7 @@ Rectangle {
 
                 Kirigami.Separator {
                     Layout.fillWidth: true
-                    visible: footer.viewer.tagGroups.length > 0 || footer.tagEditor.editing
+                    visible: footer.tagEditor.editing
                 }
 
                 DetailRow {

@@ -75,6 +75,7 @@ set(qmlFiles
     qml/TagChip.qml
     qml/TagNameField.qml
     qml/TagValueBox.qml
+    qml/TagPane.qml
     qml/TagRowContent.qml
     qml/BulkTagPanel.qml
     qml/UploadPage.qml

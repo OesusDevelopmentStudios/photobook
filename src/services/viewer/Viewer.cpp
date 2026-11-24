@@ -160,37 +160,4 @@ QString Viewer::location() const
     return hasImage() ? m_currentImage->details.location : QString();
 }
 
-// The server sorts the tags by namespace, so each namespace's tags are next to each other.
-QVariantList Viewer::tagGroups() const
-{
-    QVariantList groups;
-    QString groupNamespace;
-    QStringList groupNames;
-    const auto finishGroup = [&]() {
-        if (!groupNames.isEmpty())
-        {
-            groups.append(
-                QVariantMap{{QStringLiteral("namespace"), groupNamespace}, {QStringLiteral("names"), groupNames}});
-        }
-    };
-
-    const QStringList tags = hasImage() ? m_currentImage->details.tags : QStringList();
-    for (const QString& tag : tags)
-    {
-        const qsizetype colon = tag.indexOf(QLatin1Char(':'));
-        const QString namespaceName = tag.left(qMax(colon, 0));
-        if (namespaceName != groupNamespace)
-        {
-            finishGroup();
-            groupNamespace = namespaceName;
-            groupNames.clear();
-        }
-
-        groupNames.append(tag.mid(colon + 1));
-    }
-
-    finishGroup();
-    return groups;
-}
-
 }  // namespace photobook::viewer

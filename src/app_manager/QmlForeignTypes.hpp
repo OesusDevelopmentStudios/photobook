@@ -19,6 +19,7 @@
 #include "SearchSuggestions.hpp"
 #include "Slideshow.hpp"
 #include "TagEditor.hpp"
+#include "TagPaneLayout.hpp"
 #include "TagRowsEditor.hpp"
 #include "TagSuggestions.hpp"
 #include "UploadTagEditor.hpp"
@@ -158,6 +159,14 @@ struct ForeignSearchSuggestions
     Q_GADGET
     QML_FOREIGN(photobook::tag_editor::SearchSuggestions)
     QML_NAMED_ELEMENT(SearchSuggestions)
+    QML_UNCREATABLE("Provided by AppManager")
+};
+
+struct ForeignTagPaneLayout
+{
+    Q_GADGET
+    QML_FOREIGN(photobook::tag_editor::TagPaneLayout)
+    QML_NAMED_ELEMENT(TagPaneLayout)
     QML_UNCREATABLE("Provided by AppManager")
 };
 

@@ -11,6 +11,7 @@ Item {
 
     required property Viewer viewer
     required property TagEditor tagEditor
+    property TagPaneLayout tagPaneLayout: null
     property real availableHeight: 0  // up to the toolbar, while the tags are edited
     readonly property ImageDetailsFooter footer: detailsFooter
 
@@ -28,6 +29,7 @@ Item {
         anchors.bottom: parent.bottom
         viewer: zone.viewer
         tagEditor: zone.tagEditor
+        tagPaneLayout: zone.tagPaneLayout
         shown: hover.hovered || expanded  // expanded, it stays until collapsed
         availableHeight: zone.availableHeight
     }

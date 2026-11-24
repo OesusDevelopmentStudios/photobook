@@ -31,8 +31,32 @@ Item {
             }
         }
 
-        function shownZone(): ImageDetailsZone {
-            const zone = createTemporaryObject(zoneComponent, root);
+        // A library photo, so the footer has the tag pane's button
+        Component {
+            id: libraryZoneComponent
+
+            ImageDetailsZone {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                viewer: TestServices.viewer
+                tagEditor: TestServices.paneTagEditor
+                tagPaneLayout: TestServices.tagPaneLayout
+                availableHeight: root.height
+            }
+        }
+
+        function initTestCase() {
+            tryCompare(TestServices.accountConnection, "state", Connection.State.LoggedIn);
+            TestServices.showSamplePhoto();
+        }
+
+        function cleanup() {
+            TestServices.tagPaneLayout.open = true;
+        }
+
+        function shownZone(component = zoneComponent): ImageDetailsZone {
+            const zone = createTemporaryObject(component, root);
             mouseMove(root, root.width / 2, 10);  // over the image
             verify(!zone.footer.shown);
             mouseMove(root, root.width / 2, zone.y + 5);  // in the zone, above the footer
@@ -56,6 +80,28 @@ Item {
             }
 
             compare(hidden, 0, "the footer hid while the pointer was on it");
+        }
+
+        function test_showsAndHidesTheTagPane() {
+            const zone = shownZone(libraryZoneComponent);
+            const toggle = findChild(zone, "tagPaneToggle");
+            verify(toggle.visible && toggle.checked);
+
+            mouseClick(toggle);
+
+            verify(!TestServices.tagPaneLayout.open);
+            verify(!toggle.checked);
+
+            mouseClick(toggle);
+
+            verify(TestServices.tagPaneLayout.open);
+        }
+
+        // A local file has no tags.
+        function test_hasNoTagPaneButtonWithoutALibraryImage() {
+            const zone = shownZone();
+
+            verify(!findChild(zone, "tagPaneToggle").visible);
         }
 
         function test_hidesWhenThePointerLeaves() {
