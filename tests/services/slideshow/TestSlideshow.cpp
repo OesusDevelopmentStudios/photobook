@@ -188,6 +188,9 @@ private Q_SLOTS:
     void pauseAndResume();
     void advancesAfterInterval();
     void doesNotAdvanceWhilePaused();
+    void aVideoPlaysToItsEnd();
+    void aVideoThatCannotPlayShowsForTheInterval();
+    void aVideosEndOnlyCountsWhileShowing();
 
     void restoresIntervalAndOrder();
     void limitsRestoredInterval();
@@ -315,6 +318,52 @@ void TestSlideshow::doesNotAdvanceWhilePaused()
     QTest::qWait(oneSecondInMilliseconds + oneSecondInMilliseconds / 2);
 
     QCOMPARE(m_navigator->currentIndex(), 0);
+}
+
+// The interval is for photos; a video moves the slideshow on when it has played.
+void TestSlideshow::aVideoPlaysToItsEnd()
+{
+    openImageAndWaitForListing(folderImages.first());
+    m_slideshow->setIntervalSeconds(1);
+    m_slideshow->start(Slideshow::Order::ByName);
+
+    m_slideshow->setWaitingForVideo(true);
+    QTest::qWait(oneSecondInMilliseconds + oneSecondInMilliseconds / 2);
+    QCOMPARE(m_navigator->currentIndex(), 0);
+
+    m_slideshow->videoEnded();
+
+    QCOMPARE(m_navigator->currentIndex(), 1);
+}
+
+void TestSlideshow::aVideoThatCannotPlayShowsForTheInterval()
+{
+    openImageAndWaitForListing(folderImages.first());
+    m_slideshow->setIntervalSeconds(1);
+    m_slideshow->start(Slideshow::Order::ByName);
+    m_slideshow->setWaitingForVideo(true);
+
+    m_slideshow->setWaitingForVideo(false);  // it could not play
+
+    QTRY_COMPARE_WITH_TIMEOUT(m_navigator->currentIndex(), 1, 3 * oneSecondInMilliseconds);
+}
+
+// Paused, or stopped, a video's end moves nothing.
+void TestSlideshow::aVideosEndOnlyCountsWhileShowing()
+{
+    openImageAndWaitForListing(folderImages.first());
+    m_slideshow->setWaitingForVideo(true);
+    m_slideshow->videoEnded();
+    QCOMPARE(m_navigator->currentIndex(), 0);
+
+    m_slideshow->start(Slideshow::Order::ByName);
+    m_slideshow->pause();
+    m_slideshow->videoEnded();
+    QCOMPARE(m_navigator->currentIndex(), 0);
+
+    m_slideshow->resume();
+    m_slideshow->videoEnded();
+    QCOMPARE(m_navigator->currentIndex(), 1);
 }
 
 void TestSlideshow::restoresIntervalAndOrder()

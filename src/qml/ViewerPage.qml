@@ -435,9 +435,19 @@ Kirigami.Page {
                 startPending = false;
                 position = page.videoPlayer.startPositionMs;
             }
+            if (mediaStatus === MediaPlayer.EndOfMedia) {
+                page.slideshow.videoEnded();  // a slideshow moves on; otherwise it stays on the last frame
+            }
         }
         // A refused URL gets one new one; the player decides.
         onErrorOccurred: (error, errorString) => page.videoPlayer.reportPlaybackError(errorString, position)
+    }
+
+    // In a slideshow a video plays to its end instead of for the interval; one that cannot play shows for it.
+    Binding {
+        target: page.slideshow
+        property: "waitingForVideo"
+        value: page.showsVideo && page.videoPlayer.errorMessage.length === 0
     }
 
     Component {

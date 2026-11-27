@@ -87,7 +87,7 @@ void Slideshow::start(Order order)
     m_navigator->setWrapAround(true);
     m_running = true;
     m_paused = false;
-    m_timer.start();
+    startOrStopInterval();
     Q_EMIT stateChanged();
 }
 
@@ -121,8 +121,16 @@ void Slideshow::resume()
     if (m_running && m_paused)
     {
         m_paused = false;
-        m_timer.start();
+        startOrStopInterval();
         Q_EMIT stateChanged();
+    }
+}
+
+void Slideshow::videoEnded()
+{
+    if (m_running && !m_paused && m_waitingForVideo)
+    {
+        showNextImage();
     }
 }
 
@@ -157,6 +165,23 @@ Slideshow::Order Slideshow::order() const
     return m_order;
 }
 
+bool Slideshow::isWaitingForVideo() const
+{
+    return m_waitingForVideo;
+}
+
+void Slideshow::setWaitingForVideo(bool waiting)
+{
+    if (waiting == m_waitingForVideo)
+    {
+        return;
+    }
+
+    m_waitingForVideo = waiting;
+    startOrStopInterval();  // e.g. a video that cannot play shows for the interval, as a photo does
+    Q_EMIT waitingForVideoChanged();
+}
+
 void Slideshow::applyIntervalSeconds(int intervalSeconds)
 {
     const int limitedSeconds = std::clamp(intervalSeconds, minimumIntervalSeconds, maximumIntervalSeconds);
@@ -186,7 +211,19 @@ void Slideshow::restartIntervalIfShowing()
 {
     if (m_running && !m_paused)
     {
-        m_timer.start();
+        startOrStopInterval();
+    }
+}
+
+void Slideshow::startOrStopInterval()
+{
+    if (m_running && !m_paused && !m_waitingForVideo)
+    {
+        m_timer.start();  // from the start of the interval
+    }
+    else
+    {
+        m_timer.stop();
     }
 }
 
