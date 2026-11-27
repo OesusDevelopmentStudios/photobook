@@ -99,14 +99,20 @@ void addAlbum(QUrlQuery& parameters, const ImageQuery& query)
     }
 }
 
+// The server finds photos and videos unless asked for one kind; this app shows photos only so far.
+void addMediaKind(QUrlQuery& parameters)
+{
+    parameters.addQueryItem(QStringLiteral("media"), QStringLiteral("image"));
+}
+
 QString imageFilePath(int imageId)
 {
-    return QStringLiteral("/images/%1/file").arg(imageId);
+    return QStringLiteral("/media/%1/file").arg(imageId);
 }
 
 QString thumbnailPath(int imageId)
 {
-    return QStringLiteral("/images/%1/thumbnail").arg(imageId);
+    return QStringLiteral("/media/%1/thumbnail").arg(imageId);
 }
 
 QUrlQuery thumbnailQuery(ThumbnailSize size)
@@ -222,6 +228,7 @@ QFuture<Result<ImagePage>> RestServerClient::searchImages(const ImageQuery& quer
     QUrlQuery parameters;
     parameters.addQueryItem(QStringLiteral("q"), queryValue(query.text));
     addAlbum(parameters, query);
+    addMediaKind(parameters);
     parameters.addQueryItem(QStringLiteral("sort"), sortName(query.sortBy));
     parameters.addQueryItem(QStringLiteral("order"),
                             query.order == SortOrder::Ascending ? QStringLiteral("asc") : QStringLiteral("desc"));
@@ -237,7 +244,7 @@ QFuture<Result<ImagePage>> RestServerClient::searchImages(const ImageQuery& quer
     }
 
     parameters.addQueryItem(QStringLiteral("apply_hidden_filters"), booleanValue(query.applyHiddenFilters));
-    return send("GET", QStringLiteral("/images"), std::nullopt, parameters).then([](const HttpResponse& response) {
+    return send("GET", QStringLiteral("/media"), std::nullopt, parameters).then([](const HttpResponse& response) {
         return jsonAnswer(response, statusOk, imagePageFrom);
     });
 }
@@ -255,14 +262,16 @@ QFuture<Result<ImageCount>> RestServerClient::countImages(const ImageQuery& quer
     QUrlQuery parameters;
     parameters.addQueryItem(QStringLiteral("q"), queryValue(query.text));
     addAlbum(parameters, query);
+    addMediaKind(parameters);
     parameters.addQueryItem(QStringLiteral("apply_hidden_filters"), booleanValue(query.applyHiddenFilters));
-    return send("GET", QStringLiteral("/images/count"), std::nullopt, parameters)
-        .then([](const HttpResponse& response) { return jsonAnswer(response, statusOk, imageCountFrom); });
+    return send("GET", QStringLiteral("/media/count"), std::nullopt, parameters).then([](const HttpResponse& response) {
+        return jsonAnswer(response, statusOk, imageCountFrom);
+    });
 }
 
 QFuture<Result<Image>> RestServerClient::image(int imageId)
 {
-    return send("GET", QStringLiteral("/images/%1").arg(imageId)).then([](const HttpResponse& response) {
+    return send("GET", QStringLiteral("/media/%1").arg(imageId)).then([](const HttpResponse& response) {
         return jsonAnswer(response, statusOk, imageFrom);
     });
 }
@@ -294,14 +303,14 @@ QFuture<Result<Image>> RestServerClient::uploadImage(const ImageUpload& upload)
         };
     }
 
-    return sendForm(QStringLiteral("/images"), form).then([](const HttpResponse& response) {
+    return sendForm(QStringLiteral("/media"), form).then([](const HttpResponse& response) {
         return jsonAnswer(response, statusCreated, imageFrom);
     });
 }
 
 QFuture<Result<Image>> RestServerClient::changeImageTags(int imageId, const TagChanges& changes)
 {
-    return send("PATCH", QStringLiteral("/images/%1").arg(imageId), tagChangesJson(changes))
+    return send("PATCH", QStringLiteral("/media/%1").arg(imageId), tagChangesJson(changes))
         .then([](const HttpResponse& response) { return jsonAnswer(response, statusOk, imageFrom); });
 }
 
@@ -314,8 +323,8 @@ QFuture<Result<int>> RestServerClient::changeTagsOfImages(const QList<int>& imag
         ids.append(imageId);
     }
 
-    body.insert(QStringLiteral("image_ids"), ids);
-    return send("POST", QStringLiteral("/images/bulk-tags"), body).then([](const HttpResponse& response) {
+    body.insert(QStringLiteral("media_ids"), ids);
+    return send("POST", QStringLiteral("/media/bulk-tags"), body).then([](const HttpResponse& response) {
         return jsonAnswer(response, statusOk, updatedCountFrom);
     });
 }
@@ -330,8 +339,9 @@ QFuture<Result<QByteArray>> RestServerClient::imageFile(int imageId)
 QFuture<Result<Image>> RestServerClient::rotateImage(int imageId, int clockwiseDegrees)
 {
     const QJsonObject body{{QStringLiteral("degrees"), clockwiseDegrees}};
-    return send("POST", QStringLiteral("/images/%1/rotation").arg(imageId), body)
-        .then([](const HttpResponse& response) { return jsonAnswer(response, statusOk, imageFrom); });
+    return send("POST", QStringLiteral("/media/%1/rotation").arg(imageId), body).then([](const HttpResponse& response) {
+        return jsonAnswer(response, statusOk, imageFrom);
+    });
 }
 
 QUrl RestServerClient::imageFileUrl(int imageId, int revision) const
@@ -367,7 +377,7 @@ QFuture<Result<QList<TagCount>>> RestServerClient::tags(const QString& prefix, c
 
 QFuture<Result<QList<TagCount>>> RestServerClient::imageTagCounts(int imageId)
 {
-    return send("GET", QStringLiteral("/images/%1/tag-counts").arg(imageId)).then([](const HttpResponse& response) {
+    return send("GET", QStringLiteral("/media/%1/tag-counts").arg(imageId)).then([](const HttpResponse& response) {
         return jsonAnswer(response, statusOk, tagCountsFrom);
     });
 }

@@ -49,39 +49,39 @@ public:
     // DELETE /auth/tokens/{id}; revoking the current token logs this app out
     virtual QFuture<Result<void>> revokeDevice(int tokenId) = 0;
 
-    // GET /images: one page of the images the user may see
+    // GET /media: one page of the images the user may see
     virtual QFuture<Result<ImagePage>> searchImages(const ImageQuery& query) = 0;
 
-    // GET /images/count: how many images the search finds. Only the query's text, album and hidden-filter
+    // GET /media/count: how many images the search finds. Only the query's text, album and hidden-filter
     // switch count; its sort and paging are ignored.
     virtual QFuture<Result<ImageCount>> countImages(const ImageQuery& query) = 0;
 
-    // GET /images/{id}
+    // GET /media/{id}
     virtual QFuture<Result<Image>> image(int imageId) = 0;
 
-    // POST /images. A file the server has already gives the error duplicate_image; its Problem Details
-    // carry the server's sha256 and, if the user may see that image, existing_image_id.
+    // POST /media. A file the server has already gives the error duplicate_media; its Problem Details
+    // carry the server's sha256 and, if the user may see that image, existing_media_id.
     virtual QFuture<Result<Image>> uploadImage(const ImageUpload& upload) = 0;
 
-    // PATCH /images/{id}; the server moves the file if a folder-forming tag changed
+    // PATCH /media/{id}; the server moves the file if a folder-forming tag changed
     virtual QFuture<Result<Image>> changeImageTags(int imageId, const TagChanges& changes) = 0;
 
-    // POST /images/bulk-tags: all or nothing; gives how many images were changed
+    // POST /media/bulk-tags: all or nothing; gives how many images were changed
     virtual QFuture<Result<int>> changeTagsOfImages(const QList<int>& imageIds, const TagChanges& changes) = 0;
 
-    // POST /images/{id}/rotation: turned clockwise by 90, 180 or 270 degrees, saved into the file; the image as
+    // POST /media/{id}/rotation: turned clockwise by 90, 180 or 270 degrees, saved into the file; the image as
     // the server has it then, with its next revision. A type that cannot be turned without losing quality
     // gives rotation_not_supported.
     virtual QFuture<Result<Image>> rotateImage(int imageId, int clockwiseDegrees) = 0;
 
-    // GET /images/{id}/file: the original file
+    // GET /media/{id}/file: the original file
     virtual QFuture<Result<QByteArray>> imageFile(int imageId) = 0;
 
     // Where the file is, for a view that loads it itself; it must send the token too. The image's revision
     // makes a changed file a new address, so no cache shows the old one.
     virtual QUrl imageFileUrl(int imageId, int revision) const = 0;
 
-    // GET /images/{id}/thumbnail: a WebP image
+    // GET /media/{id}/thumbnail: a WebP image
     virtual QFuture<Result<QByteArray>> thumbnail(int imageId, ThumbnailSize size) = 0;
 
     // Where the thumbnail is, for a view that loads it itself; it must send the token too. With the image's
@@ -93,7 +93,7 @@ public:
     virtual QFuture<Result<QList<TagCount>>>
     tags(const QString& prefix, const QString& namespaceName = {}, int limit = 20) = 0;
 
-    // GET /images/{id}/tag-counts: every tag of the image, in the image's order, with how many images have it
+    // GET /media/{id}/tag-counts: every tag of the image, in the image's order, with how many images have it
     virtual QFuture<Result<QList<TagCount>>> imageTagCounts(int imageId) = 0;
 
     // GET /albums: the albums with an image the user may see, most recently changed first. Albums with an image

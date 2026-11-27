@@ -47,7 +47,7 @@ ImageInfo landscapePhoto()
     return imageInfo;
 }
 
-const QUrl serverFileUrl(QStringLiteral("https://photos.example.org/api/v1/images/5/file"));
+const QUrl serverFileUrl(QStringLiteral("https://photos.example.org/api/v1/media/5/file"));
 
 // As the library gives it: portrait, with tags sorted by namespace
 photobook::viewer::Viewer::ImageDetails libraryPhoto()

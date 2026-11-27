@@ -20,8 +20,9 @@ using photobook::token_store::TokenStoreError;
 
 const QString expectedServerName = QStringLiteral("photobook-db");
 constexpr int supportedApiVersion = 1;
-// The albums, tag counts and fixed values this app uses came with 0.2.0; a pre-release such as 0.2.0.dev0 counts.
-const QVersionNumber minimumServerVersion(0, 2, 0);
+// The photobook-db line this app works with: before 1.0, each 0.x line may change the API, so an app and a server
+// work together only on the same line. A pre-release such as 0.2.0.dev0 counts.
+const QVersionNumber serverLine(0, 2);
 constexpr int statusUnauthorized = 401;
 
 // Why an address that answered is not a server this app can use; empty if it is one.
@@ -41,13 +42,23 @@ QString problemWithServer(const QUrl& serverUrl, const ServerInfo& info)
                      supportedApiVersion);
     }
 
-    if (QVersionNumber::fromString(info.version) < minimumServerVersion)
+    const QVersionNumber serverVersion = QVersionNumber::fromString(info.version);
+    if (serverVersion < serverLine)
     {
         return i18nc("@info %1 and %2 are version numbers",
-                     "The server is too old (photobook-db %1): this Photobook needs photobook-db %2 or newer. Update "
-                     "the server.",
+                     "The server is too old (photobook-db %1): this Photobook needs photobook-db %2.x. Update the "
+                     "server.",
                      info.version,
-                     minimumServerVersion.toString());
+                     serverLine.toString());
+    }
+
+    if (!serverLine.isPrefixOf(serverVersion))
+    {
+        return i18nc("@info %1 and %2 are version numbers",
+                     "The server is newer (photobook-db %1) than this Photobook works with (photobook-db %2.x). "
+                     "Update Photobook.",
+                     info.version,
+                     serverLine.toString());
     }
 
     if (info.setupRequired)

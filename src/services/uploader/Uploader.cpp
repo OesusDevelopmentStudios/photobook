@@ -398,7 +398,7 @@ void Uploader::send(int row, const QString& sha256)
 
             // The same file, by its SHA-256: it is on the server.
             const ApiError& error = answer.error();
-            const bool sameFile = error.code == QLatin1String("duplicate_image") &&
+            const bool sameFile = error.code == QLatin1String("duplicate_media") &&
                                   error.problem.value(QStringLiteral("sha256")).toString() == sha256;
             if (!sameFile)
             {
@@ -407,7 +407,7 @@ void Uploader::send(int row, const QString& sha256)
             }
 
             // Without the image's id (the user may not see it) there is nothing to add the tags to.
-            const QJsonValue imageId = error.problem.value(QStringLiteral("existing_image_id"));
+            const QJsonValue imageId = error.problem.value(QStringLiteral("existing_media_id"));
             if (imageId.isDouble() && !m_tags.isEmpty())
             {
                 addTagsToDuplicate(row, imageId.toInt());

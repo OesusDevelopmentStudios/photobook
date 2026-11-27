@@ -80,7 +80,7 @@ server_client::HttpResponse tagsStartingWith(const QString& prefix)
     int imageCount = 100;
     for (const QString& name : names)
     {
-        items.append(QJsonObject{{QStringLiteral("tag"), name}, {QStringLiteral("image_count"), imageCount--}});
+        items.append(QJsonObject{{QStringLiteral("tag"), name}, {QStringLiteral("media_count"), imageCount--}});
     }
 
     return fakes::jsonResponse(200, {{QStringLiteral("items"), items}});

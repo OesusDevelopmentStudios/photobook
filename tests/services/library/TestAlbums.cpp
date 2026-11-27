@@ -39,7 +39,7 @@ QJsonObject albumJson(const QString& tag, int imageCount, int coverId, int cover
 {
     return {
         {QStringLiteral("tag"), tag},
-        {QStringLiteral("image_count"), imageCount},
+        {QStringLiteral("media_count"), imageCount},
         {QStringLiteral("cover"),
          QJsonObject{{QStringLiteral("id"), coverId}, {QStringLiteral("revision"), coverRevision}}},
         {QStringLiteral("last_changed_at"), lastChanged},
@@ -177,7 +177,7 @@ void TestAlbums::givesTheGridWhatItShows()
              QDateTime(QDate(2026, 11, 20), QTime(18, 3, 11), QTimeZone::UTC));
     // The cover's thumbnail, at its revision, so a turned cover is not shown from an old cache
     const QUrl cover = m_albums->data(vacation, Albums::CoverUrlRole).toUrl();
-    QCOMPARE(cover.path(), QStringLiteral("/api/v1/images/1234/thumbnail"));
+    QCOMPARE(cover.path(), QStringLiteral("/api/v1/media/1234/thumbnail"));
     QCOMPARE(QUrlQuery(cover).queryItemValue(QStringLiteral("size")), QStringLiteral("256"));
     QCOMPARE(QUrlQuery(cover).queryItemValue(QStringLiteral("rev")), QStringLiteral("2"));
     const QUrl largeCover = m_albums->data(vacation, Albums::LargeCoverUrlRole).toUrl();

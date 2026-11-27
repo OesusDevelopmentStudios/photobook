@@ -34,7 +34,7 @@ using server_client::HttpRequest;
 using FileState = Uploader::FileState;
 
 const QString serverUrl = QStringLiteral("https://photos.example.org");
-const QString imagesUrl = serverUrl + QStringLiteral("/api/v1/images");
+const QString imagesUrl = serverUrl + QStringLiteral("/api/v1/media");
 
 QJsonObject metadataOf(const HttpRequest& request)
 {
@@ -46,11 +46,11 @@ server_client::HttpResponse duplicate(const QString& sha256, const QJsonValue& e
     QJsonObject problem{{QStringLiteral("type"), QStringLiteral("about:blank")},
                         {QStringLiteral("title"), QStringLiteral("Image already exists")},
                         {QStringLiteral("status"), 409},
-                        {QStringLiteral("code"), QStringLiteral("duplicate_image")},
+                        {QStringLiteral("code"), QStringLiteral("duplicate_media")},
                         {QStringLiteral("sha256"), sha256}};
     if (!existingImageId.isUndefined())
     {
-        problem.insert(QStringLiteral("existing_image_id"), existingImageId);
+        problem.insert(QStringLiteral("existing_media_id"), existingImageId);
     }
 
     return fakes::jsonResponse(409, problem);

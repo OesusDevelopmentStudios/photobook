@@ -32,7 +32,7 @@ using server_client::HttpRequest;
 using server_client::Image;
 
 const QString serverUrl = QStringLiteral("https://photos.example.org");
-const QString bulkUrl = serverUrl + QStringLiteral("/api/v1/images/bulk-tags");
+const QString bulkUrl = serverUrl + QStringLiteral("/api/v1/media/bulk-tags");
 
 QJsonObject namespaceJson(const QString& name, bool singleValue, const QJsonValue& allowedValues = QJsonValue::Null)
 {
@@ -194,7 +194,7 @@ void TestBulkTagEditor::init()
                      fakes::jsonResponse(200, {{QStringLiteral("items"), QJsonArray()}}));
     m_server->answerWith("POST", bulkUrl, [](const HttpRequest& request) {
         return fakes::jsonResponse(
-            200, {{QStringLiteral("updated"), bodyOf(request).value(QStringLiteral("image_ids")).toArray().size()}});
+            200, {{QStringLiteral("updated"), bodyOf(request).value(QStringLiteral("media_ids")).toArray().size()}});
     });
     for (const Image& image : threeImages())
     {
@@ -202,7 +202,7 @@ void TestBulkTagEditor::init()
         changed[QStringLiteral("tags")] =
             QJsonArray::fromStringList(image.tags + QStringList{QStringLiteral("general:sunset")});
         m_server->answer(
-            "GET", serverUrl + QStringLiteral("/api/v1/images/%1").arg(image.id), fakes::jsonResponse(200, changed));
+            "GET", serverUrl + QStringLiteral("/api/v1/media/%1").arg(image.id), fakes::jsonResponse(200, changed));
     }
 
     auto keyring = std::make_shared<fakes::Keyring>();
@@ -307,7 +307,7 @@ void TestBulkTagEditor::appliesToAllImagesInOneChange()
     QCOMPARE(applied.count(), 1);
     const QList<HttpRequest> changes = m_server->requestsTo("POST", bulkUrl);
     QCOMPARE(changes.size(), 1);
-    QCOMPARE(bodyOf(changes.first()).value(QStringLiteral("image_ids")).toArray(), QJsonArray({1, 2, 3}));
+    QCOMPARE(bodyOf(changes.first()).value(QStringLiteral("media_ids")).toArray(), QJsonArray({1, 2, 3}));
     QCOMPARE(bodyOf(changes.first()).value(QStringLiteral("add_tags")).toArray(),
              QJsonArray{QStringLiteral("general:sunset")});
     QCOMPARE(bodyOf(changes.first()).value(QStringLiteral("remove_tags")).toArray(),
@@ -401,7 +401,7 @@ void TestBulkTagEditor::keepsTheChangesWhenTheSelectionChanges()
     m_editor->apply();
 
     QTRY_COMPARE(m_server->requestsTo("POST", bulkUrl).size(), 1);
-    QCOMPARE(bodyOf(m_server->requestsTo("POST", bulkUrl).first()).value(QStringLiteral("image_ids")).toArray(),
+    QCOMPARE(bodyOf(m_server->requestsTo("POST", bulkUrl).first()).value(QStringLiteral("media_ids")).toArray(),
              QJsonArray{3});
 }
 

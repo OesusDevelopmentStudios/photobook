@@ -55,6 +55,8 @@ private Q_SLOTS:
     void refusesWhatIsNotAPhotobookServer();
     void pointsToTheSetupPageOfANewServer();
     void refusesAServerOlderThan020();
+    void refusesAServerOfANewerLine();
+    void acceptsALaterReleaseOfItsLine();
     void acceptsAPreReleaseOf020();
     void linksToTheWebAdmin();
     void linksToTheWebAdminUnderTheServersPath();
@@ -200,7 +202,37 @@ void TestConnection::refusesAServerOlderThan020()
     QTRY_COMPARE(connection->state(), Connection::State::NoServer);
     QVERIFY2(connection->errorMessage().contains(QStringLiteral("too old (photobook-db 0.1.0)")),
              qPrintable(connection->errorMessage()));
-    QVERIFY(connection->errorMessage().contains(QStringLiteral("photobook-db 0.2.0 or newer")));
+    QVERIFY(connection->errorMessage().contains(QStringLiteral("photobook-db 0.2.x")));
+}
+
+// Before 1.0 each 0.x line may change the API: a server of the next line is refused too.
+void TestConnection::refusesAServerOfANewerLine()
+{
+    m_server->answer(
+        "GET",
+        serverUrl + QStringLiteral("/api/v1/server/info"),
+        response(200, R"({"name":"photobook-db","version":"0.3.0","api_version":1,"setup_required":false})"));
+    const auto connection = createConnection();
+
+    connection->checkServer(serverUrl);
+
+    QTRY_COMPARE(connection->state(), Connection::State::NoServer);
+    QVERIFY2(connection->errorMessage().contains(QStringLiteral("newer (photobook-db 0.3.0)")),
+             qPrintable(connection->errorMessage()));
+    QVERIFY(connection->errorMessage().contains(QStringLiteral("Update Photobook")));
+}
+
+void TestConnection::acceptsALaterReleaseOfItsLine()
+{
+    m_server->answer(
+        "GET",
+        serverUrl + QStringLiteral("/api/v1/server/info"),
+        response(200, R"({"name":"photobook-db","version":"0.2.7","api_version":1,"setup_required":false})"));
+    const auto connection = createConnection();
+
+    connection->checkServer(serverUrl);
+
+    QTRY_COMPARE(connection->state(), Connection::State::ServerFound);
 }
 
 // A development build of the server, e.g. 0.2.0.dev0, has the 0.2.0 features.

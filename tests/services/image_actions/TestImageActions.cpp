@@ -40,7 +40,7 @@ using connection::Connection;
 using fakes::FakeServer;
 
 const QString serverUrl = QStringLiteral("https://photos.example.org");
-const QString fileUrl = serverUrl + QStringLiteral("/api/v1/images/7/file");
+const QString fileUrl = serverUrl + QStringLiteral("/api/v1/media/7/file");
 
 // A small image in the given format, e.g. "PNG"
 QByteArray encodedImage(const char* format, const QSize& size = QSize(4, 3))
@@ -386,7 +386,7 @@ void TestImageActions::savesNoRotationOfAWebp()
 
 void TestImageActions::savesTheRotationOfALibraryImageOnTheServer()
 {
-    const QString rotationUrl = serverUrl + QStringLiteral("/api/v1/images/7/rotation");
+    const QString rotationUrl = serverUrl + QStringLiteral("/api/v1/media/7/rotation");
     QJsonObject turned = fakes::imageJson(7);
     turned.insert(QStringLiteral("revision"), 1);
     m_server->answer("POST", rotationUrl, fakes::jsonResponse(200, turned));
@@ -410,7 +410,7 @@ void TestImageActions::savesTheRotationOfALibraryImageOnTheServer()
 void TestImageActions::reportsARotationTheServerRefuses()
 {
     m_server->answer(
-        "POST", serverUrl + QStringLiteral("/api/v1/images/7/rotation"), fakes::problem(422, "rotation_not_supported"));
+        "POST", serverUrl + QStringLiteral("/api/v1/media/7/rotation"), fakes::problem(422, "rotation_not_supported"));
     QSignalSpy failed(m_actions.get(), &ImageActions::failed);
     QSignalSpy saved(m_actions.get(), &ImageActions::rotationSaved);
 

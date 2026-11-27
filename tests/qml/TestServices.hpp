@@ -236,7 +236,7 @@ private:
                            200,
                            {{QStringLiteral("items"),
                              QJsonArray{QJsonObject{{QStringLiteral("tag"), QStringLiteral("character:sample_hero")},
-                                                    {QStringLiteral("image_count"), 3}}}}}));
+                                                    {QStringLiteral("media_count"), 3}}}}}));
         server->answer(
             "GET",
             api + QStringLiteral("/preferences"),
@@ -246,7 +246,7 @@ private:
         const auto albumJson = [](const QString& tag, int imageCount, int coverId, const QString& lastChanged) {
             return QJsonObject{
                 {QStringLiteral("tag"), tag},
-                {QStringLiteral("image_count"), imageCount},
+                {QStringLiteral("media_count"), imageCount},
                 {QStringLiteral("cover"),
                  QJsonObject{{QStringLiteral("id"), coverId}, {QStringLiteral("revision"), 0}}},
                 {QStringLiteral("last_changed_at"), lastChanged},
@@ -264,10 +264,10 @@ private:
                       albumJson(QStringLiteral("album:garden"), 3, 7, QStringLiteral("2026-11-01T10:00:00Z"))}}}));
         const auto tagCount = [](const char* tag, int imageCount) {
             return QJsonObject{{QStringLiteral("tag"), QString::fromLatin1(tag)},
-                               {QStringLiteral("image_count"), imageCount}};
+                               {QStringLiteral("media_count"), imageCount}};
         };
         server->answer("GET",
-                       api + QStringLiteral("/images/5/tag-counts"),
+                       api + QStringLiteral("/media/5/tag-counts"),
                        fakes::jsonResponse(200,
                                            {{QStringLiteral("items"),
                                              QJsonArray{tagCount("author:sample_artist", 40),
@@ -276,7 +276,7 @@ private:
                                                         tagCount("general:summer", 999),
                                                         tagCount("meta:jpeg", 3100000)}}}));
         // The sample photo's tags as changed: the server applies what it is sent.
-        server->answerWith("PATCH", api + QStringLiteral("/images/5"), [](const server_client::HttpRequest& request) {
+        server->answerWith("PATCH", api + QStringLiteral("/media/5"), [](const server_client::HttpRequest& request) {
             const QJsonObject changes = QJsonDocument::fromJson(request.body).object();
             QStringList tags = samplePhotoTags();
             for (const QJsonValue& removed : changes.value(QStringLiteral("remove_tags")).toArray())

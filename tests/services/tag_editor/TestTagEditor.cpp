@@ -31,7 +31,7 @@ using fakes::FakeServer;
 using server_client::HttpRequest;
 
 const QString serverUrl = QStringLiteral("https://photos.example.org");
-const QString imageUrl = serverUrl + QStringLiteral("/api/v1/images/5");
+const QString imageUrl = serverUrl + QStringLiteral("/api/v1/media/5");
 const QString countsUrl = imageUrl + QStringLiteral("/tag-counts");
 
 QJsonObject namespaceJson(const QString& name, bool singleValue, const QJsonValue& allowedValues = QJsonValue::Null)
@@ -232,16 +232,16 @@ void TestTagEditor::init()
         if (QUrlQuery(request.url).queryItemValue(QStringLiteral("namespace")) == QLatin1String("category"))
         {
             items = {QJsonObject{{QStringLiteral("tag"), QStringLiteral("category:photo")},
-                                 {QStringLiteral("image_count"), 9}},
+                                 {QStringLiteral("media_count"), 9}},
                      QJsonObject{{QStringLiteral("tag"), QStringLiteral("category:artwork")},
-                                 {QStringLiteral("image_count"), 4}}};
+                                 {QStringLiteral("media_count"), 4}}};
         }
 
         return fakes::jsonResponse(200, {{QStringLiteral("items"), items}});
     });
     const auto tagCount = [](const char* tag, int imageCount) {
         return QJsonObject{{QStringLiteral("tag"), QString::fromLatin1(tag)},
-                           {QStringLiteral("image_count"), imageCount}};
+                           {QStringLiteral("media_count"), imageCount}};
     };
     m_server->answer("GET",
                      countsUrl,

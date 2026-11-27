@@ -98,7 +98,7 @@ TagCount tagCountFrom(JsonReader& reader)
 {
     TagCount tagCount;
     tagCount.tag = reader.string(QStringLiteral("tag"));
-    tagCount.imageCount = reader.integer(QStringLiteral("image_count"));
+    tagCount.imageCount = reader.integer(QStringLiteral("media_count"));
     return tagCount;
 }
 
@@ -106,7 +106,7 @@ Album albumFrom(JsonReader& reader)
 {
     Album album;
     album.tag = reader.string(QStringLiteral("tag"));
-    album.imageCount = reader.integer(QStringLiteral("image_count"));
+    album.imageCount = reader.integer(QStringLiteral("media_count"));
     JsonReader coverReader(reader.object(QStringLiteral("cover")));
     album.coverImageId = coverReader.integer(QStringLiteral("id"));
     album.coverRevision = coverReader.integer(QStringLiteral("revision"));

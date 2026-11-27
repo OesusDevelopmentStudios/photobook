@@ -100,7 +100,7 @@ void TestNetworkAccess::givesTheTokenOnlyForTheServersAddresses_data()
     QTest::addColumn<bool>("getsToken");
 
     const QString server = QStringLiteral("https://photos.example.org");
-    const QString thumbnail = QStringLiteral("/api/v1/images/5/thumbnail?size=256");
+    const QString thumbnail = QStringLiteral("/api/v1/media/5/thumbnail?size=256");
     QTest::newRow("the server") << server << server + thumbnail << true;
     QTest::newRow("host in capitals") << server << QStringLiteral("https://Photos.Example.org") + thumbnail << true;
     QTest::newRow("default port written out")
@@ -132,7 +132,7 @@ void TestNetworkAccess::sendsTheTokenWithTheRequest()
     m_credentials->setLogin(m_server->url({}), QStringLiteral("pk_secret"));
     QNetworkAccessManager* networkAccess = createNetworkAccessManager(m_credentials, m_cacheFolder->path(), this);
 
-    QNetworkReply* reply = get(*networkAccess, m_server->url(QStringLiteral("/api/v1/images/5/thumbnail")));
+    QNetworkReply* reply = get(*networkAccess, m_server->url(QStringLiteral("/api/v1/media/5/thumbnail")));
 
     QCOMPARE(reply->readAll(), QByteArray("webp bytes"));
     QCOMPARE(m_server->requests.size(), 1);
@@ -145,7 +145,7 @@ void TestNetworkAccess::sendsNoTokenAfterLogout()
     m_credentials->clear();
     QNetworkAccessManager* networkAccess = createNetworkAccessManager(m_credentials, m_cacheFolder->path(), this);
 
-    get(*networkAccess, m_server->url(QStringLiteral("/api/v1/images/5/thumbnail")));
+    get(*networkAccess, m_server->url(QStringLiteral("/api/v1/media/5/thumbnail")));
 
     QCOMPARE(m_server->requests.size(), 1);
     QVERIFY(!lowerCase(m_server->requests.first()).contains("authorization"));
@@ -156,7 +156,7 @@ void TestNetworkAccess::sendsNoTokenAfterLogout()
 void TestNetworkAccess::loadsAThumbnailFromDiskTheSecondTime()
 {
     m_credentials->setLogin(m_server->url({}), QStringLiteral("pk_secret"));
-    const QUrl thumbnail = m_server->url(QStringLiteral("/api/v1/images/5/thumbnail"));
+    const QUrl thumbnail = m_server->url(QStringLiteral("/api/v1/media/5/thumbnail"));
     {
         QNetworkAccessManager* firstRun = createNetworkAccessManager(m_credentials, m_cacheFolder->path(), this);
         QNetworkReply* reply = get(*firstRun, thumbnail);
@@ -177,7 +177,7 @@ void TestNetworkAccess::keepsFullImagesOffTheDisk()
 {
     m_credentials->setLogin(m_server->url({}), QStringLiteral("pk_secret"));
     QNetworkAccessManager* networkAccess = createNetworkAccessManager(m_credentials, m_cacheFolder->path(), this);
-    const QUrl file = m_server->url(QStringLiteral("/api/v1/images/5/file"));
+    const QUrl file = m_server->url(QStringLiteral("/api/v1/media/5/file"));
 
     get(*networkAccess, file);
     QNetworkReply* reply = get(*networkAccess, file);

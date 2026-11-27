@@ -30,7 +30,7 @@ struct FieldError
 };
 
 // Why a request failed: the server's Problem Details (RFC 9457), or a network or response error. The app
-// branches on `code` (e.g. "tag_restricted", "duplicate_image"), never on the title.
+// branches on `code` (e.g. "tag_restricted", "duplicate_media"), never on the title.
 struct ApiError
 {
     int httpStatus = 0;  // 0 if no answer arrived

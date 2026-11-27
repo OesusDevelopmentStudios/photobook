@@ -31,8 +31,8 @@ using library::Library;
 using server_client::HttpRequest;
 
 const QString serverUrl = QStringLiteral("https://photos.example.org");
-const QString imagesUrl = serverUrl + QStringLiteral("/api/v1/images");
-const QString countUrl = serverUrl + QStringLiteral("/api/v1/images/count");
+const QString imagesUrl = serverUrl + QStringLiteral("/api/v1/media");
+const QString countUrl = serverUrl + QStringLiteral("/api/v1/media/count");
 constexpr int resultCount = 7;
 
 // Never asked: library images are not in a folder.

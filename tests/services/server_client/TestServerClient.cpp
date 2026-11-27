@@ -79,8 +79,8 @@ QByteArray beachImageJson()
         "storage_path":"photo/sample_artist/2025/beach_aaaaaaaa.jpg","mime_type":"image/jpeg","width":4000,
         "height":3000,"file_size":5000000000,"taken_at":"2025-07-14T18:03:12","taken_at_source":"exif",
         "imported_at":"2026-11-15T19:22:03.724229Z","updated_at":"2026-11-15T19:22:04Z",
-        "tags":["category:photo","general:summer"],"revision":0,"links":{"self":"/api/v1/images/5",
-        "file":"/api/v1/images/5/file","thumbnail":"/api/v1/images/5/thumbnail"}})";
+        "tags":["category:photo","general:summer"],"revision":0,"links":{"self":"/api/v1/media/5",
+        "file":"/api/v1/media/5/file","thumbnail":"/api/v1/media/5/thumbnail"}})";
 }
 
 // As the server sends it once the file changed
@@ -431,7 +431,8 @@ void TestServerClient::searchesWithEveryParameter()
     QVERIFY(valueOf(m_client->searchImages(query)).has_value());
 
     const QUrl url = m_transport->lastRequest().url;
-    QCOMPARE(url.path(), QStringLiteral("/api/v1/images"));
+    QCOMPARE(url.path(), QStringLiteral("/api/v1/media"));
+    QCOMPARE(serverSideValue(url, "media"), QStringLiteral("image"));  // photos only, until the app shows videos
     QCOMPARE(serverSideValue(url, "q"), QStringLiteral("category:photo c++ q&a?#1"));
     QCOMPARE(serverSideValue(url, "album"), QStringLiteral("c++_trip"));
     QCOMPARE(serverSideValue(url, "sort"), QStringLiteral("random"));
@@ -508,7 +509,8 @@ void TestServerClient::countsTheImagesASearchFinds()
     const Result<ImageCount> found = valueOf(m_client->countImages(query));
 
     const QUrl url = m_transport->lastRequest().url;
-    QCOMPARE(url.path(), QStringLiteral("/api/v1/images/count"));
+    QCOMPARE(url.path(), QStringLiteral("/api/v1/media/count"));
+    QCOMPARE(serverSideValue(url, "media"), QStringLiteral("image"));
     QCOMPARE(serverSideValue(url, "q"), QStringLiteral("summer"));
     QCOMPARE(serverSideValue(url, "apply_hidden_filters"), QStringLiteral("false"));
     QVERIFY(!url.query().contains(QStringLiteral("sort")));
@@ -539,7 +541,7 @@ void TestServerClient::readsOneImage()
 
     const Result<Image> image = valueOf(m_client->image(5));
 
-    QCOMPARE(m_transport->lastRequest().url.path(), QStringLiteral("/api/v1/images/5"));
+    QCOMPARE(m_transport->lastRequest().url.path(), QStringLiteral("/api/v1/media/5"));
     QVERIFY(image.has_value());
     QCOMPARE(image->originalFilename, QStringLiteral("beach.jpg"));
 }
@@ -559,7 +561,7 @@ void TestServerClient::uploadsAFileWithItsMetadata()
 
     const HttpRequest request = m_transport->lastRequest();
     QCOMPARE(request.method, QByteArray("POST"));
-    QCOMPARE(request.url.path(), QStringLiteral("/api/v1/images"));
+    QCOMPARE(request.url.path(), QStringLiteral("/api/v1/media"));
     QVERIFY(request.form.has_value());
     QCOMPARE(request.form->fileField, QByteArray("file"));
     QCOMPARE(request.form->filePath, upload.filePath);
@@ -613,8 +615,8 @@ void TestServerClient::keepsTheDuplicateImageInTheError()
     QTemporaryDir folder;
     m_transport->nextResponse =
         answer(409,
-               R"({"type":"t","title":"Image already exists","status":409,"code":"duplicate_image",
-                        "existing_image_id":5,"sha256":)" +
+               R"({"type":"t","title":"Already in the library","status":409,"code":"duplicate_media",
+                        "existing_media_id":5,"sha256":)" +
                    ('"' + beachSha256 + '"') + "}");
     ImageUpload upload;
     upload.filePath = writeFile(folder, QStringLiteral("beach.jpg"), "fake jpeg bytes");
@@ -623,9 +625,9 @@ void TestServerClient::keepsTheDuplicateImageInTheError()
     const Result<Image> result = valueOf(m_client->uploadImage(upload));
 
     QVERIFY(!result.has_value());
-    QCOMPARE(result.error().code, QStringLiteral("duplicate_image"));
+    QCOMPARE(result.error().code, QStringLiteral("duplicate_media"));
     QCOMPARE(result.error().problem.value(QStringLiteral("sha256")).toString(), QString::fromLatin1(beachSha256));
-    QCOMPARE(result.error().problem.value(QStringLiteral("existing_image_id")).toInt(), 5);
+    QCOMPARE(result.error().problem.value(QStringLiteral("existing_media_id")).toInt(), 5);
 }
 
 void TestServerClient::changesTheTagsOfAnImage()
@@ -637,7 +639,7 @@ void TestServerClient::changesTheTagsOfAnImage()
 
     const HttpRequest request = m_transport->lastRequest();
     QCOMPARE(request.method, QByteArray("PATCH"));
-    QCOMPARE(request.url.path(), QStringLiteral("/api/v1/images/5"));
+    QCOMPARE(request.url.path(), QStringLiteral("/api/v1/media/5"));
     QCOMPARE(jsonBodyOf(request),
              QJsonObject({{QStringLiteral("add_tags"), QJsonArray({QStringLiteral("author:sample_artist")})},
                           {QStringLiteral("remove_tags"), QJsonArray({QStringLiteral("general:summer")})}}));
@@ -653,8 +655,8 @@ void TestServerClient::changesTheTagsOfManyImages()
 
     const HttpRequest request = m_transport->lastRequest();
     QCOMPARE(request.method, QByteArray("POST"));
-    QCOMPARE(request.url.path(), QStringLiteral("/api/v1/images/bulk-tags"));
-    QCOMPARE(jsonBodyOf(request).value(QStringLiteral("image_ids")).toArray(), QJsonArray({1, 2, 3}));
+    QCOMPARE(request.url.path(), QStringLiteral("/api/v1/media/bulk-tags"));
+    QCOMPARE(jsonBodyOf(request).value(QStringLiteral("media_ids")).toArray(), QJsonArray({1, 2, 3}));
     QCOMPARE(updated.value(), 3);
 }
 
@@ -666,7 +668,7 @@ void TestServerClient::rotatesAnImage()
 
     const HttpRequest request = m_transport->lastRequest();
     QCOMPARE(request.method, QByteArray("POST"));
-    QCOMPARE(request.url.path(), QStringLiteral("/api/v1/images/5/rotation"));
+    QCOMPARE(request.url.path(), QStringLiteral("/api/v1/media/5/rotation"));
     QCOMPARE(jsonBodyOf(request), QJsonObject({{QStringLiteral("degrees"), 90}}));
     QVERIFY(image.has_value());
     QCOMPARE(image->revision, 1);
@@ -685,13 +687,13 @@ void TestServerClient::downloadsTheFileAndTheThumbnail()
 {
     m_transport->nextResponse = answer(200, "jpeg bytes");
     const Result<QByteArray> file = valueOf(m_client->imageFile(5));
-    QCOMPARE(m_transport->lastRequest().url.path(), QStringLiteral("/api/v1/images/5/file"));
+    QCOMPARE(m_transport->lastRequest().url.path(), QStringLiteral("/api/v1/media/5/file"));
     QCOMPARE(file.value(), QByteArray("jpeg bytes"));
     QCOMPARE(m_client->imageFileUrl(5, 0), m_transport->lastRequest().url);  // where views load it
 
     m_transport->nextResponse = answer(200, "webp bytes");
     const Result<QByteArray> thumbnail = valueOf(m_client->thumbnail(5, ThumbnailSize::Large));
-    QCOMPARE(m_transport->lastRequest().url.path(), QStringLiteral("/api/v1/images/5/thumbnail"));
+    QCOMPARE(m_transport->lastRequest().url.path(), QStringLiteral("/api/v1/media/5/thumbnail"));
     QCOMPARE(serverSideValue(m_transport->lastRequest().url, "size"), QStringLiteral("1024"));
     QCOMPARE(thumbnail.value(), QByteArray("webp bytes"));
     QCOMPARE(m_client->thumbnailUrl(5, ThumbnailSize::Large, 0),
@@ -705,8 +707,8 @@ void TestServerClient::downloadsTheFileAndTheThumbnail()
 
 void TestServerClient::suggestsTags()
 {
-    m_transport->nextResponse = answer(200, R"({"items":[{"tag":"author:sample_artist","image_count":412},
-                                                         {"tag":"author:sam_other","image_count":3}]})");
+    m_transport->nextResponse = answer(200, R"({"items":[{"tag":"author:sample_artist","media_count":412},
+                                                         {"tag":"author:sam_other","media_count":3}]})");
 
     const Result<QList<TagCount>> tags = valueOf(m_client->tags(QStringLiteral("sam"), QStringLiteral("author"), 5));
 
@@ -723,13 +725,13 @@ void TestServerClient::suggestsTags()
 
 void TestServerClient::countsTheImagesOfAnImagesTags()
 {
-    m_transport->nextResponse = answer(200, R"({"items":[{"tag":"category:photo","image_count":9000},
-                                                         {"tag":"general:summer","image_count":412}]})");
+    m_transport->nextResponse = answer(200, R"({"items":[{"tag":"category:photo","media_count":9000},
+                                                         {"tag":"general:summer","media_count":412}]})");
 
     const Result<QList<TagCount>> counts = valueOf(m_client->imageTagCounts(5));
 
     QCOMPARE(m_transport->lastRequest().method, QByteArray("GET"));
-    QCOMPARE(m_transport->lastRequest().url.path(), QStringLiteral("/api/v1/images/5/tag-counts"));
+    QCOMPARE(m_transport->lastRequest().url.path(), QStringLiteral("/api/v1/media/5/tag-counts"));
     QVERIFY(counts.has_value());
     QCOMPARE(counts->size(), 2);
     QCOMPARE(counts->at(1).tag, QStringLiteral("general:summer"));
@@ -739,9 +741,9 @@ void TestServerClient::countsTheImagesOfAnImagesTags()
 void TestServerClient::readsTheAlbums()
 {
     m_transport->nextResponse = answer(200, R"({"items":[
-        {"tag":"album:vacation_2015","image_count":84,"cover":{"id":1234,"revision":2},
+        {"tag":"album:vacation_2015","media_count":84,"cover":{"id":1234,"revision":2},
          "last_changed_at":"2026-11-20T18:03:11Z"},
-        {"tag":"album:garden","image_count":1,"cover":{"id":7,"revision":0},
+        {"tag":"album:garden","media_count":1,"cover":{"id":7,"revision":0},
          "last_changed_at":"2026-11-02T08:00:00Z"}]})");
 
     const Result<QList<Album>> albums = valueOf(m_client->albums(false));
@@ -774,7 +776,7 @@ void TestServerClient::listsAlbumsWithHiddenImagesWhenAsked()
 void TestServerClient::namesTheFieldOfACoverThatIsMissing()
 {
     m_transport->nextResponse = answer(200, R"({"items":[
-        {"tag":"album:garden","image_count":1,"cover":{"id":7},"last_changed_at":"2026-11-02T08:00:00Z"}]})");
+        {"tag":"album:garden","media_count":1,"cover":{"id":7},"last_changed_at":"2026-11-02T08:00:00Z"}]})");
 
     const Result<QList<Album>> albums = valueOf(m_client->albums(false));
 
@@ -921,7 +923,7 @@ void TestServerClient::realTransportUploadsTheFileAsMultipart()
     QTRY_VERIFY(future.isFinished());
     QVERIFY(future.result().has_value());
     QCOMPARE(sent, 1.0);  // Qt told how the body went
-    QVERIFY(received.startsWith("POST /api/v1/images HTTP/1.1"));
+    QVERIFY(received.startsWith("POST /api/v1/media HTTP/1.1"));
     const QByteArray request = received.toLower();  // header names are case-insensitive; Qt writes them lower case
     QVERIFY(request.contains("content-type: multipart/form-data; boundary="));
     QVERIFY(request.contains("content-disposition: form-data; name=\"metadata\""));

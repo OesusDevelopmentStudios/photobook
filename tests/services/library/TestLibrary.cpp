@@ -35,8 +35,8 @@ using fakes::jsonResponse;
 using server_client::HttpRequest;
 
 const QString serverUrl = QStringLiteral("https://photos.example.org");
-const QString imagesUrl = serverUrl + QStringLiteral("/api/v1/images");
-const QString countUrl = serverUrl + QStringLiteral("/api/v1/images/count");
+const QString imagesUrl = serverUrl + QStringLiteral("/api/v1/media");
+const QString countUrl = serverUrl + QStringLiteral("/api/v1/media/count");
 
 QString parameter(const HttpRequest& request, const QString& name)
 {
@@ -318,9 +318,9 @@ void TestLibrary::givesTheGridWhatItShows()
     QCOMPARE(m_library->data(first, Library::ImageIdRole).toInt(), 1);
     QCOMPARE(m_library->data(first, Library::FileNameRole).toString(), QStringLiteral("photo_1.jpg"));
     QCOMPARE(m_library->data(first, Library::ThumbnailUrlRole).toUrl(),
-             QUrl(serverUrl + QStringLiteral("/api/v1/images/1/thumbnail?size=256")));
+             QUrl(serverUrl + QStringLiteral("/api/v1/media/1/thumbnail?size=256")));
     QCOMPARE(m_library->data(first, Library::LargeThumbnailUrlRole).toUrl(),
-             QUrl(serverUrl + QStringLiteral("/api/v1/images/1/thumbnail?size=1024")));
+             QUrl(serverUrl + QStringLiteral("/api/v1/media/1/thumbnail?size=1024")));
     QCOMPARE(m_library->data(first, Library::TakenAtRole).toDateTime().date(), QDate(2025, 7, 14));
     QCOMPARE(m_library->roleNames().value(Library::ThumbnailUrlRole), QByteArray("thumbnailUrl"));
 
