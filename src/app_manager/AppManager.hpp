@@ -29,6 +29,7 @@
 #include "TagPaneLayout.hpp"
 #include "UploadTagEditor.hpp"
 #include "Uploader.hpp"
+#include "VideoPlayer.hpp"
 #include "ViewTransform.hpp"
 #include "Viewer.hpp"
 
@@ -46,6 +47,7 @@ class AppManager : public QObject
     Q_PROPERTY(photobook::view_transform::ViewTransform* viewTransform READ viewTransform CONSTANT)
     Q_PROPERTY(photobook::navigator::Navigator* navigator READ navigator CONSTANT)
     Q_PROPERTY(photobook::slideshow::Slideshow* slideshow READ slideshow CONSTANT)
+    Q_PROPERTY(photobook::video_player::VideoPlayer* videoPlayer READ videoPlayer CONSTANT)
     Q_PROPERTY(photobook::connection::Connection* connection READ connection CONSTANT)
     Q_PROPERTY(photobook::library::Library* library READ library CONSTANT)
     Q_PROPERTY(photobook::library::Albums* albums READ albums CONSTANT)
@@ -67,6 +69,7 @@ public:
     view_transform::ViewTransform* viewTransform() const;
     navigator::Navigator* navigator() const;
     slideshow::Slideshow* slideshow() const;
+    video_player::VideoPlayer* videoPlayer() const;
     connection::Connection* connection() const;
     library::Library* library() const;
     library::Albums* albums() const;
@@ -132,6 +135,7 @@ private:
     std::unique_ptr<tag_editor::HiddenFilterEditor> m_hiddenFilterEditor;
     std::unique_ptr<tag_editor::SearchSuggestions> m_searchSuggestions;
     std::unique_ptr<image_actions::ImageActions> m_imageActions;
+    std::unique_ptr<video_player::VideoPlayer> m_videoPlayer;
     std::optional<server_client::Image> m_libraryImageOnScreen;  // none while a local file is shown
     std::shared_ptr<network_access::ServerCredentials> m_serverCredentials;
     std::unique_ptr<QQmlNetworkAccessManagerFactory> m_networkAccessFactory;

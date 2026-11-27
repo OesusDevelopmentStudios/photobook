@@ -287,6 +287,7 @@ Kirigami.ApplicationWindow {
             }
             uploader: root.appManager.uploader
             imageActions: root.appManager.imageActions
+            videoPlayer: root.appManager.videoPlayer
             onServerPageRequested: root.showServerPage()
             onLibraryRequested: root.showLibrary()
             onUploadImageRequested: {

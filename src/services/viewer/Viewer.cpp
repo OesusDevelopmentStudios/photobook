@@ -130,6 +130,11 @@ bool Viewer::isFromLibrary() const
     return hasImage() && m_currentImage->fromLibrary;
 }
 
+bool Viewer::isVideo() const
+{
+    return hasImage() && m_currentImage->details.video;
+}
+
 QString Viewer::mimeType() const
 {
     return hasImage() ? m_currentImage->details.mimeType : QString();

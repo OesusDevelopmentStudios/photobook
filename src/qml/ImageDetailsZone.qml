@@ -14,12 +14,28 @@ Item {
     property TagPaneLayout tagPaneLayout: null
     property bool pinned: false  // shown without the pointer near, e.g. while the tag pane is open
     property real availableHeight: 0  // up to the toolbar, while the tags are edited
+    property Component controls: null  // e.g. a video's controls, in a bar above the details that comes with them
     readonly property ImageDetailsFooter footer: detailsFooter
+    readonly property Item controlsBar: controlsLoader.item as Item
 
-    height: detailsFooter.implicitHeight + Kirigami.Units.gridUnit * 2
+    height: detailsFooter.implicitHeight + controlsLoader.height + Kirigami.Units.gridUnit * 2
 
     HoverHandler {
         id: hover
+    }
+
+    Loader {
+        id: controlsLoader
+
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: detailsFooter.top
+        sourceComponent: zone.controls
+        visible: detailsFooter.visible
+        opacity: detailsFooter.opacity
+        transform: Translate {
+            y: (1 - detailsFooter.reveal) * (controlsLoader.height + detailsFooter.height)
+        }
     }
 
     ImageDetailsFooter {

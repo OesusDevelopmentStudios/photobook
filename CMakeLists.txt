@@ -70,6 +70,7 @@ ecm_find_qmlmodule(org.kde.ki18n REQUIRED)
 # install prefix, and in the Flatpak the module is in the runtime instead.
 ecm_find_qmlmodule(org.kde.kirigamiaddons.components REQUIRED)
 ecm_find_qmlmodule(QtQuick.Dialogs REQUIRED)  # the file dialog for opening an image
+ecm_find_qmlmodule(QtMultimedia REQUIRED)  # playing videos (MediaPlayer, VideoOutput)
 
 add_subdirectory(src)
 add_subdirectory(packaging)

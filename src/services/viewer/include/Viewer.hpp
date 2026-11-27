@@ -32,6 +32,7 @@ class Viewer : public QObject
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY currentImageChanged)
 
     Q_PROPERTY(bool fromLibrary READ isFromLibrary NOTIFY detailsChanged)
+    Q_PROPERTY(bool video READ isVideo NOTIFY currentImageChanged)
     Q_PROPERTY(QString mimeType READ mimeType NOTIFY detailsChanged)
     Q_PROPERTY(qint64 fileSize READ fileSize NOTIFY detailsChanged)
     Q_PROPERTY(QDateTime takenAt READ takenAt NOTIFY detailsChanged)
@@ -59,6 +60,7 @@ public:
         TakenAtSource takenAtSource = TakenAtSource::Unknown;
         QDateTime importedAt;  // into the library; invalid for local files
         QString location;      // the folder, or the place in the server's library
+        bool video = false;    // the image shown is its poster frame; the video plays over it
     };
 
     explicit Viewer(std::unique_ptr<image_loader::ImageLoader> imageLoader, QObject* parent = nullptr);
@@ -81,6 +83,7 @@ public:
     QString errorMessage() const;  // empty when the image opened
 
     bool isFromLibrary() const;
+    bool isVideo() const;
     QString mimeType() const;
     qint64 fileSize() const;
     QDateTime takenAt() const;

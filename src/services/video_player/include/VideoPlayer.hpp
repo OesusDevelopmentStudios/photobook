@@ -51,6 +51,9 @@ public:
     // expired or been refused, so it gets one new URL and goes on from there. Otherwise the message is shown.
     Q_INVOKABLE void reportPlaybackError(const QString& message, qint64 positionMs);
 
+    // A time in the video as the controls show it, e.g. "3:42"
+    Q_INVOKABLE QString timeText(qint64 milliseconds) const;
+
     QUrl source() const;  // empty while waiting for a URL, after an error and when closed
     bool isWaitingForSource() const;
     qint64 startPositionMs() const;  // where to start: 0, or where a refused URL stopped

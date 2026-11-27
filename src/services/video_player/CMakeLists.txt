@@ -19,6 +19,7 @@ target_link_libraries(photobook_video_player
         photobook_settings
         Qt6::Core
     PRIVATE
+        photobook_utils
         KF6::I18n
 )
 

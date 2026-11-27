@@ -31,6 +31,7 @@
 #include "TagPaneLayout.hpp"
 #include "UploadTagEditor.hpp"
 #include "Uploader.hpp"
+#include "VideoPlayer.hpp"
 #include "Viewer.hpp"
 #include "ViewerFactory.hpp"
 #include "fakes/FakeServer.hpp"
@@ -52,6 +53,7 @@ class TestServices : public QObject
     Q_OBJECT
 
     Q_PROPERTY(photobook::viewer::Viewer* viewer READ viewer CONSTANT)
+    Q_PROPERTY(photobook::video_player::VideoPlayer* videoPlayer READ videoPlayer CONSTANT)
     Q_PROPERTY(photobook::tag_editor::TagEditor* tagEditor READ tagEditor CONSTANT)
     Q_PROPERTY(photobook::tag_editor::UploadTagEditor* uploadTagEditor READ uploadTagEditor CONSTANT)
     Q_PROPERTY(photobook::uploader::Uploader* uploader READ uploader CONSTANT)
@@ -98,6 +100,7 @@ public:
         , m_uploadTagEditor(tag_editor::createUploadTagEditor(m_connection.get()))
         , m_uploader(std::make_unique<uploader::Uploader>(
               m_connection.get(), m_uploadTagEditor.get(), std::make_unique<fakes::FakeTrash>(m_trashCan)))
+        , m_videoPlayer(std::make_unique<video_player::VideoPlayer>(m_connection.get(), m_settings.get()))
     {
         m_viewer->openImage(QStringLiteral("/photos/beach.jpg"));
         logInForHiddenFilters();
@@ -116,6 +119,13 @@ public:
     viewer::Viewer* viewer() const
     {
         return m_viewer.get();
+    }
+
+    video_player::VideoPlayer* videoPlayer() const
+
+    {
+
+        return m_videoPlayer.get();
     }
 
     tag_editor::TagEditor* tagEditor() const
@@ -323,6 +333,7 @@ private:
     std::unique_ptr<tag_editor::UploadTagEditor> m_uploadTagEditor;
     std::shared_ptr<fakes::TrashCan> m_trashCan = std::make_shared<fakes::TrashCan>();
     std::unique_ptr<uploader::Uploader> m_uploader;
+    std::unique_ptr<video_player::VideoPlayer> m_videoPlayer;
     std::unique_ptr<settings::Settings> m_accountSettings;
     std::unique_ptr<connection::Connection> m_accountConnection;
     std::unique_ptr<tag_editor::HiddenFilterEditor> m_hiddenFilterEditor;

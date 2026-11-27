@@ -86,6 +86,7 @@ private Q_SLOTS:
     void readsTheFileAgain();
 
     void opensServerImage();
+    void knowsWhenItShowsAVideosPoster();
     void mayAnimateServerImages_data();
     void mayAnimateServerImages();
     void clearsErrorWhenServerImageOpens();
@@ -198,6 +199,24 @@ void TestViewer::notifiesOncePerOpen()
     m_viewer->openImage(QStringLiteral("/photos/beach.jpg"));
 
     QCOMPARE(changeSpy.count(), 1);
+}
+
+// A video shows as its poster frame; the viewer page plays the video over it.
+void TestViewer::knowsWhenItShowsAVideosPoster()
+{
+    Viewer::ImageDetails video = libraryPhoto();
+    video.fileName = QStringLiteral("waves.mp4");
+    video.video = true;
+    QSignalSpy changes(m_viewer.get(), &Viewer::currentImageChanged);
+
+    m_viewer->openServerImage(serverFileUrl, video);
+
+    QVERIFY(m_viewer->isVideo());
+    QCOMPARE(changes.count(), 1);
+    m_viewer->openServerImage(serverFileUrl, libraryPhoto());
+    QVERIFY(!m_viewer->isVideo());
+    m_viewer->openImage(QStringLiteral("/photos/beach.jpg"));
+    QVERIFY(!m_viewer->isVideo());
 }
 
 void TestViewer::opensServerImage()

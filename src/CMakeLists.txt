@@ -57,6 +57,7 @@ set(qmlFiles
     qml/Main.qml
     qml/ViewerPage.qml
     qml/SlideshowControls.qml
+    qml/VideoControls.qml
     qml/WelcomePage.qml
     qml/ConnectPage.qml
     qml/LocalServerPage.qml
@@ -125,6 +126,7 @@ target_link_libraries(photobook_ui PUBLIC
     photobook_tag_editor
     photobook_uploader
     photobook_image_actions
+    photobook_video_player
     Qt6::Qml
     Qt6::Quick
     Qt6::QuickControls2

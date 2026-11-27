@@ -21,6 +21,7 @@
 #include "SlideshowFactory.hpp"
 #include "TagEditorFactory.hpp"
 #include "UploaderFactory.hpp"
+#include "VideoPlayerFactory.hpp"
 #include "ViewTransformFactory.hpp"
 #include "ViewerFactory.hpp"
 
@@ -57,6 +58,7 @@ Viewer::ImageDetails detailsOf(const photobook::server_client::Image& image)
     details.takenAtSource = takenAtSourceFor(image.takenAtSource);
     details.importedAt = image.importedAt;
     details.location = image.storagePath;
+    details.video = image.mediaKind == photobook::server_client::MediaKind::Video;
     return details;
 }
 
@@ -85,6 +87,7 @@ AppManager::AppManager(QObject* parent)
     , m_hiddenFilterEditor(tag_editor::createHiddenFilterEditor(m_connection.get()))
     , m_searchSuggestions(tag_editor::createSearchSuggestions(m_connection.get()))
     , m_imageActions(image_actions::createImageActions(m_connection.get()))
+    , m_videoPlayer(video_player::createVideoPlayer(m_connection.get(), m_settings.get()))
     , m_serverCredentials(std::make_shared<network_access::ServerCredentials>())
     , m_networkAccessFactory(network_access::createNetworkAccessFactory(
           m_serverCredentials,
@@ -93,10 +96,11 @@ AppManager::AppManager(QObject* parent)
     connect(m_navigator.get(), &navigator::Navigator::imageRequested, m_viewer.get(), &viewer::Viewer::openImage);
     connect(m_navigator.get(), &navigator::Navigator::libraryImageRequested, this, &AppManager::showLibraryImage);
 
-    // Only library images have tags to edit.
+    // Only library images have tags to edit. Local videos play from I10 on; until then nothing plays.
     connect(m_navigator.get(), &navigator::Navigator::imageRequested, this, [this]() {
         m_tagEditor->setImage(std::nullopt);
         m_libraryImageOnScreen.reset();
+        m_videoPlayer->close();
     });
 
     // The first page's rows arrive just after loading ends: their count is known once the event loop runs.
@@ -181,6 +185,11 @@ navigator::Navigator* AppManager::navigator() const
 slideshow::Slideshow* AppManager::slideshow() const
 {
     return m_slideshow.get();
+}
+
+video_player::VideoPlayer* AppManager::videoPlayer() const
+{
+    return m_videoPlayer.get();
 }
 
 connection::Connection* AppManager::connection() const
@@ -391,9 +400,21 @@ void AppManager::showLibraryImage(int row)
     m_libraryImageOnScreen = image;
     if (!image.has_value() || m_connection->client() == nullptr)
     {
+        m_videoPlayer->close();
         return;
     }
 
+    if (image->mediaKind == server_client::MediaKind::Video)
+    {
+        // The viewer shows the poster frame until the video plays over it.
+        m_viewer->openServerImage(
+            m_connection->client()->thumbnailUrl(image->id, server_client::ThumbnailSize::Large, image->revision),
+            detailsOf(*image));
+        m_videoPlayer->openLibraryVideo(image->id);
+        return;
+    }
+
+    m_videoPlayer->close();
     m_viewer->openServerImage(m_connection->client()->imageFileUrl(image->id, image->revision), detailsOf(*image));
 }
 

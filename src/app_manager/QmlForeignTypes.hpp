@@ -24,6 +24,7 @@
 #include "TagSuggestions.hpp"
 #include "UploadTagEditor.hpp"
 #include "Uploader.hpp"
+#include "VideoPlayer.hpp"
 #include "ViewTransform.hpp"
 #include "Viewer.hpp"
 
@@ -62,6 +63,14 @@ struct ForeignSlideshow
     Q_GADGET
     QML_FOREIGN(photobook::slideshow::Slideshow)
     QML_NAMED_ELEMENT(Slideshow)
+    QML_UNCREATABLE("Provided by AppManager")
+};
+
+struct ForeignVideoPlayer
+{
+    Q_GADGET
+    QML_FOREIGN(photobook::video_player::VideoPlayer)
+    QML_NAMED_ELEMENT(VideoPlayer)
     QML_UNCREATABLE("Provided by AppManager")
 };
 

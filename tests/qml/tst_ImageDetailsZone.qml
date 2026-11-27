@@ -46,6 +46,23 @@ Item {
             }
         }
 
+        // A bar of controls, e.g. a video's, above the details
+        Component {
+            id: controlsZoneComponent
+
+            ImageDetailsZone {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                viewer: TestServices.viewer
+                tagEditor: TestServices.tagEditor
+                availableHeight: root.height
+                controls: Rectangle {
+                    implicitHeight: 30
+                }
+            }
+        }
+
         function initTestCase() {
             tryCompare(TestServices.accountConnection, "state", Connection.State.LoggedIn);
             TestServices.showSamplePhoto();
@@ -80,6 +97,20 @@ Item {
             }
 
             compare(hidden, 0, "the footer hid while the pointer was on it");
+        }
+
+        function test_bringsControlsAboveTheDetails() {
+            const zone = shownZone(controlsZoneComponent);
+
+            const bar = zone.controlsBar;
+            verify(bar.visible);
+            const barBottom = bar.mapToItem(root, 0, bar.height).y;
+            const footerTop = zone.footer.mapToItem(root, 0, 0).y;
+            fuzzyCompare(barBottom, footerTop, 1);
+
+            mouseMove(root, root.width / 2, 10);  // away: both go
+            tryCompare(zone.footer, "reveal", 0);
+            verify(!bar.visible);
         }
 
         function test_showsAndHidesTheTagPane() {

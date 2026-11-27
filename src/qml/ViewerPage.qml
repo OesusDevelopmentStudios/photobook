@@ -6,6 +6,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Controls as Controls
+import QtMultimedia
 import org.kde.kirigami as Kirigami
 import org.kde.kirigamiaddons.components as Components
 import org.kde.ki18n
@@ -24,6 +25,7 @@ Kirigami.Page {
     property bool tagsSearchable: true  // there is a Library tab to search in
     required property Uploader uploader
     required property ImageActions imageActions
+    required property VideoPlayer videoPlayer
 
     signal serverPageRequested()
     signal libraryRequested()
@@ -43,6 +45,8 @@ Kirigami.Page {
     }
 
     readonly property bool presenting: slideshow.running
+    // A video is shown: its poster as the image, the video playing over it while this page is in front
+    readonly property bool showsVideo: viewer.video
     // Unsaved tag changes are saved or dropped first; stepping on would lose them.
     readonly property bool canStep: !tagEditor.hasChanges
     readonly property bool canStartSlideshow: canStep && viewer.hasImage
@@ -174,7 +178,7 @@ Kirigami.Page {
             text: KI18n.i18nc("@action:intoolbar", "Save Rotation")
             displayHint: toolbarPriority.displayHint(saveRotationAction)
             shortcut: StandardKey.Save
-            visible: page.viewer.hasImage && page.viewTransform.rotationAngle !== 0
+            visible: page.viewer.hasImage && !page.showsVideo && page.viewTransform.rotationAngle !== 0
                      && page.imageActions.canSaveRotation(page.viewer.mimeType)
             enabled: !page.imageActions.busy
             onTriggered: page.saveRotationRequested()
@@ -186,7 +190,7 @@ Kirigami.Page {
             text: KI18n.i18nc("@action:intoolbar", "Rotate Left")
             displayHint: toolbarPriority.displayHint(rotateLeftAction)
             shortcut: "Ctrl+L"
-            enabled: page.viewer.hasImage
+            enabled: page.viewer.hasImage && !page.showsVideo  // the server turns images only
             onTriggered: page.viewTransform.rotateCounterclockwise()
         },
         Kirigami.Action {
@@ -196,7 +200,7 @@ Kirigami.Page {
             text: KI18n.i18nc("@action:intoolbar", "Rotate Right")
             displayHint: toolbarPriority.displayHint(rotateRightAction)
             shortcut: "Ctrl+R"
-            enabled: page.viewer.hasImage
+            enabled: page.viewer.hasImage && !page.showsVideo
             onTriggered: page.viewTransform.rotateClockwise()
         },
         // In the menu; Ctrl+C reaches it unless a text field, e.g. while editing tags, takes it first.
@@ -207,7 +211,7 @@ Kirigami.Page {
             text: KI18n.i18nc("@action:inmenu", "Copy Image")
             displayHint: Kirigami.DisplayHint.AlwaysHide
             shortcut: StandardKey.Copy
-            enabled: page.viewer.hasImage && !page.imageActions.busy
+            enabled: page.viewer.hasImage && !page.showsVideo && !page.imageActions.busy
             onTriggered: page.copyImageRequested()
         },
         Kirigami.Action {
@@ -367,10 +371,87 @@ Kirigami.Page {
         onActivated: page.slideshow.stop()
     }
 
+    // In a slideshow, the slideshow and its video pause and go on together.
     Shortcut {
         sequence: "Space"
-        enabled: page.presenting
-        onActivated: page.slideshow.paused ? page.slideshow.resume() : page.slideshow.pause()
+        enabled: page.presenting || page.showsVideo
+        onActivated: page.togglePlayback()
+    }
+
+    Shortcut {
+        sequence: "Shift+Left"
+        enabled: page.showsVideo
+        onActivated: page.seekBy(-page.seekStepMs)
+    }
+
+    Shortcut {
+        sequence: "Shift+Right"
+        enabled: page.showsVideo
+        onActivated: page.seekBy(page.seekStepMs)
+    }
+
+    readonly property int seekStepMs: 5000
+
+    function togglePlayback(): void {
+        if (page.presenting) {
+            const pausing = !page.slideshow.paused;
+            pausing ? page.slideshow.pause() : page.slideshow.resume();
+            if (page.showsVideo) {
+                pausing ? mediaPlayer.pause() : mediaPlayer.play();
+            }
+            return;
+        }
+
+        mediaPlayer.playing ? mediaPlayer.pause() : mediaPlayer.play();
+    }
+
+    function seekBy(milliseconds: int): void {
+        mediaPlayer.position = Math.max(0, Math.min(mediaPlayer.duration, mediaPlayer.position + milliseconds));
+    }
+
+    // Plays the video over its poster, as soon as the URL is known (D103), and only while this page is in front.
+    // At its end it stops on the last frame; Play starts it again.
+    MediaPlayer {
+        id: mediaPlayer
+
+        property bool startPending: false  // where to start is set once the video has loaded
+
+        source: page.showsVideo && page.isCurrentPage ? page.videoPlayer.source : ""
+        playbackRate: page.videoPlayer.speed
+        videoOutput: videoOutput
+        audioOutput: AudioOutput {
+            volume: page.videoPlayer.volume
+            muted: page.videoPlayer.muted
+        }
+
+        onSourceChanged: {
+            if (source.toString().length > 0) {
+                startPending = page.videoPlayer.startPositionMs > 0;
+                play();
+            }
+        }
+        onMediaStatusChanged: {
+            if (startPending && (mediaStatus === MediaPlayer.LoadedMedia || mediaStatus === MediaPlayer.BufferedMedia)) {
+                startPending = false;
+                position = page.videoPlayer.startPositionMs;
+            }
+        }
+        // A refused URL gets one new one; the player decides.
+        onErrorOccurred: (error, errorString) => page.videoPlayer.reportPlaybackError(errorString, position)
+    }
+
+    Component {
+        id: videoControlsComponent
+
+        VideoControls {
+            videoPlayer: page.videoPlayer
+            playing: mediaPlayer.playing
+            position: mediaPlayer.position
+            duration: mediaPlayer.duration
+            seekable: mediaPlayer.seekable
+            onPlayPauseRequested: mediaPlayer.playing ? mediaPlayer.pause() : mediaPlayer.play()
+            onSeekRequested: position => mediaPlayer.position = position
+        }
     }
 
     Binding {
@@ -436,6 +517,15 @@ Kirigami.Page {
 
                 // Image shows only the first frame of an animation.
                 sourceComponent: page.viewer.imageAnimated ? animatedImage : stillImage
+            }
+
+            // Over the poster, which shows until the first frame arrives
+            VideoOutput {
+                id: videoOutput
+
+                anchors.fill: imageLoader
+                visible: page.showsVideo
+                fillMode: VideoOutput.PreserveAspectFit
             }
         }
 
@@ -540,7 +630,21 @@ Kirigami.Page {
     Controls.BusyIndicator {
         anchors.centerIn: parent
         running: (imageLoader.item as Image)?.status === Image.Loading
+                 || (page.showsVideo && (page.videoPlayer.waitingForSource
+                                         || mediaPlayer.mediaStatus === MediaPlayer.LoadingMedia
+                                         || mediaPlayer.mediaStatus === MediaPlayer.StalledMedia))
         visible: running
+    }
+
+    // Over the poster, which stays
+    Kirigami.PlaceholderMessage {
+        anchors.centerIn: parent
+        width: parent.width - Kirigami.Units.gridUnit * 4
+        visible: page.showsVideo && page.videoPlayer.errorMessage.length > 0
+
+        icon.name: "data-error"
+        text: KI18n.i18nc("@info:placeholder %1 is a file name", "Cannot play %1", page.viewer.fileName)
+        explanation: page.videoPlayer.errorMessage
     }
 
     Kirigami.PlaceholderMessage {
@@ -573,6 +677,7 @@ Kirigami.Page {
         tagPaneLayout: page.tagPaneLayout
         pinned: tagPane.visible
         availableHeight: page.height
+        controls: page.showsVideo ? videoControlsComponent : null
     }
 
     SlideshowControls {

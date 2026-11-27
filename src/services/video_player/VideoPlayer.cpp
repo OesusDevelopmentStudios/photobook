@@ -10,6 +10,7 @@
 #include <KLocalizedString>
 
 #include "ServerClient.hpp"
+#include "utils/Duration.hpp"
 
 namespace photobook::video_player
 {
@@ -97,6 +98,11 @@ void VideoPlayer::reportPlaybackError(const QString& message, qint64 positionMs)
 
     setSource({}, 0);
     setErrorMessage(cannotPlay(message));
+}
+
+QString VideoPlayer::timeText(qint64 milliseconds) const
+{
+    return utils::durationText(milliseconds);
 }
 
 QUrl VideoPlayer::source() const
