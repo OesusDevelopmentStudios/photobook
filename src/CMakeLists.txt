@@ -57,6 +57,7 @@ set(qmlFiles
     qml/Main.qml
     qml/ViewerPage.qml
     qml/SlideshowControls.qml
+    qml/SlideshowVideo.qml
     qml/VideoControls.qml
     qml/WelcomePage.qml
     qml/ConnectPage.qml

@@ -394,11 +394,7 @@ Kirigami.Page {
 
     function togglePlayback(): void {
         if (page.presenting) {
-            const pausing = !page.slideshow.paused;
-            pausing ? page.slideshow.pause() : page.slideshow.resume();
-            if (page.showsVideo) {
-                pausing ? mediaPlayer.pause() : mediaPlayer.play();
-            }
+            page.slideshow.paused ? page.slideshow.resume() : page.slideshow.pause();  // the video follows
             return;
         }
 
@@ -427,7 +423,9 @@ Kirigami.Page {
         onSourceChanged: {
             if (source.toString().length > 0) {
                 startPending = page.videoPlayer.startPositionMs > 0;
-                play();
+                if (slideshowVideo.videoMayPlay) {  // reached while a slideshow is paused, it waits for it
+                    play();
+                }
             }
         }
         onMediaStatusChanged: {
@@ -441,6 +439,15 @@ Kirigami.Page {
         }
         // A refused URL gets one new one; the player decides.
         onErrorOccurred: (error, errorString) => page.videoPlayer.reportPlaybackError(errorString, position)
+    }
+
+    SlideshowVideo {
+        id: slideshowVideo
+
+        slideshow: page.slideshow
+        showsVideo: page.showsVideo
+        onPlayRequested: mediaPlayer.play()
+        onPauseRequested: mediaPlayer.pause()
     }
 
     // In a slideshow a video plays to its end instead of for the interval; one that cannot play shows for it.

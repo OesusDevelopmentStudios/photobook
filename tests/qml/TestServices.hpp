@@ -18,14 +18,17 @@
 
 #include "Albums.hpp"
 #include "Connection.hpp"
+#include "FolderScannerFactory.hpp"
 #include "HiddenFilterEditor.hpp"
 #include "ImageLoader.hpp"
 #include "LibraryFactory.hpp"
 #include "LibraryView.hpp"
 #include "LibraryViewFactory.hpp"
+#include "NavigatorFactory.hpp"
 #include "SearchSuggestions.hpp"
 #include "ServerClientFactory.hpp"
 #include "SettingsFactory.hpp"
+#include "SlideshowFactory.hpp"
 #include "TagEditor.hpp"
 #include "TagEditorFactory.hpp"
 #include "TagPaneLayout.hpp"
@@ -54,6 +57,7 @@ class TestServices : public QObject
 
     Q_PROPERTY(photobook::viewer::Viewer* viewer READ viewer CONSTANT)
     Q_PROPERTY(photobook::video_player::VideoPlayer* videoPlayer READ videoPlayer CONSTANT)
+    Q_PROPERTY(photobook::slideshow::Slideshow* slideshow READ slideshow CONSTANT)
     Q_PROPERTY(photobook::tag_editor::TagEditor* tagEditor READ tagEditor CONSTANT)
     Q_PROPERTY(photobook::tag_editor::UploadTagEditor* uploadTagEditor READ uploadTagEditor CONSTANT)
     Q_PROPERTY(photobook::uploader::Uploader* uploader READ uploader CONSTANT)
@@ -101,6 +105,9 @@ public:
         , m_uploader(std::make_unique<uploader::Uploader>(
               m_connection.get(), m_uploadTagEditor.get(), std::make_unique<fakes::FakeTrash>(m_trashCan)))
         , m_videoPlayer(std::make_unique<video_player::VideoPlayer>(m_connection.get(), m_settings.get()))
+        , m_navigator(
+              navigator::createNavigator(folder_scanner::createFolderScanner(std::make_unique<FakeImageLoader>())))
+        , m_slideshow(slideshow::createSlideshow(m_navigator.get(), m_settings.get()))
     {
         m_viewer->openImage(QStringLiteral("/photos/beach.jpg"));
         logInForHiddenFilters();
@@ -119,6 +126,11 @@ public:
     viewer::Viewer* viewer() const
     {
         return m_viewer.get();
+    }
+
+    slideshow::Slideshow* slideshow() const
+    {
+        return m_slideshow.get();
     }
 
     video_player::VideoPlayer* videoPlayer() const
@@ -334,6 +346,8 @@ private:
     std::shared_ptr<fakes::TrashCan> m_trashCan = std::make_shared<fakes::TrashCan>();
     std::unique_ptr<uploader::Uploader> m_uploader;
     std::unique_ptr<video_player::VideoPlayer> m_videoPlayer;
+    std::unique_ptr<navigator::Navigator> m_navigator;
+    std::unique_ptr<slideshow::Slideshow> m_slideshow;
     std::unique_ptr<settings::Settings> m_accountSettings;
     std::unique_ptr<connection::Connection> m_accountConnection;
     std::unique_ptr<tag_editor::HiddenFilterEditor> m_hiddenFilterEditor;
