@@ -20,6 +20,29 @@ using namespace photobook::server_client;
 
 const QString apiPath = QStringLiteral("/api/v1");
 
+// An API path (after /api/v1) under the server's URL, which may have a path of its own, e.g. behind a proxy.
+QUrl urlUnder(const QUrl& serverUrl, const QString& path, const QUrlQuery& query)
+{
+    QUrl url = serverUrl;
+    QString basePath = url.path();
+    while (basePath.endsWith(QLatin1Char('/')))
+    {
+        basePath.chop(1);
+    }
+
+    url.setPath(basePath + apiPath + path);
+    url.setQuery(query);
+    url.setFragment(QString());
+    return url;
+}
+
+// A URL the server sent as /api/v1/…, under the server's URL as this client reaches it.
+QUrl absoluteApiUrl(const QUrl& serverUrl, const QUrl& sent)
+{
+    const QString path = sent.path();
+    return urlUnder(serverUrl, path.startsWith(apiPath) ? path.mid(apiPath.size()) : path, QUrlQuery(sent));
+}
+
 constexpr int statusOk = 200;
 constexpr int statusCreated = 201;
 constexpr int statusNoContent = 204;
@@ -383,6 +406,20 @@ QFuture<Result<QList<TagCount>>> RestServerClient::imageTagCounts(int imageId)
     });
 }
 
+QFuture<Result<StreamUrl>> RestServerClient::streamUrl(int imageId)
+{
+    return send("POST", QStringLiteral("/media/%1/stream").arg(imageId))
+        .then([serverUrl = m_serverUrl](const HttpResponse& response) -> Result<StreamUrl> {
+            Result<StreamUrl> stream = jsonAnswer(response, statusOk, streamUrlFrom);
+            if (stream.has_value())
+            {
+                stream->url = absoluteApiUrl(serverUrl, stream->url);
+            }
+
+            return stream;
+        });
+}
+
 QFuture<Result<QList<Album>>> RestServerClient::albums(bool includeHidden)
 {
     QUrlQuery parameters;
@@ -452,17 +489,7 @@ HttpRequest RestServerClient::requestTo(const QByteArray& method, const QString&
 
 QUrl RestServerClient::endpointUrl(const QString& path, const QUrlQuery& query) const
 {
-    QUrl url = m_serverUrl;
-    QString basePath = url.path();
-    while (basePath.endsWith(QLatin1Char('/')))
-    {
-        basePath.chop(1);
-    }
-
-    url.setPath(basePath + apiPath + path);
-    url.setQuery(query);
-    url.setFragment(QString());
-    return url;
+    return urlUnder(m_serverUrl, path, query);
 }
 
 }  // namespace photobook::server_client

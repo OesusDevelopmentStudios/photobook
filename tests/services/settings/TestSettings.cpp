@@ -57,6 +57,9 @@ void TestSettings::returnsNothingForValuesNeverStored()
     QCOMPARE(settings->foldedTagNamespaces(), std::nullopt);
     QCOMPARE(settings->albumSort(), std::nullopt);
     QCOMPARE(settings->showAlbumsWithHiddenImages(), std::nullopt);
+    QCOMPARE(settings->videoVolume(), std::nullopt);
+    QCOMPARE(settings->videoSpeed(), std::nullopt);
+    QCOMPARE(settings->startVideosMuted(), std::nullopt);
 }
 
 void TestSettings::keepsValuesAfterRestart()
@@ -76,6 +79,9 @@ void TestSettings::keepsValuesAfterRestart()
         settings->setFoldedTagNamespaces({QStringLiteral("general"), QStringLiteral("meta")});
         settings->setAlbumSort(QStringLiteral("size"));
         settings->setShowAlbumsWithHiddenImages(true);
+        settings->setVideoVolume(0.35);
+        settings->setVideoSpeed(1.5);
+        settings->setStartVideosMuted(true);
     }
 
     const auto settingsAfterRestart = createSettings(configFilePath());
@@ -94,6 +100,9 @@ void TestSettings::keepsValuesAfterRestart()
              QStringList({QStringLiteral("general"), QStringLiteral("meta")}));
     QCOMPARE(settingsAfterRestart->albumSort(), QStringLiteral("size"));
     QCOMPARE(settingsAfterRestart->showAlbumsWithHiddenImages(), true);
+    QCOMPARE(settingsAfterRestart->videoVolume(), 0.35);
+    QCOMPARE(settingsAfterRestart->videoSpeed(), 1.5);
+    QCOMPARE(settingsAfterRestart->startVideosMuted(), true);
 }
 
 // Group and key names must not change, or users lose their settings with an update.
@@ -112,6 +121,9 @@ void TestSettings::writesReadableConfigFile()
     settings->setFoldedTagNamespaces({QStringLiteral("general")});
     settings->setAlbumSort(QStringLiteral("name"));
     settings->setShowAlbumsWithHiddenImages(true);
+    settings->setVideoVolume(0.5);
+    settings->setVideoSpeed(2);
+    settings->setStartVideosMuted(true);
 
     const KConfig configFile(configFilePath(), KConfig::SimpleConfig);
     const KConfigGroup slideshowGroup = configFile.group(QStringLiteral("Slideshow"));
@@ -119,6 +131,7 @@ void TestSettings::writesReadableConfigFile()
     const KConfigGroup libraryGroup = configFile.group(QStringLiteral("Library"));
     const KConfigGroup albumsGroup = configFile.group(QStringLiteral("Albums"));
     const KConfigGroup tagPaneGroup = configFile.group(QStringLiteral("TagPane"));
+    const KConfigGroup videoGroup = configFile.group(QStringLiteral("Video"));
 
     QCOMPARE(slideshowGroup.readEntry("IntervalSeconds", 0), 7);
     QCOMPARE(slideshowGroup.readEntry("Order", QString()), QStringLiteral("random"));
@@ -132,6 +145,9 @@ void TestSettings::writesReadableConfigFile()
     QCOMPARE(tagPaneGroup.readEntry("Open", QString()), QStringLiteral("false"));
     QCOMPARE(tagPaneGroup.readEntry("FoldedNamespaces", QString()), QStringLiteral("general"));
     QCOMPARE(albumsGroup.readEntry("ShowWithHiddenImages", QString()), QStringLiteral("true"));
+    QCOMPARE(videoGroup.readEntry("Volume", QString()), QStringLiteral("0.5"));
+    QCOMPARE(videoGroup.readEntry("Speed", QString()), QStringLiteral("2"));
+    QCOMPARE(videoGroup.readEntry("StartMuted", QString()), QStringLiteral("true"));
     QVERIFY(!serverGroup.keyList().contains(QStringLiteral("Token")));  // the token belongs in the keyring
 }
 

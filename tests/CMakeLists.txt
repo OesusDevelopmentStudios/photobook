@@ -60,6 +60,10 @@ ecm_add_test(services/slideshow/TestSlideshow.cpp
     LINK_LIBRARIES photobook_slideshow Qt6::Test
 )
 
+ecm_add_test(services/video_player/TestVideoPlayer.cpp
+    LINK_LIBRARIES photobook_video_player photobook_server_client Qt6::Test
+)
+
 ecm_add_test(services/settings/TestSettings.cpp
     LINK_LIBRARIES photobook_settings Qt6::Test KF6::ConfigCore
 )

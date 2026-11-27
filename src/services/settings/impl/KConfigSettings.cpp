@@ -27,6 +27,10 @@ constexpr const char* foldedNamespacesKey = "FoldedNamespaces";
 const QString albumsGroupName = QStringLiteral("Albums");
 constexpr const char* sortKey = "Sort";
 constexpr const char* showWithHiddenImagesKey = "ShowWithHiddenImages";
+const QString videoGroupName = QStringLiteral("Video");
+constexpr const char* volumeKey = "Volume";
+constexpr const char* speedKey = "Speed";
+constexpr const char* startMutedKey = "StartMuted";
 
 }  // namespace
 
@@ -278,6 +282,60 @@ std::optional<bool> KConfigSettings::readLibraryFlag(const char* key) const
     }
 
     return group.readEntry(key, true);
+}
+
+std::optional<double> KConfigSettings::videoVolume() const
+{
+    return readVideoNumber(volumeKey);
+}
+
+void KConfigSettings::setVideoVolume(double volume)
+{
+    writeVideoEntry(volumeKey, volume);
+}
+
+std::optional<double> KConfigSettings::videoSpeed() const
+{
+    return readVideoNumber(speedKey);
+}
+
+void KConfigSettings::setVideoSpeed(double speed)
+{
+    writeVideoEntry(speedKey, speed);
+}
+
+std::optional<bool> KConfigSettings::startVideosMuted() const
+{
+    const KConfigGroup group = m_config->group(videoGroupName);
+    if (!group.hasKey(startMutedKey))
+    {
+        return std::nullopt;
+    }
+
+    return group.readEntry(startMutedKey, false);
+}
+
+void KConfigSettings::setStartVideosMuted(bool muted)
+{
+    writeVideoEntry(startMutedKey, muted);
+}
+
+std::optional<double> KConfigSettings::readVideoNumber(const char* key) const
+{
+    const KConfigGroup group = m_config->group(videoGroupName);
+    if (!group.hasKey(key))
+    {
+        return std::nullopt;
+    }
+
+    return group.readEntry(key, 0.0);
+}
+
+void KConfigSettings::writeVideoEntry(const char* key, const QVariant& value)
+{
+    KConfigGroup group = m_config->group(videoGroupName);
+    group.writeEntry(key, value);
+    m_config->sync();
 }
 
 KConfigGroup KConfigSettings::tagPaneGroup() const

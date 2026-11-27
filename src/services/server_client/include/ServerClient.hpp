@@ -96,6 +96,10 @@ public:
     // GET /media/{id}/tag-counts: every tag of the image, in the image's order, with how many images have it
     virtual QFuture<Result<QList<TagCount>>> imageTagCounts(int imageId) = 0;
 
+    // POST /media/{id}/stream: a URL to play a video from without the token (Qt Multimedia cannot send it). It works
+    // for that video only, until it expires and while this login lasts.
+    virtual QFuture<Result<StreamUrl>> streamUrl(int imageId) = 0;
+
     // GET /albums: the albums with an image the user may see, most recently changed first. Albums with an image
     // the user's hidden filters match are left out, unless includeHidden.
     virtual QFuture<Result<QList<Album>>> albums(bool includeHidden) = 0;

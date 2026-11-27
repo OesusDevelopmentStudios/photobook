@@ -17,6 +17,7 @@ namespace photobook::server_client
 // invalid_response error that names the field.
 Result<ServerInfo> serverInfoFrom(const QJsonValue& json);
 Result<LocalLibrary> localLibraryFrom(const QJsonValue& json);
+Result<StreamUrl> streamUrlFrom(const QJsonValue& json);  // url as the server sends it, relative
 Result<Login> loginFrom(const QJsonValue& json);
 Result<CurrentUser> currentUserFrom(const QJsonValue& json);
 Result<QList<DeviceToken>> devicesFrom(const QJsonValue& json);

@@ -279,6 +279,15 @@ Result<LocalLibrary> localLibraryFrom(const QJsonValue& json)
     return checked(reader, library);
 }
 
+Result<StreamUrl> streamUrlFrom(const QJsonValue& json)
+{
+    JsonReader reader(json.toObject());
+    StreamUrl stream;
+    stream.url = QUrl(reader.string(QStringLiteral("url")));
+    stream.expiresAt = reader.dateTime(QStringLiteral("expires_at"));
+    return checked(reader, stream);
+}
+
 Result<ImageCount> imageCountFrom(const QJsonValue& json)
 {
     JsonReader reader(json.toObject());

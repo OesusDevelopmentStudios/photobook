@@ -140,6 +140,27 @@ public:
 
     void setShowAlbumsWithHiddenImages(bool) override {}
 
+    std::optional<double> videoVolume() const override
+    {
+        return std::nullopt;
+    }
+
+    void setVideoVolume(double) override {}
+
+    std::optional<double> videoSpeed() const override
+    {
+        return std::nullopt;
+    }
+
+    void setVideoSpeed(double) override {}
+
+    std::optional<bool> startVideosMuted() const override
+    {
+        return std::nullopt;
+    }
+
+    void setStartVideosMuted(bool) override {}
+
     std::optional<int> intervalSeconds;
     std::optional<QString> order;
 };

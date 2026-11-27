@@ -50,6 +50,13 @@ public:
     std::optional<bool> showAlbumsWithHiddenImages() const override;
     void setShowAlbumsWithHiddenImages(bool show) override;
 
+    std::optional<double> videoVolume() const override;
+    void setVideoVolume(double volume) override;
+    std::optional<double> videoSpeed() const override;
+    void setVideoSpeed(double speed) override;
+    std::optional<bool> startVideosMuted() const override;
+    void setStartVideosMuted(bool muted) override;
+
 private:
     KConfigGroup slideshowGroup() const;
     void writeSlideshowEntry(const char* key, const QVariant& value);
@@ -62,6 +69,8 @@ private:
     void writeTagPaneEntry(const char* key, const QVariant& value);
     KConfigGroup albumsGroup() const;
     void writeAlbumsEntry(const char* key, const QVariant& value);
+    std::optional<double> readVideoNumber(const char* key) const;
+    void writeVideoEntry(const char* key, const QVariant& value);
 
     KSharedConfigPtr m_config;
 };

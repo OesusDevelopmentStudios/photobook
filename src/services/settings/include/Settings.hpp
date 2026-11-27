@@ -61,6 +61,15 @@ public:
     // Albums with an image the user's hidden filters match are listed too
     virtual std::optional<bool> showAlbumsWithHiddenImages() const = 0;
     virtual void setShowAlbumsWithHiddenImages(bool show) = 0;
+
+    // The video player's volume (0 to 1) and speed (1 = normal), as last chosen
+    virtual std::optional<double> videoVolume() const = 0;
+    virtual void setVideoVolume(double volume) = 0;
+    virtual std::optional<double> videoSpeed() const = 0;
+    virtual void setVideoSpeed(double speed) = 0;
+    // Every video starts without sound; the user can unmute it
+    virtual std::optional<bool> startVideosMuted() const = 0;
+    virtual void setStartVideosMuted(bool muted) = 0;
 };
 
 }  // namespace photobook::settings

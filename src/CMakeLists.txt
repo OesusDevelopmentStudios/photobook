@@ -43,6 +43,7 @@ add_subdirectory(services/tag_editor)
 add_subdirectory(services/uploader)
 add_subdirectory(services/network_access)
 add_subdirectory(services/image_actions)
+add_subdirectory(services/video_player)
 
 #The user interface : the QML files and the C++ types they use, the AppManager and through it the services.A
 #static library that is also a QML module, so the application and the QML tests use the same one.The URI is

@@ -178,6 +178,8 @@ private Q_SLOTS:
     void countsTheImagesOfAnImagesTags();
     void readsTheAlbums();
     void listsAlbumsWithHiddenImagesWhenAsked();
+    void asksForAStreamUrl();
+    void keepsTheServersPathInAStreamUrl();
     void namesTheFieldOfACoverThatIsMissing();
     void readsTheNamespaces();
     void readsAndReplacesThePreferences();
@@ -805,6 +807,37 @@ void TestServerClient::readsTheAlbums()
     QCOMPARE(vacation.coverRevision, 2);
     QCOMPARE(vacation.lastChangedAt, QDateTime(QDate(2026, 11, 20), QTime(18, 3, 11), QTimeZone::UTC));
     QCOMPARE(albums->at(1).coverImageId, 7);
+}
+
+// As the server answers POST /media/{id}/stream
+const QByteArray streamAnswer =
+    R"({"url":"/api/v1/media/5/file?t=56&exp=1795826657&sig=Ab-c_9","expires_at":"2026-11-28T00:44:17Z"})";
+
+void TestServerClient::asksForAStreamUrl()
+{
+    m_transport->nextResponse = answer(200, streamAnswer);
+
+    const Result<StreamUrl> stream = valueOf(m_client->streamUrl(5));
+
+    QCOMPARE(m_transport->lastRequest().method, QByteArray("POST"));
+    QCOMPARE(m_transport->lastRequest().url.path(), QStringLiteral("/api/v1/media/5/stream"));
+    QVERIFY(stream.has_value());
+    QCOMPARE(stream->url,
+             QUrl(QStringLiteral("http://raspberrypi.local:8737/api/v1/media/5/file?t=56&exp=1795826657&sig=Ab-c_9")));
+    QCOMPARE(stream->expiresAt, QDateTime(QDate(2026, 11, 28), QTime(0, 44, 17), QTimeZone::UTC));
+}
+
+// Behind a proxy the server may live under a path of its own; the player must ask there, with the signature as sent.
+void TestServerClient::keepsTheServersPathInAStreamUrl()
+{
+    const auto client = createServerClient(QUrl(QStringLiteral("https://example.org/photobook/")), m_transport);
+    m_transport->nextResponse = answer(200, streamAnswer);
+
+    const Result<StreamUrl> stream = valueOf(client->streamUrl(5));
+
+    QVERIFY(stream.has_value());
+    QCOMPARE(stream->url.toString(),
+             QStringLiteral("https://example.org/photobook/api/v1/media/5/file?t=56&exp=1795826657&sig=Ab-c_9"));
 }
 
 void TestServerClient::listsAlbumsWithHiddenImagesWhenAsked()

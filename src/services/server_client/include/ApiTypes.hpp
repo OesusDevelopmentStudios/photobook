@@ -163,6 +163,13 @@ struct LocalLibrary
     QString libraryDir;  // an image's file is there at its storagePath
 };
 
+// A video's file without the login token, for a player that cannot send it
+struct StreamUrl
+{
+    QUrl url;  // absolute, under the server's URL
+    QDateTime expiresAt;
+};
+
 struct ImageCount
 {
     int count = 0;           // over all pages of the search
