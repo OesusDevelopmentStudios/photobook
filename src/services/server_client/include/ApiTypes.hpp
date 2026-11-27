@@ -93,8 +93,15 @@ struct DeviceToken
 enum class TakenAtSource
 {
     Exif,        // the photo's own date
+    Container,   // a video's own recording time
     FileMtime,   // the file's modification time, as the uploading client saw it
-    ImportTime,  // neither was known
+    ImportTime,  // none of them was known
+};
+
+enum class MediaKind
+{
+    Image,
+    Video,
 };
 
 struct Image
@@ -113,6 +120,8 @@ struct Image
     QDateTime updatedAt;
     QStringList tags;  // sorted by namespace, then name, e.g. "category:photo"
     int revision = 0;  // grows when the file changes, e.g. a saved rotation; part of the file's and thumbnails' URLs
+    MediaKind mediaKind = MediaKind::Image;  // a video's thumbnails show its poster frame
+    qint64 durationMs = 0;                   // videos only
 };
 
 enum class SortBy

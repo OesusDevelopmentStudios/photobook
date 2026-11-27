@@ -12,6 +12,7 @@
 #include <QRandomGenerator>
 
 #include "hlp/ServerErrors.hpp"
+#include "utils/Duration.hpp"
 
 namespace
 {
@@ -308,6 +309,10 @@ QVariant Library::data(const QModelIndex& index, int role) const
         return image.height;
     case SelectedRole:
         return m_selectedImageIds.contains(image.id);
+    case IsVideoRole:
+        return image.mediaKind == server_client::MediaKind::Video;
+    case DurationTextRole:
+        return image.mediaKind == server_client::MediaKind::Video ? utils::durationText(image.durationMs) : QString();
     default:
         return {};
     }
@@ -324,6 +329,8 @@ QHash<int, QByteArray> Library::roleNames() const
         {WidthRole, "imageWidth"},
         {HeightRole, "imageHeight"},
         {SelectedRole, "selected"},
+        {IsVideoRole, "isVideo"},
+        {DurationTextRole, "durationText"},
     };
 }
 

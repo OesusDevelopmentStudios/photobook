@@ -5,6 +5,7 @@
 add_library(photobook_utils STATIC
     utils/AppIdentity.cpp
     utils/CommandLine.cpp
+    utils/Duration.cpp
     utils/FileHash.cpp
     utils/MachineId.cpp
 )

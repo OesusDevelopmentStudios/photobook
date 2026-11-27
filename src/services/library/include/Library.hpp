@@ -51,6 +51,8 @@ public:
         WidthRole,
         HeightRole,
         SelectedRole,  // chosen for changing the tags of many images at once
+        IsVideoRole,
+        DurationTextRole,  // a video's length, e.g. "3:42"; empty for an image
     };
 
     enum class Content

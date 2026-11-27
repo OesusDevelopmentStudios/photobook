@@ -25,6 +25,7 @@ target_link_libraries(photobook_library
         Qt6::Core
         photobook_connection
         photobook_settings
+        photobook_utils
     PRIVATE
         KF6::I18n
 )

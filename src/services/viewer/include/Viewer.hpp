@@ -43,7 +43,7 @@ public:
     enum class TakenAtSource
     {
         Unknown,     // a local file without a date in it
-        Photo,       // the photo's own EXIF date
+        Taken,       // the photo's own EXIF date, or a video's own recording time
         FileDate,    // the file's modification time, as the uploading computer saw it
         ImportTime,  // neither was known when it came into the library
     };

@@ -30,8 +30,10 @@ namespace
 
 using connection::Connection;
 using fakes::FakeServer;
+using fakes::imageJson;
 using fakes::imagePageJson;
 using fakes::jsonResponse;
+using fakes::videoJson;
 using server_client::HttpRequest;
 
 const QString serverUrl = QStringLiteral("https://photos.example.org");
@@ -80,6 +82,7 @@ private Q_SLOTS:
     void showsWhyASearchFailed();
     void emptiesWhenLoggedOut();
     void givesTheGridWhatItShows();
+    void marksVideosWithTheirLength();
     void knowsTheTotalOfTheSearch();
     void ignoresTheTotalOfAnOlderSearch();
     void hasNoTotalIfTheServerCannotCount();
@@ -135,6 +138,14 @@ void TestLibrary::init()
         if (parameter(request, QStringLiteral("q")) == QLatin1String("category:photo"))
         {
             return imagePageJson({7}, QString());
+        }
+
+        if (parameter(request, QStringLiteral("q")) == QLatin1String("waves"))
+        {
+            return jsonResponse(200,
+                                {{QStringLiteral("items"), QJsonArray{videoJson(9, 222400), imageJson(8)}},
+                                 {QStringLiteral("next_cursor"), QJsonValue(QJsonValue::Null)},
+                                 {QStringLiteral("effective_query"), QStringLiteral("waves")}});
         }
 
         // Like a real cursor, this one belongs to its search: the sort and the text.
@@ -327,6 +338,21 @@ void TestLibrary::givesTheGridWhatItShows()
     QCOMPARE(m_library->imageAt(1)->id, 2);  // all of an image, for the viewer
     QCOMPARE(m_library->imageAt(2), std::nullopt);
     QCOMPARE(m_library->imageAt(-1), std::nullopt);
+}
+
+void TestLibrary::marksVideosWithTheirLength()
+{
+    logIn();
+    QTRY_COMPARE(m_library->count(), 2);
+
+    m_library->search(QStringLiteral("waves"));
+
+    QTRY_COMPARE(m_library->data(m_library->index(0), Library::ImageIdRole).toInt(), 9);
+    QVERIFY(m_library->data(m_library->index(0), Library::IsVideoRole).toBool());
+    QCOMPARE(m_library->data(m_library->index(0), Library::DurationTextRole).toString(), QStringLiteral("3:42"));
+    QVERIFY(!m_library->data(m_library->index(1), Library::IsVideoRole).toBool());
+    QCOMPARE(m_library->data(m_library->index(1), Library::DurationTextRole).toString(), QString());
+    QCOMPARE(m_library->roleNames().value(Library::DurationTextRole), QByteArray("durationText"));
 }
 
 void TestLibrary::knowsTheTotalOfTheSearch()

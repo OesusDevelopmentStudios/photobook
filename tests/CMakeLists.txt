@@ -19,6 +19,10 @@ ecm_add_test(utils/TestCommandLine.cpp
     LINK_LIBRARIES photobook_utils Qt6::Test
 )
 
+ecm_add_test(utils/TestDuration.cpp
+    LINK_LIBRARIES photobook_utils Qt6::Test
+)
+
 ecm_add_test(utils/TestFileHash.cpp
     LINK_LIBRARIES photobook_utils Qt6::Test
 )

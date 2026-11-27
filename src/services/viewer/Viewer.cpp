@@ -29,7 +29,7 @@ Viewer::ImageDetails detailsOf(const photobook::image_loader::ImageInfo& imageIn
     details.fileSize = file.size();
     details.takenAt = imageInfo.captureDate;
     details.takenAtSource =
-        imageInfo.captureDate.isValid() ? Viewer::TakenAtSource::Photo : Viewer::TakenAtSource::Unknown;
+        imageInfo.captureDate.isValid() ? Viewer::TakenAtSource::Taken : Viewer::TakenAtSource::Unknown;
     details.location = file.path();
     return details;
 }

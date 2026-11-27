@@ -35,7 +35,8 @@ Viewer::TakenAtSource takenAtSourceFor(TakenAtSource source)
     switch (source)
     {
     case TakenAtSource::Exif:
-        return Viewer::TakenAtSource::Photo;
+    case TakenAtSource::Container:
+        return Viewer::TakenAtSource::Taken;
     case TakenAtSource::FileMtime:
         return Viewer::TakenAtSource::FileDate;
     case TakenAtSource::ImportTime:

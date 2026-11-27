@@ -50,12 +50,14 @@ Rectangle {
 
     function takenAtText(): string {
         switch (viewer.takenAtSource) {
-        case Viewer.TakenAtSource.Photo:
-            return KI18n.i18nc("@info %1 is a date and time", "%1 (from the photo)", dateAndTime(viewer.takenAt));
+        case Viewer.TakenAtSource.Taken:
+            return KI18n.i18nc("@info %1 is a date and time; when the photo or video was taken", "%1 (taken at)",
+                               dateAndTime(viewer.takenAt));
         case Viewer.TakenAtSource.FileDate:
-            return KI18n.i18nc("@info %1 is a date and time", "%1 (the file's date)", dateAndTime(viewer.takenAt));
+            return KI18n.i18nc("@info %1 is a date and time; the file's modification time", "%1 (file date)",
+                               dateAndTime(viewer.takenAt));
         case Viewer.TakenAtSource.ImportTime:
-            return KI18n.i18nc("@info %1 is a date and time", "%1 (when it was imported)",
+            return KI18n.i18nc("@info %1 is a date and time; when it came into the library", "%1 (import date)",
                                dateAndTime(viewer.takenAt));
         }
         return KI18n.i18nc("@info The date a photo was taken", "Unknown");

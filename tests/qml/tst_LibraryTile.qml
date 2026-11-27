@@ -31,6 +31,8 @@ Item {
                 imageWidth: 400
                 imageHeight: 300
                 selected: false
+                isVideo: false
+                durationText: ""
             }
         }
 
@@ -66,6 +68,25 @@ Item {
             }
             mouseClick(tile, tile.width / 2, tile.height / 2, button, modifiers);
             return tile;
+        }
+
+        function videoBadge(tile: LibraryTile): Item {
+            return findChild(tile, "videoBadge");
+        }
+
+        function test_aVideoShowsItsLength() {
+            const tile = createTemporaryObject(tileComponent, root, {isVideo: true, durationText: "3:42"});
+
+            const badge = videoBadge(tile);
+            verify(badge.visible);
+            compare(badge.Accessible.name, "Video, 3:42");
+            verify(badge.x + badge.width > tile.width / 2 && badge.y < tile.height / 2, "in the top-right corner");
+        }
+
+        function test_aPhotoHasNoBadge() {
+            const tile = createTemporaryObject(tileComponent, root);
+
+            verify(!videoBadge(tile).visible);
         }
 
         function test_opensOnAClick() {

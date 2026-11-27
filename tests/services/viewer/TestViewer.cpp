@@ -260,7 +260,7 @@ void TestViewer::givesTheDetailsOfALocalFile()
     QVERIFY(!m_viewer->isFromLibrary());
     QCOMPARE(m_viewer->mimeType(), QStringLiteral("image/jpeg"));
     QCOMPARE(m_viewer->takenAt(), photo.captureDate);
-    QCOMPARE(m_viewer->takenAtSource(), Viewer::TakenAtSource::Photo);
+    QCOMPARE(m_viewer->takenAtSource(), Viewer::TakenAtSource::Taken);
     QVERIFY(!m_viewer->importedAt().isValid());
     QCOMPARE(m_viewer->location(), QStringLiteral("/photos"));
 }

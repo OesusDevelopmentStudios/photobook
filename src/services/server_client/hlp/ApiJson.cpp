@@ -53,12 +53,33 @@ DeviceToken deviceTokenFrom(JsonReader& reader)
     return device;
 }
 
+MediaKind mediaKindFrom(JsonReader& reader)
+{
+    const QString kind = reader.string(QStringLiteral("media_kind"));
+    if (kind == QLatin1String("video"))
+    {
+        return MediaKind::Video;
+    }
+
+    if (kind != QLatin1String("image") && reader.isValid())
+    {
+        reader.reject(QStringLiteral("media_kind"), QStringLiteral("unknown kind %1").arg(kind));
+    }
+
+    return MediaKind::Image;
+}
+
 TakenAtSource takenAtSourceFrom(JsonReader& reader)
 {
     const QString source = reader.string(QStringLiteral("taken_at_source"));
     if (source == QLatin1String("exif"))
     {
         return TakenAtSource::Exif;
+    }
+
+    if (source == QLatin1String("container"))
+    {
+        return TakenAtSource::Container;
     }
 
     if (source == QLatin1String("file_mtime"))
@@ -91,6 +112,12 @@ Image imageFieldsFrom(JsonReader& reader)
     image.updatedAt = reader.dateTime(QStringLiteral("updated_at"));
     image.tags = reader.stringList(QStringLiteral("tags"));
     image.revision = reader.integer(QStringLiteral("revision"));
+    image.mediaKind = mediaKindFrom(reader);
+    if (image.mediaKind == MediaKind::Video)  // an image's object has no duration
+    {
+        image.durationMs = reader.integer64(QStringLiteral("duration_ms"));
+    }
+
     return image;
 }
 

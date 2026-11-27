@@ -80,7 +80,7 @@ QByteArray beachImageJson()
         "height":3000,"file_size":5000000000,"taken_at":"2025-07-14T18:03:12","taken_at_source":"exif",
         "imported_at":"2026-11-15T19:22:03.724229Z","updated_at":"2026-11-15T19:22:04Z",
         "tags":["category:photo","general:summer"],"revision":0,"links":{"self":"/api/v1/media/5",
-        "file":"/api/v1/media/5/file","thumbnail":"/api/v1/media/5/thumbnail"}})";
+        "file":"/api/v1/media/5/file","thumbnail":"/api/v1/media/5/thumbnail"},"media_kind":"image"})";
 }
 
 // As the server sends it once the file changed
@@ -162,6 +162,8 @@ private Q_SLOTS:
     void countsTheImagesASearchFinds();
     void countsTheImagesOfAnAlbum();
     void readsOneImage();
+    void readsAVideo();
+    void refusesAnUnknownKind();
     void uploadsAFileWithItsMetadata();
     void refusesToUploadAFileItCannotRead();
     void tellsHowMuchOfAnUploadIsSent();
@@ -432,7 +434,7 @@ void TestServerClient::searchesWithEveryParameter()
 
     const QUrl url = m_transport->lastRequest().url;
     QCOMPARE(url.path(), QStringLiteral("/api/v1/media"));
-    QCOMPARE(serverSideValue(url, "media"), QStringLiteral("image"));  // photos only, until the app shows videos
+    QCOMPARE(serverSideValue(url, "media"), QStringLiteral("all"));  // photos and videos
     QCOMPARE(serverSideValue(url, "q"), QStringLiteral("category:photo c++ q&a?#1"));
     QCOMPARE(serverSideValue(url, "album"), QStringLiteral("c++_trip"));
     QCOMPARE(serverSideValue(url, "sort"), QStringLiteral("random"));
@@ -510,7 +512,7 @@ void TestServerClient::countsTheImagesASearchFinds()
 
     const QUrl url = m_transport->lastRequest().url;
     QCOMPARE(url.path(), QStringLiteral("/api/v1/media/count"));
-    QCOMPARE(serverSideValue(url, "media"), QStringLiteral("image"));
+    QCOMPARE(serverSideValue(url, "media"), QStringLiteral("all"));
     QCOMPARE(serverSideValue(url, "q"), QStringLiteral("summer"));
     QCOMPARE(serverSideValue(url, "apply_hidden_filters"), QStringLiteral("false"));
     QVERIFY(!url.query().contains(QStringLiteral("sort")));
@@ -544,6 +546,49 @@ void TestServerClient::readsOneImage()
     QCOMPARE(m_transport->lastRequest().url.path(), QStringLiteral("/api/v1/media/5"));
     QVERIFY(image.has_value());
     QCOMPARE(image->originalFilename, QStringLiteral("beach.jpg"));
+    QCOMPARE(image->mediaKind, MediaKind::Image);
+    QCOMPARE(image->durationMs, 0);
+}
+
+// As the server sends a video: its kind, its length and its own recording time, and its codecs
+QByteArray wavesVideoJson()
+{
+    QJsonObject video = QJsonDocument::fromJson(beachImageJson()).object();
+    video.insert(QStringLiteral("original_filename"), QStringLiteral("waves.mp4"));
+    video.insert(QStringLiteral("mime_type"), QStringLiteral("video/mp4"));
+    video.insert(QStringLiteral("taken_at_source"), QStringLiteral("container"));
+    video.insert(QStringLiteral("media_kind"), QStringLiteral("video"));
+    video.insert(QStringLiteral("duration_ms"), 222400);
+    video.insert(QStringLiteral("video"),
+                 QJsonObject{{QStringLiteral("video_codec"), QStringLiteral("h264")},
+                             {QStringLiteral("audio_codec"), QJsonValue(QJsonValue::Null)},
+                             {QStringLiteral("bitrate"), 8120000},
+                             {QStringLiteral("frame_rate"), 29.97}});
+    return QJsonDocument(video).toJson(QJsonDocument::Compact);
+}
+
+void TestServerClient::readsAVideo()
+{
+    m_transport->nextResponse = answer(200, wavesVideoJson());
+
+    const Result<Image> video = valueOf(m_client->image(5));
+
+    QVERIFY2(video.has_value(), qPrintable(video.has_value() ? QString() : video.error().detail));
+    QCOMPARE(video->mediaKind, MediaKind::Video);
+    QCOMPARE(video->durationMs, 222400);
+    QCOMPARE(video->takenAtSource, TakenAtSource::Container);
+}
+
+void TestServerClient::refusesAnUnknownKind()
+{
+    QJsonObject sound = QJsonDocument::fromJson(beachImageJson()).object();
+    sound.insert(QStringLiteral("media_kind"), QStringLiteral("sound"));
+    m_transport->nextResponse = answer(200, QJsonDocument(sound).toJson(QJsonDocument::Compact));
+
+    const Result<Image> image = valueOf(m_client->image(5));
+
+    QVERIFY(!image.has_value());
+    QCOMPARE(image.error().detail, QStringLiteral("media_kind: unknown kind sound"));
 }
 
 void TestServerClient::uploadsAFileWithItsMetadata()

@@ -23,6 +23,8 @@ Item {
     required property int imageWidth
     required property int imageHeight
     required property bool selected
+    required property bool isVideo
+    required property string durationText  // a video's length, e.g. "3:42"
     property bool selecting: false  // images are being chosen for changing their tags
 
     // The size the grid's tiles were chosen at. The tile may stretch a little to fill its row, but the
@@ -122,6 +124,43 @@ Item {
             height: width
             source: "checkmark"
             color: Kirigami.Theme.highlightedTextColor
+        }
+    }
+
+    // A video: a play symbol and its length, in the corner the hover details leave free. Dark over any picture.
+    Rectangle {
+        objectName: "videoBadge"
+        anchors.top: frame.top
+        anchors.right: frame.right
+        anchors.margins: Kirigami.Units.smallSpacing
+        visible: tile.isVideo
+        width: badgeContent.implicitWidth + Kirigami.Units.smallSpacing * 2
+        height: badgeContent.implicitHeight + Kirigami.Units.smallSpacing
+        radius: height / 2
+        color: Qt.rgba(0, 0, 0, 0.6)
+
+        Accessible.role: Accessible.StaticText
+        Accessible.name: KI18n.i18nc("@info:tooltip %1 is a duration such as 3:42", "Video, %1", tile.durationText)
+
+        RowLayout {
+            id: badgeContent
+
+            anchors.centerIn: parent
+            spacing: Kirigami.Units.smallSpacing / 2
+
+            Kirigami.Icon {
+                Layout.preferredWidth: Kirigami.Units.iconSizes.small
+                Layout.preferredHeight: Kirigami.Units.iconSizes.small
+                source: "media-playback-start"
+                color: "white"
+                isMask: true
+            }
+
+            Controls.Label {
+                text: tile.durationText
+                color: "white"
+                font: Kirigami.Theme.smallFont
+            }
         }
     }
 

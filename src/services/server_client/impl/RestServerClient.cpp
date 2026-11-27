@@ -99,10 +99,11 @@ void addAlbum(QUrlQuery& parameters, const ImageQuery& query)
     }
 }
 
-// The server finds photos and videos unless asked for one kind; this app shows photos only so far.
+// Photos and videos; the server's default too, but said so that a server's other default cannot change what the
+// library lists.
 void addMediaKind(QUrlQuery& parameters)
 {
-    parameters.addQueryItem(QStringLiteral("media"), QStringLiteral("image"));
+    parameters.addQueryItem(QStringLiteral("media"), QStringLiteral("all"));
 }
 
 QString imageFilePath(int imageId)

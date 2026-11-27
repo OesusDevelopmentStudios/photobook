@@ -39,7 +39,25 @@ inline QJsonObject imageJson(int imageId)
         {QStringLiteral("tags"), QJsonArray()},
         {QStringLiteral("revision"), 0},
         {QStringLiteral("links"), QJsonObject()},
+        {QStringLiteral("media_kind"), QStringLiteral("image")},
     };
+}
+
+// A video object, e.g. original_filename "video_7.mp4", recorded on 2025-07-14
+inline QJsonObject videoJson(int imageId, qint64 durationMs)
+{
+    QJsonObject video = imageJson(imageId);
+    video.insert(QStringLiteral("original_filename"), QStringLiteral("video_%1.mp4").arg(imageId));
+    video.insert(QStringLiteral("mime_type"), QStringLiteral("video/mp4"));
+    video.insert(QStringLiteral("taken_at_source"), QStringLiteral("container"));
+    video.insert(QStringLiteral("media_kind"), QStringLiteral("video"));
+    video.insert(QStringLiteral("duration_ms"), durationMs);
+    video.insert(QStringLiteral("video"),
+                 QJsonObject{{QStringLiteral("video_codec"), QStringLiteral("h264")},
+                             {QStringLiteral("audio_codec"), QStringLiteral("aac")},
+                             {QStringLiteral("bitrate"), 8120000},
+                             {QStringLiteral("frame_rate"), 29.97}});
+    return video;
 }
 
 // A page of a search; an empty cursor: the last page.
