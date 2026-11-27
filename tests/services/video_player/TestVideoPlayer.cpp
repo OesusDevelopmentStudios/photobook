@@ -60,6 +60,11 @@ private Q_SLOTS:
     void remembersVolumeAndSpeed();
     void eachVideoStartsAsStartMutedSays();
     void closingIgnoresALateUrl();
+    void findsThePreviewNearestAPosition_data();
+    void findsThePreviewNearestAPosition();
+    void hasNoPreviewsWhenTheServerCannotMakeThem();
+    void previewsGoWithTheirVideo();
+    void ignoresTheStoryboardOfAVideoLeftBehind();
 
 private:
     void logIn();
@@ -87,6 +92,18 @@ void TestVideoPlayer::init()
     m_server->answer("GET", serverUrl + QStringLiteral("/api/v1/auth/me"), jsonResponse(200, user));
     answerStreamRequests(5);
     answerStreamRequests(6);
+    // 25 frames a second apart, 160×90, ten to a row; none for video 6
+    m_server->answer("GET",
+                     serverUrl + QStringLiteral("/api/v1/media/5/storyboard"),
+                     jsonResponse(200,
+                                  {{QStringLiteral("interval_ms"), 1000},
+                                   {QStringLiteral("frame_count"), 25},
+                                   {QStringLiteral("frame_width"), 160},
+                                   {QStringLiteral("frame_height"), 90},
+                                   {QStringLiteral("columns"), 10},
+                                   {QStringLiteral("sprite"), QStringLiteral("/api/v1/media/5/storyboard/sprite")}}));
+    m_server->answer(
+        "GET", serverUrl + QStringLiteral("/api/v1/media/6/storyboard"), fakes::problem(503, "storyboard_unavailable"));
 
     auto keyring = std::make_shared<fakes::Keyring>();
     keyring->tokens.insert(serverUrl, QStringLiteral("pk_kept"));
@@ -162,7 +179,8 @@ void TestVideoPlayer::ignoresTheUrlOfAVideoLeftBehind()
     m_player->openLibraryVideo(6);
     QTRY_COMPARE(m_server->requestsTo("POST", streamRequestUrl(6)).size(), 1);
 
-    m_server->releaseAnswer(1);  // the video on screen first
+    // Held: 5's URL and storyboard, then 6's. The video on screen gets its URL first.
+    m_server->releaseAnswer(2);
     QTRY_COMPARE(m_player->source(), signedUrl(6, 1));
     m_server->releaseAnswers();
     QTest::qWait(50);
@@ -248,6 +266,76 @@ void TestVideoPlayer::closingIgnoresALateUrl()
 
     QCOMPARE(m_player->source(), QUrl());
     QVERIFY(!m_player->isWaitingForSource());
+}
+
+void TestVideoPlayer::findsThePreviewNearestAPosition_data()
+{
+    QTest::addColumn<qint64>("positionMs");
+    QTest::addColumn<QPoint>("offset");
+
+    QTest::newRow("the start") << qint64(0) << QPoint(0, 0);
+    QTest::newRow("nearer the first frame") << qint64(1400) << QPoint(160, 0);
+    QTest::newRow("nearer the second") << qint64(1600) << QPoint(320, 0);
+    QTest::newRow("the second row") << qint64(10000) << QPoint(0, 90);
+    QTest::newRow("the last frame") << qint64(24400) << QPoint(640, 180);
+    QTest::newRow("past the last frame") << qint64(99000) << QPoint(640, 180);
+    QTest::newRow("before the start") << qint64(-500) << QPoint(0, 0);
+}
+
+void TestVideoPlayer::findsThePreviewNearestAPosition()
+{
+    QFETCH(qint64, positionMs);
+    QFETCH(QPoint, offset);
+    logIn();
+    m_player->openLibraryVideo(5);
+    QTRY_VERIFY(m_player->hasPreviews());
+
+    QCOMPARE(m_player->previewSprite(), QUrl(serverUrl + QStringLiteral("/api/v1/media/5/storyboard/sprite")));
+    QCOMPARE(m_player->previewFrameSize(), QSize(160, 90));
+    QCOMPARE(m_player->previewFrameOffset(positionMs), offset);
+}
+
+// The scrub bar works without them: no message.
+void TestVideoPlayer::hasNoPreviewsWhenTheServerCannotMakeThem()
+{
+    logIn();
+
+    m_player->openLibraryVideo(6);
+
+    QTRY_COMPARE(m_player->source(), signedUrl(6, 1));
+    QVERIFY(!m_player->hasPreviews());
+    QCOMPARE(m_player->errorMessage(), QString());
+    QCOMPARE(m_player->previewFrameOffset(5000), QPoint(0, 0));
+}
+
+void TestVideoPlayer::previewsGoWithTheirVideo()
+{
+    logIn();
+    m_player->openLibraryVideo(5);
+    QTRY_VERIFY(m_player->hasPreviews());
+
+    m_player->openLocalVideo(QStringLiteral("/home/apo/Videos/waves.mp4"));
+    QVERIFY(!m_player->hasPreviews());
+
+    m_player->openLibraryVideo(5);
+    QTRY_VERIFY(m_player->hasPreviews());
+    m_player->close();
+    QVERIFY(!m_player->hasPreviews());
+    QCOMPARE(m_player->previewSprite(), QUrl());
+}
+
+void TestVideoPlayer::ignoresTheStoryboardOfAVideoLeftBehind()
+{
+    logIn();
+    m_server->holdAnswers = true;
+    m_player->openLibraryVideo(5);
+    m_player->openLibraryVideo(6);
+    QTRY_COMPARE(m_server->requestsTo("GET", serverUrl + QStringLiteral("/api/v1/media/6/storyboard")).size(), 1);
+
+    m_server->releaseAnswers();
+    QTRY_COMPARE(m_player->source(), signedUrl(6, 1));
+
+    QVERIFY(!m_player->hasPreviews());  // video 5's frames, not this one's
 }
 
 }  // namespace photobook::video_player

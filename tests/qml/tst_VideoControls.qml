@@ -113,6 +113,44 @@ Item {
             verify(!TestServices.videoPlayer.muted);
         }
 
+        function test_showsTheFrameUnderThePointer() {
+            tryCompare(TestServices.accountConnection, "state", Connection.State.LoggedIn);
+            TestServices.openSampleVideo();
+            tryVerify(() => TestServices.previewPlayer.hasPreviews);
+            mouseMove(root, root.width / 2, root.height - 1);  // not where the bar will be
+            const controls = createTemporaryObject(controlsComponent, root, {videoPlayer: TestServices.previewPlayer});
+            waitForRendering(controls);
+            const scrubBar = findChild(controls, "scrubBar");
+            const preview = findChild(controls, "scrubPreview");
+            verify(!preview.visible);
+
+            // The middle: 111.2 s, frame 50 (row 5, column 0)
+            mouseMove(scrubBar, scrubBar.leftPadding + scrubBar.availableWidth / 2, scrubBar.height / 2);
+
+            tryVerify(() => preview.visible);
+            const sprite = findChild(controls, "previewSprite");
+            compare(sprite.x, 0);
+            compare(sprite.y, -450);
+            compare(findChild(controls, "previewTime").text, "1:51");
+            verify(preview.y + preview.height <= 0, "above the bar");
+            const middle = scrubBar.mapToItem(controls, scrubBar.leftPadding + scrubBar.availableWidth / 2, 0).x;
+            fuzzyCompare(preview.x + preview.width / 2, middle, 1);
+
+            mouseMove(root, root.width / 2, root.height - 1);  // away
+            tryVerify(() => !preview.visible);
+        }
+
+        // Without a storyboard, e.g. one the server could not make, the bar works without previews.
+        function test_showsNoPreviewWithoutAStoryboard() {
+            const controls = shownControls();
+            const scrubBar = findChild(controls, "scrubBar");
+
+            mouseMove(scrubBar, scrubBar.width / 2, scrubBar.height / 2);
+            wait(50);
+
+            verify(!findChild(controls, "scrubPreview").visible);
+        }
+
         // Turning the volume up means to hear it.
         function test_turningTheVolumeUpUnmutes() {
             const controls = shownControls();

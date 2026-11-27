@@ -47,6 +47,7 @@ public:
     QFuture<Result<QList<TagCount>>> tags(const QString& prefix, const QString& namespaceName, int limit) override;
     QFuture<Result<QList<TagCount>>> imageTagCounts(int imageId) override;
     QFuture<Result<StreamUrl>> streamUrl(int imageId) override;
+    QFuture<Result<Storyboard>> storyboard(int imageId) override;
     QFuture<Result<QList<Album>>> albums(bool includeHidden) override;
     QFuture<Result<QList<Namespace>>> namespaces() override;
     QFuture<Result<Preferences>> preferences() override;

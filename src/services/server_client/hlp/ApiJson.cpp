@@ -288,6 +288,24 @@ Result<StreamUrl> streamUrlFrom(const QJsonValue& json)
     return checked(reader, stream);
 }
 
+Result<Storyboard> storyboardFrom(const QJsonValue& json)
+{
+    JsonReader reader(json.toObject());
+    Storyboard storyboard;
+    storyboard.intervalMs = reader.integer64(QStringLiteral("interval_ms"));
+    storyboard.frameCount = reader.integer(QStringLiteral("frame_count"));
+    storyboard.frameSize =
+        QSize(reader.integer(QStringLiteral("frame_width")), reader.integer(QStringLiteral("frame_height")));
+    storyboard.columns = reader.integer(QStringLiteral("columns"));
+    storyboard.spriteUrl = QUrl(reader.string(QStringLiteral("sprite")));
+    if (reader.isValid() && (storyboard.intervalMs <= 0 || storyboard.frameCount <= 0 || storyboard.columns <= 0))
+    {
+        reader.reject(QStringLiteral("frame_count"), QStringLiteral("no frames"));
+    }
+
+    return checked(reader, storyboard);
+}
+
 Result<ImageCount> imageCountFrom(const QJsonValue& json)
 {
     JsonReader reader(json.toObject());

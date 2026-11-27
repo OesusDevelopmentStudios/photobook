@@ -58,6 +58,8 @@ class TestServices : public QObject
     Q_PROPERTY(photobook::viewer::Viewer* viewer READ viewer CONSTANT)
     Q_PROPERTY(photobook::video_player::VideoPlayer* videoPlayer READ videoPlayer CONSTANT)
     Q_PROPERTY(photobook::slideshow::Slideshow* slideshow READ slideshow CONSTANT)
+    // Logged in, with a video whose storyboard has 100 frames 2224 ms apart, 160×90, ten to a row: openSampleVideo()
+    Q_PROPERTY(photobook::video_player::VideoPlayer* previewPlayer READ previewPlayer CONSTANT)
     Q_PROPERTY(photobook::tag_editor::TagEditor* tagEditor READ tagEditor CONSTANT)
     Q_PROPERTY(photobook::tag_editor::UploadTagEditor* uploadTagEditor READ uploadTagEditor CONSTANT)
     Q_PROPERTY(photobook::uploader::Uploader* uploader READ uploader CONSTANT)
@@ -126,6 +128,16 @@ public:
     viewer::Viewer* viewer() const
     {
         return m_viewer.get();
+    }
+
+    video_player::VideoPlayer* previewPlayer() const
+    {
+        return m_previewPlayer.get();
+    }
+
+    Q_INVOKABLE void openSampleVideo()
+    {
+        m_previewPlayer->openLibraryVideo(9);
     }
 
     slideshow::Slideshow* slideshow() const
@@ -316,6 +328,22 @@ private:
             image[QStringLiteral("tags")] = QJsonArray::fromStringList(tags);
             return fakes::jsonResponse(200, image);
         });
+        server->answer(
+            "POST",
+            api + QStringLiteral("/media/9/stream"),
+            fakes::jsonResponse(200,
+                                {{QStringLiteral("url"), QStringLiteral("/api/v1/media/9/file?t=1&exp=2&sig=s")},
+                                 {QStringLiteral("expires_at"), QStringLiteral("2026-11-28T00:44:17Z")}}));
+        server->answer(
+            "GET",
+            api + QStringLiteral("/media/9/storyboard"),
+            fakes::jsonResponse(200,
+                                {{QStringLiteral("interval_ms"), 2224},
+                                 {QStringLiteral("frame_count"), 100},
+                                 {QStringLiteral("frame_width"), 160},
+                                 {QStringLiteral("frame_height"), 90},
+                                 {QStringLiteral("columns"), 10},
+                                 {QStringLiteral("sprite"), QStringLiteral("/api/v1/media/9/storyboard/sprite")}}));
         server->answerWith("PUT", api + QStringLiteral("/preferences"), [](const server_client::HttpRequest& request) {
             return fakes::jsonResponse(200, QJsonDocument::fromJson(request.body).object());
         });
@@ -335,6 +363,8 @@ private:
         m_libraryView = library_view::createLibraryView(m_accountSettings.get());
         m_paneTagEditor = tag_editor::createTagEditor(m_accountConnection.get());
         m_tagPaneLayout = tag_editor::createTagPaneLayout(m_accountSettings.get());
+        m_previewPlayer =
+            std::make_unique<video_player::VideoPlayer>(m_accountConnection.get(), m_accountSettings.get());
     }
 
     QTemporaryDir m_folder;  // the settings, never the user's own, and the images to upload
@@ -348,6 +378,7 @@ private:
     std::unique_ptr<video_player::VideoPlayer> m_videoPlayer;
     std::unique_ptr<navigator::Navigator> m_navigator;
     std::unique_ptr<slideshow::Slideshow> m_slideshow;
+    std::unique_ptr<video_player::VideoPlayer> m_previewPlayer;
     std::unique_ptr<settings::Settings> m_accountSettings;
     std::unique_ptr<connection::Connection> m_accountConnection;
     std::unique_ptr<tag_editor::HiddenFilterEditor> m_hiddenFilterEditor;

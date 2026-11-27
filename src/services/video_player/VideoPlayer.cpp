@@ -61,6 +61,7 @@ void VideoPlayer::openLibraryVideo(int imageId)
     setErrorMessage({});
     setMuted(m_startMuted);
     requestStreamUrl(0);
+    requestStoryboard();
 }
 
 void VideoPlayer::openLocalVideo(const QString& filePath)
@@ -70,6 +71,7 @@ void VideoPlayer::openLocalVideo(const QString& filePath)
     m_waitingForSource = false;
     setErrorMessage({});
     setMuted(m_startMuted);
+    setStoryboard(std::nullopt);  // previews for local videos come with I11
     setSource(QUrl::fromLocalFile(filePath), 0);
 }
 
@@ -79,6 +81,7 @@ void VideoPlayer::close()
     m_libraryImageId = 0;
     m_waitingForSource = false;
     setErrorMessage({});
+    setStoryboard(std::nullopt);
     setSource({}, 0);
 }
 
@@ -103,6 +106,35 @@ void VideoPlayer::reportPlaybackError(const QString& message, qint64 positionMs)
 QString VideoPlayer::timeText(qint64 milliseconds) const
 {
     return utils::durationText(milliseconds);
+}
+
+QPoint VideoPlayer::previewFrameOffset(qint64 positionMs) const
+{
+    if (!m_storyboard.has_value())
+    {
+        return {};
+    }
+
+    // Frame i shows the video at i × interval: the nearest one, never past the last
+    const qint64 nearest = (std::max<qint64>(positionMs, 0) + m_storyboard->intervalMs / 2) / m_storyboard->intervalMs;
+    const int index = static_cast<int>(std::min<qint64>(nearest, m_storyboard->frameCount - 1));
+    return {index % m_storyboard->columns * m_storyboard->frameSize.width(),
+            index / m_storyboard->columns * m_storyboard->frameSize.height()};
+}
+
+bool VideoPlayer::hasPreviews() const
+{
+    return m_storyboard.has_value();
+}
+
+QUrl VideoPlayer::previewSprite() const
+{
+    return m_storyboard.has_value() ? m_storyboard->spriteUrl : QUrl();
+}
+
+QSize VideoPlayer::previewFrameSize() const
+{
+    return m_storyboard.has_value() ? m_storyboard->frameSize : QSize();
 }
 
 QUrl VideoPlayer::source() const
@@ -229,6 +261,37 @@ void VideoPlayer::requestStreamUrl(qint64 startPositionMs)
 
             setSource(answer->url, startPositionMs);
         });
+}
+
+void VideoPlayer::requestStoryboard()
+{
+    setStoryboard(std::nullopt);
+    server_client::ServerClient* client = m_connection->client();
+    if (client == nullptr)
+    {
+        return;
+    }
+
+    const int openCount = m_openCount;
+    client->storyboard(m_libraryImageId)
+        .then(this, [this, openCount](const server_client::Result<server_client::Storyboard>& answer) {
+            // Without previews the scrub bar still works, so a refusal is not worth a message.
+            if (openCount == m_openCount && answer.has_value())
+            {
+                setStoryboard(*answer);
+            }
+        });
+}
+
+void VideoPlayer::setStoryboard(std::optional<server_client::Storyboard> storyboard)
+{
+    if (!storyboard.has_value() && !m_storyboard.has_value())
+    {
+        return;
+    }
+
+    m_storyboard = std::move(storyboard);
+    Q_EMIT previewsChanged();
 }
 
 void VideoPlayer::setSource(const QUrl& source, qint64 startPositionMs)

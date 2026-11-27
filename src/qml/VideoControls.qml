@@ -12,6 +12,7 @@ import org.kde.ki18n
 
 // A video's controls: play/pause, where it is, the scrub bar, its length, the speed and the sound. Playing and
 // seeking are asked for, not done: the viewer drives Qt's MediaPlayer. Speed and sound are the player's settings.
+// Over the scrub bar, or dragging it, the frame at that point shows above it when the player has previews.
 Rectangle {
     id: controls
 
@@ -24,6 +25,13 @@ Rectangle {
     signal playPauseRequested
     signal seekRequested(real position)
 
+    readonly property bool previewing: videoPlayer.hasPreviews && duration > 0 && (scrubHover.hovered || scrubBar.pressed)
+    // Where in the bar the preview is for: the dragged handle, or the pointer
+    readonly property real previewX: scrubBar.pressed ? scrubBar.leftPadding + scrubBar.visualPosition * scrubBar.availableWidth
+                                                      : scrubHover.point.position.x
+    readonly property real previewPosition: Math.max(0, Math.min(1, (previewX - scrubBar.leftPadding)
+                                                                      / scrubBar.availableWidth)) * duration
+
     // "1×", "0.25×", "1.5×"
     function speedText(speed: real): string {
         return KI18n.i18nc("@action:button %1 is a playback speed, e.g. 1.5", "%1×",
@@ -32,6 +40,51 @@ Rectangle {
 
     implicitHeight: row.implicitHeight + Kirigami.Units.smallSpacing * 2
     color: Qt.alpha(Kirigami.Theme.backgroundColor, 0.85)
+
+    // Above the bar, centred on the point it shows, and kept inside the bar
+    Rectangle {
+        objectName: "scrubPreview"
+        visible: controls.previewing
+        width: previewFrame.width + Kirigami.Units.smallSpacing * 2
+        height: previewFrame.height + previewTime.implicitHeight + Kirigami.Units.smallSpacing * 3
+        x: Math.max(0, Math.min(controls.width - width, scrubBar.mapToItem(controls, controls.previewX, 0).x - width / 2))
+        y: -height - Kirigami.Units.smallSpacing
+        radius: Kirigami.Units.cornerRadius
+        color: Kirigami.Theme.backgroundColor
+        border.color: Kirigami.ColorUtils.linearInterpolation(Kirigami.Theme.backgroundColor, Kirigami.Theme.textColor, 0.2)
+
+        // One frame of the sprite, which loads once per video
+        Item {
+            id: previewFrame
+
+            x: Kirigami.Units.smallSpacing
+            y: Kirigami.Units.smallSpacing
+            width: controls.videoPlayer.previewFrameSize.width
+            height: controls.videoPlayer.previewFrameSize.height
+            clip: true
+
+            Image {
+                readonly property point offset: controls.videoPlayer.previewFrameOffset(controls.previewPosition)
+
+                objectName: "previewSprite"
+                x: -offset.x
+                y: -offset.y
+                source: controls.videoPlayer.previewSprite
+                asynchronous: true
+            }
+        }
+
+        Controls.Label {
+            id: previewTime
+
+            objectName: "previewTime"
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: previewFrame.bottom
+            anchors.topMargin: Kirigami.Units.smallSpacing
+            text: controls.videoPlayer.timeText(controls.previewPosition)
+            font.features: {"tnum": 1}
+        }
+    }
 
     RowLayout {
         id: row
@@ -68,6 +121,10 @@ Rectangle {
             enabled: controls.seekable && controls.duration > 0
             Accessible.name: KI18n.i18nc("@label:slider", "Position in the video")
             onMoved: controls.seekRequested(value)
+
+            HoverHandler {
+                id: scrubHover
+            }
 
             // Follows the video, except while dragged
             Binding on value {

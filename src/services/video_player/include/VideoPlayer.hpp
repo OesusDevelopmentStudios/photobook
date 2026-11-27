@@ -5,11 +5,16 @@
 
 #pragma once
 
+#include <optional>
+
 #include <QList>
 #include <QObject>
+#include <QPoint>
+#include <QSize>
 #include <QUrl>
 
 #include "Connection.hpp"
+#include "ServerClient.hpp"
 #include "Settings.hpp"
 
 namespace photobook::video_player
@@ -31,6 +36,11 @@ class VideoPlayer : public QObject
     Q_PROPERTY(double speed READ speed WRITE setSpeed NOTIFY speedChanged)
     Q_PROPERTY(QList<double> speeds READ speeds CONSTANT)
     Q_PROPERTY(bool startMuted READ startsMuted WRITE setStartMuted NOTIFY startMutedChanged)
+    // Frames to show above the scrub bar: one sprite image, frames row by row. Library videos only, once the server
+    // has made them; none for a video it cannot make them for.
+    Q_PROPERTY(bool hasPreviews READ hasPreviews NOTIFY previewsChanged)
+    Q_PROPERTY(QUrl previewSprite READ previewSprite NOTIFY previewsChanged)
+    Q_PROPERTY(QSize previewFrameSize READ previewFrameSize NOTIFY previewsChanged)
 
 public:
     static constexpr double defaultVolume = 1.0;
@@ -53,6 +63,8 @@ public:
 
     // A time in the video as the controls show it, e.g. "3:42"
     Q_INVOKABLE QString timeText(qint64 milliseconds) const;
+    // Where in the sprite the frame nearest that time begins; (0, 0) without previews
+    Q_INVOKABLE QPoint previewFrameOffset(qint64 positionMs) const;
 
     QUrl source() const;  // empty while waiting for a URL, after an error and when closed
     bool isWaitingForSource() const;
@@ -68,6 +80,9 @@ public:
     QList<double> speeds() const;
     bool startsMuted() const;
     void setStartMuted(bool muted);  // remembered
+    bool hasPreviews() const;
+    QUrl previewSprite() const;
+    QSize previewFrameSize() const;
 
 Q_SIGNALS:
     void sourceChanged();
@@ -76,11 +91,14 @@ Q_SIGNALS:
     void mutedChanged();
     void speedChanged();
     void startMutedChanged();
+    void previewsChanged();
 
 private:
     void requestStreamUrl(qint64 startPositionMs);
     void setSource(const QUrl& source, qint64 startPositionMs);
     void setErrorMessage(const QString& message);
+    void requestStoryboard();
+    void setStoryboard(std::optional<server_client::Storyboard> storyboard);
 
     connection::Connection* m_connection;
     settings::Settings* m_settings;
@@ -95,6 +113,7 @@ private:
     bool m_muted = false;
     double m_speed = defaultSpeed;
     bool m_startMuted = false;
+    std::optional<server_client::Storyboard> m_storyboard;
 };
 
 }  // namespace photobook::video_player

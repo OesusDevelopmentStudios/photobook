@@ -12,6 +12,7 @@
 #include <QDateTime>
 #include <QJsonObject>
 #include <QList>
+#include <QSize>
 #include <QString>
 #include <QStringList>
 
@@ -168,6 +169,16 @@ struct StreamUrl
 {
     QUrl url;  // absolute, under the server's URL
     QDateTime expiresAt;
+};
+
+// A video's frames at a fixed interval, in one sprite image filled row by row: previews while scrubbing
+struct Storyboard
+{
+    qint64 intervalMs = 0;  // frame i shows the video at i × intervalMs
+    int frameCount = 0;
+    QSize frameSize;
+    int columns = 0;
+    QUrl spriteUrl;  // absolute, under the server's URL; loading it needs the login token
 };
 
 struct ImageCount

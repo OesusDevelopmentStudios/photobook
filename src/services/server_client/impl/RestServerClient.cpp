@@ -420,6 +420,20 @@ QFuture<Result<StreamUrl>> RestServerClient::streamUrl(int imageId)
         });
 }
 
+QFuture<Result<Storyboard>> RestServerClient::storyboard(int imageId)
+{
+    return send("GET", QStringLiteral("/media/%1/storyboard").arg(imageId))
+        .then([serverUrl = m_serverUrl](const HttpResponse& response) -> Result<Storyboard> {
+            Result<Storyboard> storyboard = jsonAnswer(response, statusOk, storyboardFrom);
+            if (storyboard.has_value())
+            {
+                storyboard->spriteUrl = absoluteApiUrl(serverUrl, storyboard->spriteUrl);
+            }
+
+            return storyboard;
+        });
+}
+
 QFuture<Result<QList<Album>>> RestServerClient::albums(bool includeHidden)
 {
     QUrlQuery parameters;

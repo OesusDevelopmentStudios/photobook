@@ -180,6 +180,8 @@ private Q_SLOTS:
     void listsAlbumsWithHiddenImagesWhenAsked();
     void asksForAStreamUrl();
     void keepsTheServersPathInAStreamUrl();
+    void readsAStoryboard();
+    void refusesAStoryboardWithoutFrames();
     void namesTheFieldOfACoverThatIsMissing();
     void readsTheNamespaces();
     void readsAndReplacesThePreferences();
@@ -838,6 +840,34 @@ void TestServerClient::keepsTheServersPathInAStreamUrl()
     QVERIFY(stream.has_value());
     QCOMPARE(stream->url.toString(),
              QStringLiteral("https://example.org/photobook/api/v1/media/5/file?t=56&exp=1795826657&sig=Ab-c_9"));
+}
+
+void TestServerClient::readsAStoryboard()
+{
+    m_transport->nextResponse = answer(200, R"({"interval_ms":2224,"frame_count":100,"frame_width":160,
+        "frame_height":90,"columns":10,"sprite":"/api/v1/media/5/storyboard/sprite"})");
+
+    const Result<Storyboard> storyboard = valueOf(m_client->storyboard(5));
+
+    QCOMPARE(m_transport->lastRequest().url.path(), QStringLiteral("/api/v1/media/5/storyboard"));
+    QVERIFY(storyboard.has_value());
+    QCOMPARE(storyboard->intervalMs, 2224);
+    QCOMPARE(storyboard->frameCount, 100);
+    QCOMPARE(storyboard->frameSize, QSize(160, 90));
+    QCOMPARE(storyboard->columns, 10);
+    QCOMPARE(storyboard->spriteUrl,
+             QUrl(QStringLiteral("http://raspberrypi.local:8737/api/v1/media/5/storyboard/sprite")));
+}
+
+// A layout the previews cannot use, e.g. no frames, is no storyboard.
+void TestServerClient::refusesAStoryboardWithoutFrames()
+{
+    m_transport->nextResponse = answer(200, R"({"interval_ms":1000,"frame_count":0,"frame_width":160,
+        "frame_height":90,"columns":10,"sprite":"/api/v1/media/5/storyboard/sprite"})");
+
+    const Result<Storyboard> storyboard = valueOf(m_client->storyboard(5));
+
+    QVERIFY(!storyboard.has_value());
 }
 
 void TestServerClient::listsAlbumsWithHiddenImagesWhenAsked()

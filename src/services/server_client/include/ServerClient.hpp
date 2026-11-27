@@ -100,6 +100,10 @@ public:
     // for that video only, until it expires and while this login lasts.
     virtual QFuture<Result<StreamUrl>> streamUrl(int imageId) = 0;
 
+    // GET /media/{id}/storyboard: the video's frames for previews while scrubbing. The first request may take a
+    // few seconds while the server makes them; 503 storyboard_unavailable if it cannot.
+    virtual QFuture<Result<Storyboard>> storyboard(int imageId) = 0;
+
     // GET /albums: the albums with an image the user may see, most recently changed first. Albums with an image
     // the user's hidden filters match are left out, unless includeHidden.
     virtual QFuture<Result<QList<Album>>> albums(bool includeHidden) = 0;
