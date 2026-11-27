@@ -29,6 +29,7 @@ Item {
                 connection: TestServices.accountConnection
                 hiddenFilterEditor: TestServices.hiddenFilterEditor
                 libraryView: TestServices.libraryView
+                videoPlayer: TestServices.videoPlayer
             }
         }
 
@@ -177,6 +178,18 @@ Item {
             const offMiddle = () => item.mapToItem(page, item.width / 2, 0).x
                                     - flickable.mapToItem(page, flickable.width / 2, 0).x;
             tryVerify(() => Math.abs(offMiddle()) < 1, 5000, item.objectName + " is not in the middle");
+        }
+
+        function test_startsVideosMutedWhenAsked() {
+            const page = shownPage();
+            const startMuted = findChild(page, "startVideosMuted");
+            verify(!startMuted.checked);
+
+            mouseClick(startMuted);
+
+            verify(TestServices.videoPlayer.startMuted);
+            TestServices.videoPlayer.startMuted = false;
+            verify(!startMuted.checked);
         }
 
         function test_putsLogOutInTheMiddle() {

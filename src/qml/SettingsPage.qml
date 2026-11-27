@@ -13,6 +13,7 @@ Kirigami.ScrollablePage {
     required property Connection connection
     required property HiddenFilterEditor hiddenFilterEditor
     required property LibraryView libraryView
+    required property VideoPlayer videoPlayer
 
     // The window asks first about unsaved filter changes, then goes back or logs out.
     signal leaveRequested()  // back, while there are unsaved filter changes
@@ -43,7 +44,7 @@ Kirigami.ScrollablePage {
             id: accountForm
 
             Layout.fillWidth: true
-            twinFormLayouts: [serverManagementForm, sectionsForm, hiddenFiltersForm]
+            twinFormLayouts: [serverManagementForm, sectionsForm, hiddenFiltersForm, videosForm]
 
             Kirigami.Separator {
                 Kirigami.FormData.isSection: true
@@ -74,7 +75,7 @@ Kirigami.ScrollablePage {
             id: serverManagementForm
 
             Layout.fillWidth: true
-            twinFormLayouts: [accountForm, sectionsForm, hiddenFiltersForm]
+            twinFormLayouts: [accountForm, sectionsForm, hiddenFiltersForm, videosForm]
 
             Kirigami.Separator {
                 Kirigami.FormData.isSection: true
@@ -105,7 +106,7 @@ Kirigami.ScrollablePage {
             id: sectionsForm
 
             Layout.fillWidth: true
-            twinFormLayouts: [accountForm, serverManagementForm, hiddenFiltersForm]
+            twinFormLayouts: [accountForm, serverManagementForm, hiddenFiltersForm, videosForm]
 
             Kirigami.Separator {
                 Kirigami.FormData.isSection: true
@@ -137,10 +138,30 @@ Kirigami.ScrollablePage {
         }
 
         Kirigami.FormLayout {
+            id: videosForm
+
+            Layout.fillWidth: true
+            twinFormLayouts: [accountForm, serverManagementForm, sectionsForm, hiddenFiltersForm]
+
+            Kirigami.Separator {
+                Kirigami.FormData.isSection: true
+                Kirigami.FormData.label: KI18n.i18nc("@title:group", "Videos")
+            }
+
+            // Each video then starts without sound; its own mute button turns the sound on for that video.
+            Controls.Switch {
+                objectName: "startVideosMuted"
+                text: KI18n.i18nc("@option:check", "Start videos muted")
+                checked: page.videoPlayer.startMuted
+                onToggled: page.videoPlayer.startMuted = checked
+            }
+        }
+
+        Kirigami.FormLayout {
             id: hiddenFiltersForm
 
             Layout.fillWidth: true
-            twinFormLayouts: [accountForm, serverManagementForm, sectionsForm]
+            twinFormLayouts: [accountForm, serverManagementForm, sectionsForm, videosForm]
 
             Kirigami.Separator {
                 Kirigami.FormData.isSection: true

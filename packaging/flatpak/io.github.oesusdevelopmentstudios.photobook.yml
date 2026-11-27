@@ -31,6 +31,7 @@ finish-args:
   # moves an uploaded original to the trash only if the app itself may change the file.
   - --filesystem=host
   - --share=network                    # the photobook-db server
+  - --socket=pulseaudio               # the sound of videos (PipeWire answers it too)
   - --talk-name=org.freedesktop.secrets  # the login token in the keyring: the Secret Service…
   - --talk-name=org.kde.kwalletd6        # …or KWallet
   - --talk-name=org.freedesktop.FileManager1  # "Open Containing Folder": the file manager selects the image
